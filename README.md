@@ -27,26 +27,82 @@ Most security tools are built for experts on laptops. Ghost Mode is different �
 
 ---
 
-## 📱 Requirements
+## 💻 Supported Environments
 
-- Any Android phone (Android 6+)
-- [Termux](https://f-droid.org/packages/com.termux/) installed from F-Droid
-- Internet connection for setup
-- **No root required**
+* **Android**: Any phone running Android 6+ (No root required)
+* **Linux**: Ubuntu, Debian, Fedora, Arch Linux, and CentOS
+* **macOS**: Apple Silicon or Intel architecture (with Homebrew)
+* **Windows**: Windows 10/11 running WSL (Windows Subsystem for Linux)
 
 ---
 
-## ⚡ Quick Install
+## ⚡ Installation & Quick Start
 
-Open Termux and paste this one command:
+### 🤖 Option 1: Android (via Termux)
 
+#### Step 1: Install Termux on your phone
+> [!WARNING]
+> Do **NOT** install Termux from the Google Play Store. The Play Store version is deprecated and cannot update packages.
+
+* **If F-Droid is working:** Download the [Termux app directly on F-Droid](https://f-droid.org/packages/com.termux/).
+* **If F-Droid is down or failing to download:**
+  1. Go to the official **[Termux GitHub Releases](https://github.com/termux/termux-app/releases)**.
+  2. Scroll to the latest release assets and download the `.apk` file (typically labeled `universal` or `arm64-v8a`).
+  3. Install the downloaded APK file manually on your phone.
+
+#### Step 2: Install Ghost Mode
+Open Termux and run the universal setup installer:
 ```bash
 curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh | bash
 ```
 
-That's it. Everything installs automatically.
+---
+
+### 🐧 Option 2: Linux (Ubuntu, Debian, Arch)
+
+1. Open your terminal and install the required security dependencies:
+   * **Ubuntu/Debian**:
+     ```bash
+     sudo apt update && sudo apt install -y python3 python3-pip nmap tor curl
+     ```
+   * **Arch Linux**:
+     ```bash
+     sudo pacman -Syy python python-pip nmap tor curl
+     ```
+2. Clone this repository and configure permissions:
+   ```bash
+   git clone https://github.com/YOURUSERNAME/ghost-mode.git
+   cd ghost-mode
+   pip install requests --break-system-packages
+   chmod +x ghost.sh
+   ```
 
 ---
+
+### 🍏 Option 3: macOS
+
+1. Open Terminal and install dependencies using **[Homebrew](https://brew.sh/)**:
+   ```bash
+   brew install python tor nmap curl
+   ```
+2. Clone this repository and configure:
+   ```bash
+   git clone https://github.com/YOURUSERNAME/ghost-mode.git
+   cd ghost-mode
+   pip install requests
+   chmod +x ghost.sh
+   ```
+
+---
+
+### 🪟 Option 4: Windows (WSL)
+
+1. Open PowerShell as Administrator and enable Windows Subsystem for Linux (if not already installed):
+   ```powershell
+   wsl --install
+   ```
+2. Open your newly installed Linux terminal environment (e.g., Ubuntu for Windows) and follow the **Option 2: Linux** guide above!
+
 
 ## 🚀 Usage
 
