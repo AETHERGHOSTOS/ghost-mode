@@ -95,25 +95,28 @@ curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh
 
 ---
 
-### 🪟 Option 4: Windows (WSL)
+### 🪟 Option 4: Windows (Native — No WSL Needed!)
 
-1. Open PowerShell as Administrator and enable Windows Subsystem for Linux (if not already installed):
-   ```powershell
-   wsl --install
-   ```
-2. Open your newly installed Linux terminal environment (e.g., Ubuntu for Windows) and follow the **Option 2: Linux** guide above!
+1. **Install Python:** Download and install Python 3 from the official **[Python Website](https://www.python.org/downloads/)**. During installation, make sure to check the box: **"Add Python to PATH"**.
+2. **Download & Run:**
+   * Clone or download this project folder.
+   * Open PowerShell or Command Prompt inside the folder and run:
+     ```powershell
+     python ghost_mode_pc.py
+     ```
+   *(The script will automatically check and install any missing library dependencies like `psutil` and `requests`.)*
 
 
 ## 🚀 Usage
 
-After install, run:
+Launch the operational suite depending on your device type:
 
+### 📱 On Mobile (Android / Termux)
+Run the launcher script:
 ```bash
 bash ~/ghost.sh
 ```
-
-You'll see this menu:
-
+This opens the terminal dashboard:
 ```
   💀😈🤫  G H O S T   M O D E  🤫😈💀
   ========================================
@@ -127,6 +130,13 @@ You'll see this menu:
   [6] 📋 View Logs
   [7] ⏹️  Stop Everything
 ```
+
+### 🖥️ On Desktop (Windows, macOS, Linux)
+Run the dedicated PC security engine directly:
+```bash
+python ghost_mode_pc.py
+```
+This starts the real-time background monitor, checks active webcam/microphone registry entries, logs local scanning activities, and boots up the browser dashboard integration.
 
 ---
 
