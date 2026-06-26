@@ -206,6 +206,66 @@ This starts the real-time background monitor, checks active webcam/microphone st
 
 ---
 
+## 🧹 Cleanup, Updating & Reinstallation
+
+If you already have a version of Ghost Mode running and want to perform a clean update, stop background processes, or completely remove the project, run the following commands in your Termux or Linux terminal:
+
+### ⏹️ Step 1: Kill All Active Background Services
+Running background components (like the web dashboard daemon or Tor circuits) can lock files and block package updates. Terminate them safely:
+```bash
+# Terminate the background web server daemon
+pkill -f server_daemon.py
+
+# Terminate active security scanner processes
+pkill -f ghost_mode.py
+
+# Stop background Tor proxy routing
+pkill tor
+
+# Stop background cron schedulers
+pkill cron
+```
+
+### 🗑️ Step 2: Remove Old Project Files & Folders
+Delete the old source folders, dashboard configs, and logs:
+```bash
+# Delete main project source folder (if installed via git clone)
+rm -rf ~/ghost-mode
+
+# Delete dashboard web files and log registries
+rm -rf ~/ghost_tools
+
+# Delete executable scripts in your home directory
+rm -f ~/ghost.sh ~/ghost_mode.py ~/setup.sh
+```
+
+### 🔄 Step 3: Run a Fresh Installation
+After stopping old daemons and clearing directories, boot up the new version using the setup script:
+```bash
+curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
+```
+*(Replace `YOURUSERNAME` with your real GitHub username).*
+
+### 🔑 Step 4: Re-grant Camera & Mic Scan Permissions
+If you cleared Termux app data or did a clean reinstall, you must re-grant the log-reading permission so that the scanner can audit camera and microphone usage without root:
+1. Enable **USB Debugging** in your phone's Developer Settings.
+2. Connect your phone to your PC.
+3. Open a Command Prompt/Terminal on your PC and run:
+   ```bash
+   adb shell pm grant com.termux android.permission.READ_LOGS
+   ```
+4. Restart Termux.
+
+### 💀 Step 5: Launch & Verify
+Open Termux on your phone and start the control menu:
+```bash
+bash ~/ghost.sh
+```
+Select option `[5] 🖥️ Open Dashboard` to boot the daemon, then open your mobile web browser and go to `http://localhost:8080/ghost_dashboard.html` to confirm that the security suite is active and running!
+
+
+---
+
 ## 🌍 Location Picker
 
 Ghost Mode lets you choose which country your internet traffic appears to come from:
