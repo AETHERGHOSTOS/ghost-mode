@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ghost Mode — Go Invisible</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=DM+Sans:wght@300;400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #070707;
+  --surface: #0e0e0e;
+  --border: #181818;
+  --green: #00e676;
+  --green-faint: rgba(0,230,118,0.07);
+  --green-line: rgba(0,230,118,0.18);
+  --red: #ff1744;
+  --blue: #448aff;
+  --text: #b0b0b0;
+  --dim: #383838;
+  --mono: 'Share Tech Mono', 'Courier New', monospace;
+  --sans: 'DM Sans', system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV ─────────────────────────────────── */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(7,7,7,0.96);
+  backdrop-filter: blur(8px);
+}
+
+.nav-logo {
+  font-family: var(--mono);
+  color: var(--green);
+  font-size: 0.9em;
+  letter-spacing: 3px;
+  text-decoration: none;
+}
+
+.nav-right { display: flex; gap: 24px; align-items: center; }
+
+.nav-right a {
+  font-size: 0.82em;
+  color: var(--dim);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  transition: color 0.15s;
+}
+.nav-right a:hover { color: var(--text); }
+
+.nav-gh {
+  font-family: var(--mono);
+  font-size: 0.75em;
+  color: var(--green) !important;
+  border: 1px solid var(--green-line);
+  padding: 5px 14px;
+  border-radius: 4px;
+  transition: background 0.15s !important;
+}
+.nav-gh:hover { background: var(--green-faint) !important; }
+
+/* ── HERO ────────────────────────────────── */
+.hero {
+  padding: 120px 32px 80px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.72em;
+  color: var(--green);
+  letter-spacing: 4px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hero-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 28px;
+  height: 1px;
+  background: var(--green);
+  opacity: 0.5;
+}
+
+.hero h1 {
+  font-family: var(--mono);
+  font-size: clamp(2.8em, 7vw, 5em);
+  color: #fff;
+  letter-spacing: -1px;
+  line-height: 1.05;
+  margin-bottom: 8px;
+}
+
+.hero h1 span { color: var(--green); }
+
+.hero-sub {
+  font-family: var(--mono);
+  font-size: clamp(1em, 2.5vw, 1.3em);
+  color: var(--dim);
+  letter-spacing: 2px;
+  margin-bottom: 28px;
+}
+
+.hero p {
+  font-size: 1.05em;
+  color: #686868;
+  max-width: 520px;
+  margin-bottom: 44px;
+  font-weight: 300;
+  line-height: 1.8;
+}
+
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.btn-main {
+  font-family: var(--mono);
+  font-size: 0.82em;
+  letter-spacing: 2px;
+  padding: 12px 28px;
+  background: var(--green);
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: opacity 0.15s, transform 0.15s;
+  display: inline-block;
+}
+.btn-main:hover { opacity: 0.85; transform: translateY(-1px); }
+
+.btn-outline {
+  font-family: var(--mono);
+  font-size: 0.82em;
+  letter-spacing: 2px;
+  padding: 12px 28px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+  display: inline-block;
+}
+.btn-outline:hover { border-color: var(--dim); color: #fff; }
+
+/* ── TERMINAL ────────────────────────────── */
+.terminal-wrap {
+  max-width: 900px;
+  margin: 0 auto 100px;
+  padding: 0 32px;
+}
+
+.terminal {
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.t-bar {
+  background: #111;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-bottom: 1px solid var(--border);
+}
+.dot { width: 11px; height: 11px; border-radius: 50%; }
+.dot.r{background:#ff5f56}.dot.y{background:#ffbd2e}.dot.g{background:#27c93f}
+.t-title { font-family: var(--mono); font-size: 0.7em; color: #2a2a2a; margin-left: 8px; }
+
+.t-body {
+  padding: 20px 24px;
+  font-family: var(--mono);
+  font-size: 0.8em;
+  line-height: 2.1;
+  min-height: 220px;
+}
+.tc  { color: var(--green); }
+.to  { color: #2e2e2e; }
+.tok { color: var(--green); }
+.tw  { color: #ffaa00; }
+.ta  { color: var(--red); }
+.ti  { color: var(--blue); }
+.cur { display: inline-block; width: 7px; height: 13px; background: var(--green); vertical-align: middle; animation: blink 1s step-end infinite; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── DIVIDER ─────────────────────────────── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+
+/* ── SECTION BASE ────────────────────────── */
+section { padding: 80px 32px; max-width: 900px; margin: 0 auto; }
+
+.label {
+  font-family: var(--mono);
+  font-size: 0.68em;
+  color: var(--dim);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  display: block;
+}
+
+section h2 {
+  font-size: clamp(1.5em, 3vw, 2em);
+  color: #eee;
+  font-weight: 500;
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+
+section > p {
+  color: #555;
+  max-width: 500px;
+  margin-bottom: 52px;
+  font-weight: 300;
+}
+
+/* ── FEATURE LIST ────────────────────────── */
+.feat-list { list-style: none; }
+
+.feat-list li {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 20px;
+  padding: 22px 0;
+  border-top: 1px solid var(--border);
+  align-items: start;
+}
+.feat-list li:last-child { border-bottom: 1px solid var(--border); }
+
+.feat-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--green-faint);
+  border: 1px solid var(--green-line);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.feat-content h3 {
+  font-family: var(--mono);
+  color: var(--green);
+  font-size: 0.82em;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.feat-content p { color: #555; font-size: 0.9em; font-weight: 300; }
+
+/* ── INSTALL ─────────────────────────────── */
+.install-steps { margin-bottom: 32px; }
+
+.step-row {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 20px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+  align-items: start;
+}
+.step-row:last-child { border-bottom: 1px solid var(--border); }
+
+.step-num {
+  font-family: var(--mono);
+  font-size: 0.78em;
+  color: var(--green);
+  margin-top: 2px;
+}
+
+.step-content h3 { color: #eee; font-size: 0.95em; font-weight: 500; margin-bottom: 4px; }
+.step-content p { color: #555; font-size: 0.88em; font-weight: 300; }
+
+.code-wrap {
+  position: relative;
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px 20px;
+  padding-right: 80px;
+  font-family: var(--mono);
+  font-size: 0.78em;
+  color: var(--green);
+  word-break: break-all;
+  line-height: 1.7;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 0.68em;
+  padding: 3px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+.copy-btn:hover { border-color: var(--green); color: var(--green); }
+
+/* ── COMPARISON ──────────────────────────── */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88em;
+}
+.compare-table th {
+  font-family: var(--mono);
+  font-size: 0.72em;
+  letter-spacing: 2px;
+  color: var(--dim);
+  text-align: left;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: normal;
+}
+.compare-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  color: #666;
+  vertical-align: middle;
+}
+.compare-table td:first-child { color: #888; }
+.compare-table tr.highlight td { color: var(--green); }
+.compare-table tr.highlight td:first-child { color: #fff; font-weight: 500; }
+.yes { color: var(--green) !important; }
+.no { color: #333 !important; }
+
+/* ── FOOTER ──────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 32px;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.footer-left p { font-size: 0.8em; color: var(--dim); }
+.footer-left p span { color: var(--green); }
+
+.warning-badge {
+  font-family: var(--mono);
+  font-size: 0.68em;
+  color: #ffaa00;
+  border: 1px solid rgba(255,170,0,0.2);
+  padding: 6px 14px;
+  border-radius: 3px;
+  background: rgba(255,170,0,0.05);
+  letter-spacing: 1px;
+}
+
+@media (max-width: 600px) {
+  nav { padding: 0 16px; }
+  .nav-right a:not(.nav-gh) { display: none; }
+  .hero, section, .terminal-wrap { padding-left: 16px; padding-right: 16px; }
+  .hero { padding-top: 64px; }
+  .hero h1 { font-size: 2.4em; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo" style="display: flex; align-items: center; gap: 8px;">
+    <img src="assets/logo.png" alt="Ghost Mode Logo" style="height: 24px; width: 24px; border-radius: 4px;">
+    GHOST MODE
+  </a>
+  <div class="nav-right">
+    <a href="#features">Features</a>
+    <a href="#install">Install</a>
+    <a href="#compare">Compare</a>
+    <a href="https://github.com/YOURUSERNAME/ghost-mode" target="_blank" class="nav-gh">GitHub ↗</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div style="margin-bottom: 24px;">
+    <img src="assets/logo.png" alt="Ghost Mode Cyber Logo" style="width: 90px; height: 90px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 0 20px rgba(0, 230, 118, 0.15);">
+  </div>
+  <div class="hero-eyebrow">OPEN SOURCE · FREE · NO ROOT REQUIRED</div>
+  <h1>Go <span>invisible</span>.<br>Stay protected.</h1>
+  <p class="hero-sub">💀 GHOST MODE 😈🤫</p>
+  <p>A personal security suite for any Android phone. Detects spying, anonymizes your traffic through Tor, monitors your network — all from Termux, with no root and no technical experience needed.</p>
+  <div class="hero-actions">
+    <a href="#install" class="btn-main">GET STARTED FREE</a>
+    <a href="https://github.com/YOURUSERNAME/ghost-mode" class="btn-outline" target="_blank">View on GitHub</a>
+  </div>
+</div>
+
+<!-- TERMINAL -->
+<div class="terminal-wrap">
+  <div class="terminal">
+    <div class="t-bar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <span class="t-title">termux — ghost_mode.py</span>
+    </div>
+    <div class="t-body" id="term"></div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- FEATURES -->
+<section id="features">
+  <span class="label">// What it does</span>
+  <h2>Everything you need.<br>Nothing you don't.</h2>
+  <p>Ghost Mode is built around one idea — personal protection, not complexity.</p>
+
+  <ul class="feat-list">
+    <li>
+      <div class="feat-icon">🎙️</div>
+      <div class="feat-content">
+        <h3>MIC / CAMERA MONITOR</h3>
+        <p>Catches any process secretly accessing your microphone or camera hardware and logs it immediately.</p>
+      </div>
+    </li>
+    <li>
+      <div class="feat-icon">🌐</div>
+      <div class="feat-content">
+        <h3>NETWORK MONITOR</h3>
+        <p>Watches all outbound connections in real time. Flags unknown IPs and ports commonly used by spyware.</p>
+      </div>
+    </li>
+    <li>
+      <div class="feat-icon">👻</div>
+      <div class="feat-content">
+        <h3>ARP SPOOF DETECTOR</h3>
+        <p>Detects man-in-the-middle attacks — someone intercepting your WiFi traffic gets flagged instantly.</p>
+      </div>
+    </li>
+    <li>
+      <div class="feat-icon">😈</div>
+      <div class="feat-content">
+        <h3>TOR ANONYMITY + LOCATION PICKER</h3>
+        <p>Routes your traffic through Tor. Pick which country you appear to be from — US, Germany, Netherlands, Japan and 16 more. One or multiple at once.</p>
+      </div>
+    </li>
+    <li>
+      <div class="feat-icon">🔍</div>
+      <div class="feat-content">
+        <h3>PORT SCANNER</h3>
+        <p>Scans your phone and local network for exposed ports that attackers could use to get in.</p>
+      </div>
+    </li>
+    <li>
+      <div class="feat-icon">⏰</div>
+      <div class="feat-content">
+        <h3>AUTO-SCAN (SILENT MODE)</h3>
+        <p>Runs a full security scan every 2 minutes in the background. Starts automatically when your phone boots.</p>
+      </div>
+    </li>
+  </ul>
+</section>
+
+<hr class="divider">
+
+<!-- INSTALL -->
+<section id="install">
+  <span class="label">// How to install</span>
+  <h2>Up and running<br>in 3 steps.</h2>
+  <p>Works on any Android phone. No root. No special knowledge.</p>
+
+  <div class="install-steps">
+    <div class="step-row">
+      <div class="step-num">01</div>
+      <div class="step-content">
+        <h3>Install Termux from F-Droid</h3>
+        <p>Download F-Droid from f-droid.org, then install Termux from there. Do not use the Play Store version — it's outdated.</p>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">02</div>
+      <div class="step-content">
+        <h3>Run the install command</h3>
+        <p>Open Termux and paste this one command. It installs everything automatically.</p>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">03</div>
+      <div class="step-content">
+        <h3>Launch Ghost Mode</h3>
+        <p>Type <code style="color:var(--green);font-family:var(--mono)">bash ~/ghost.sh</code> — your security menu appears. You're protected.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+    <span id="cmd">curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh | bash</span>
+  </div>
+
+  <p style="margin-top:16px;font-size:0.78em;color:#333;margin-bottom:0">
+    No SD card? No problem. Ghost Mode stores everything inside Termux's own storage — no external card needed.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- COMPARE -->
+<section id="compare">
+  <span class="label">// How it compares</span>
+  <h2>Built different.</h2>
+  <p>Every other tool like this needs root, a PC, or advanced knowledge. Ghost Mode doesn't.</p>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>TOOL</th>
+        <th>NO ROOT</th>
+        <th>ONE-COMMAND SETUP</th>
+        <th>DEFENSIVE FOCUS</th>
+        <th>FREE</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Kali NetHunter</td>
+        <td class="no">✗</td>
+        <td class="no">✗</td>
+        <td class="no">✗</td>
+        <td class="yes">✓</td>
+      </tr>
+      <tr>
+        <td>cSploit</td>
+        <td class="no">✗</td>
+        <td class="no">✗</td>
+        <td class="no">✗</td>
+        <td class="yes">✓</td>
+      </tr>
+      <tr>
+        <td>Commercial VPNs</td>
+        <td class="yes">✓</td>
+        <td class="yes">✓</td>
+        <td class="yes">✓</td>
+        <td class="no">✗</td>
+      </tr>
+      <tr class="highlight">
+        <td>💀 Ghost Mode</td>
+        <td class="yes">✓</td>
+        <td class="yes">✓</td>
+        <td class="yes">✓</td>
+        <td class="yes">✓</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<hr class="divider">
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <p style="font-family:var(--mono);color:var(--green);font-size:0.9em;margin-bottom:4px">💀😈🤫 GHOST MODE</p>
+    <p>Open source. Free forever. Built for Android with Termux.</p>
+    <p style="margin-top:6px">MIT License · <a href="https://github.com/YOURUSERNAME/ghost-mode" style="color:var(--dim);text-decoration:none">GitHub ↗</a></p>
+  </div>
+  <div class="warning-badge">⚠️ FOR PERSONAL SECURITY USE ONLY</div>
+</footer>
+
+<script>
+// Terminal animation
+const lines=[
+  {t:'$ python3 ghost_mode.py', c:'tc', d:400},
+  {t:'', c:'', d:200},
+  {t:'💀😈🤫  G H O S T   M O D E  🤫😈💀', c:'tok', d:300},
+  {t:'═══════════════════════════════════════════', c:'to', d:100},
+  {t:'😈 Checking outbound connections...', c:'', d:600},
+  {t:'🤫 Network clean — nobody watching', c:'tok', d:400},
+  {t:'😈 Scanning open ports...', c:'', d:600},
+  {t:'🤫 No open ports — you are sealed', c:'tok', d:400},
+  {t:'😈 Checking mic/camera access...', c:'', d:600},
+  {t:'🤫 Mic/Camera clean — nobody listening', c:'tok', d:400},
+  {t:'😈 Checking for ARP spoofing...', c:'', d:600},
+  {t:'🤫 No MITM attacks — traffic is clean', c:'tok', d:400},
+  {t:'😈 Checking Tor anonymity...', c:'', d:600},
+  {t:'💀😈 GHOST ACTIVE — Anonymous IP: 185.220.101.47', c:'tok', d:500},
+  {t:'🤫 Real IP hidden. You are invisible.', c:'tok', d:400},
+  {t:'═══════════════════════════════════════════', c:'to', d:100},
+  {t:'💀 Scan complete. You are a ghost. 😈🤫', c:'tok', d:600},
+  {t:'$ █', c:'tc', d:4000},
+];
+
+let i=0;
+const term=document.getElementById('term');
+
+function addLine(text,cls){
+  const d=document.createElement('div');
+  d.className=cls;
+  d.textContent=text;
+  term.appendChild(d);
+  term.scrollTop=term.scrollHeight;
+}
+
+function nextLine(){
+  if(i>=lines.length){
+    setTimeout(()=>{
+      term.innerHTML='';
+      i=0;
+      nextLine();
+    },2000);
+    return;
+  }
+  const l=lines[i++];
+  if(l.t) addLine(l.t,l.c);
+  setTimeout(nextLine,l.d);
+}
+
+setTimeout(nextLine,600);
+
+function copyCmd(btn){
+  const text=document.getElementById('cmd').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='COPIED!';
+    btn.style.color='var(--green)';
+    btn.style.borderColor='var(--green)';
+    setTimeout(()=>{
+      btn.textContent='COPY';
+      btn.style.color='';
+      btn.style.borderColor='';
+    },2000);
+  }).catch(()=>{
+    // fallback for older Android browsers
+    const el=document.createElement('textarea');
+    el.value=text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    btn.textContent='COPIED!';
+    setTimeout(()=>btn.textContent='COPY',2000);
+  });
+}
+</script>
+</body>
+</html>

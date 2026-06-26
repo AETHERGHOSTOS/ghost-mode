@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>💀 Aether Ghost OS Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Grotesk:wght@300;400;500;600;700&family=Zen+Dots&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{
+  background:#050505;
+  color:#d0d0d0;
+  font-family:'Space Grotesk', sans-serif;
+  min-height:100vh;
+  padding:16px;
+  position:relative;
+}
+/* Cyber scanline overlay */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);
+  pointer-events:none;
+  z-index:9999;
+}
+
+/* Splash screen loader */
+#splash-overlay {
+  position: fixed;
+  inset: 0;
+  background: #030303;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.8s ease-out, visibility 0.8s;
+}
+#splash-overlay.fade-out {
+  opacity: 0;
+  visibility: hidden;
+}
+.splash-content {
+  text-align: center;
+  width: 90%;
+  max-width: 320px;
+}
+.splash-logo {
+  width: 90px;
+  height: 90px;
+  margin-bottom: 20px;
+  animation: logo-glow 2s infinite ease-in-out;
+}
+@keyframes logo-glow {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(0,255,136,0.3)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 20px rgba(0,255,136,0.8)); transform: scale(1.05); }
+}
+.splash-title {
+  font-family: 'Zen Dots', sans-serif;
+  color: #00ff88;
+  font-size: 1.2rem;
+  letter-spacing: 4px;
+  margin-bottom: 15px;
+}
+.splash-progress-bg {
+  width: 100%;
+  height: 4px;
+  background: #111;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  border: 1px solid #1a1a1a;
+}
+.splash-progress-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #00ff88, #0099ff);
+  transition: width 0.1s linear;
+}
+.splash-status {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  color: #444;
+  letter-spacing: 1px;
+  height: 15px;
+}
+
+/* Circular score gauge */
+.gauge-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.gauge-svg {
+  transform: rotate(-90deg);
+  width: 80px;
+  height: 80px;
+}
+.gauge-bg {
+  fill: none;
+  stroke: #111;
+  stroke-width: 6;
+}
+.gauge-fill {
+  fill: none;
+  stroke: #00ff88;
+  stroke-width: 6;
+  stroke-dasharray: 251.2;
+  stroke-dashoffset: 251.2; /* 2*pi*r where r=40 */
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease-out, stroke 0.8s;
+  filter: drop-shadow(0 0 4px rgba(0, 255, 136, 0.4));
+}
+.gauge-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255,255,255,0.3);
+}
+
+/* Circuit visualizer */
+.circuit-map {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 12px;
+  background: #050505;
+  border-radius: 6px;
+  border: 1px solid #111;
+}
+.circuit-node {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+.circuit-node:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 22px;
+  width: 1px;
+  height: 18px;
+  border-left: 1px dashed #222;
+}
+.node-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #0c0c0c;
+  border: 1px solid #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #666;
+  font-family: 'Share Tech Mono', monospace;
+  z-index: 1;
+}
+.node-dot.active {
+  background: #00ff8812;
+  border-color: #00ff88;
+  color: #00ff88;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.25);
+}
+.node-dot.alert {
+  background: #ff335512;
+  border-color: #ff3355;
+  color: #ff3355;
+  box-shadow: 0 0 8px rgba(255, 51, 85, 0.25);
+}
+.node-info {
+  display: flex;
+  flex-direction: column;
+}
+.node-title {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.node-desc {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  color: #c0c0c0;
+}
+
+/* Blinking unprotected warning banner */
+.unprotected-banner {
+  background: rgba(255, 51, 85, 0.06);
+  border: 1px solid #ff3355;
+  color: #ff3355;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85em;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  animation: border-flash 1.5s infinite ease-in-out;
+}
+@keyframes border-flash {
+  0%, 100% { border-color: #ff3355; box-shadow: 0 0 4px rgba(255,51,85,0.1); }
+  50% { border-color: rgba(255,51,85,0.3); box-shadow: none; }
+}
+
+header{
+  text-align:center;
+  padding:12px 0 16px;
+  border-bottom:1px dashed #161616;
+  margin-bottom:16px;
+}
+header h1{
+  font-family:'Zen Dots', sans-serif;
+  font-size:1.4em;
+  letter-spacing:5px;
+  color:#00ff88;
+  text-shadow:0 0 15px rgba(0,255,136,0.3);
+  margin-top:6px;
+}
+.aether-emoji {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  background-image: url('aether_emoji.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  vertical-align: middle;
+  margin-top: -4px;
+}
+header p{
+  font-family:'Share Tech Mono', monospace;
+  color:#444;
+  font-size:0.7em;
+  letter-spacing:4px;
+  margin-top:2px;
+}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media (max-width: 600px) {
+  .grid2 { grid-template-columns: 1fr; }
+}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+@media (max-width: 500px) {
+  .grid3 { grid-template-columns: 1fr; }
+}
+
+.card{
+  background:#0a0a0a;
+  border:1px solid #141414;
+  border-radius:10px;
+  padding:14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transition: border-color 0.3s;
+}
+.card:hover{
+  border-color:#222;
+}
+.card h3{
+  font-weight:700;
+  font-size:0.72em;
+  color:#555;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:12px;
+  border-bottom:1px solid #141414;
+  padding-bottom:6px;
+}
+
+.status-text{font-size:1.1em;font-weight:600;letter-spacing:1.5px;display:flex;align-items:center;}
+.ok{color:#00ff88}
+.warn{color:#ffaa00}
+.alert{color:#ff3355}
+.info{color:#0099ff}
+.muted{color:#666}
+
+.big-num{font-family:'Share Tech Mono', monospace; font-size:2.4em;font-weight:bold;text-align:center;padding:4px 0;letter-spacing:1px}
+
+.pulse{
+  display:inline-block;
+  width:8px;height:8px;
+  border-radius:50%;
+  background:#00ff88;
+  margin-right:8px;
+  animation:pulse 2s infinite;
+}
+.pulse.dead{background:#ff3355;animation:none}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.2;transform:scale(0.8)}}
+
+.badge-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.badge{
+  font-family:'Share Tech Mono', monospace;
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:6px;
+  font-size:0.7em;
+  letter-spacing:0.5px;
+}
+.badge.ok{background:#00ff8812;border:1px solid #00ff8825;color:#00ff88}
+.badge.warn{background:#ffaa0012;border:1px solid #ffaa0025;color:#ffaa00}
+.badge.alert{background:#ff335512;border:1px solid #ff335525;color:#ff3355}
+.badge.pend{background:#111;border:1px solid #222;color:#444}
+
+.log-box{
+  height:160px;
+  overflow-y:auto;
+  font-family:'Share Tech Mono', monospace;
+  font-size:0.7em;
+  line-height:1.8;
+  padding:10px;
+  background:#050505;
+  border-radius:6px;
+  border:1px solid #121212;
+}
+.log-box::-webkit-scrollbar{width:4px}
+.log-box::-webkit-scrollbar-thumb{background:#1a1a1a;border-radius:2px}
+.log-line{color:#444}
+.log-line.ok{color:#00ff88}
+.log-line.warn{color:#ffaa00}
+.log-line.alert{color:#ff3355}
+.log-line.info{color:#0099ff}
+
+.btn{
+  width:100%;
+  padding:12px;
+  background:#00ff880a;
+  border:1px solid #00ff8825;
+  color:#00ff88;
+  font-family:'Space Grotesk', sans-serif;
+  font-size:0.85em;
+  letter-spacing:2px;
+  border-radius:8px;
+  cursor:pointer;
+  margin:4px 0;
+  transition:all 0.2s ease-in-out;
+}
+.btn:hover{background:#00ff881a;border-color:#00ff88;box-shadow:0 0 10px rgba(0,255,136,0.15)}
+.btn.blue{border-color:#0099ff25;color:#0099ff;background:#0099ff0a}
+.btn.blue:hover{background:#0099ff1a;border-color:#0099ff}
+.btn.red{border-color:#ff335525;color:#ff3355;background:#ff33550a}
+.btn.red:hover{background:#ff33551a;border-color:#ff3355}
+
+.ip-val{
+  font-family:'Share Tech Mono', monospace;
+  font-size:1.1em;
+  letter-spacing:0.5px;
+  margin-top:2px;
+}
+#last-scan{color:#3a3a3a;font-size:0.65em;margin-top:4px}
+
+/* Form Styles */
+select{
+  background:#0f0f0f;
+  color:#fff;
+  border:1px solid #202020;
+  padding:10px;
+  border-radius:6px;
+  font-family:'Space Grotesk', sans-serif;
+  font-size:0.85em;
+  outline:none;
+}
+select:focus{border-color:#00ff88}
+
+/* Speedtest UI */
+.speed-meter{
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  margin:10px 0;
+  text-align:center;
+}
+.speed-val{
+  font-family:'Share Tech Mono', monospace;
+  font-size:1.6em;
+  font-weight:bold;
+  color:#0099ff;
+}
+.speed-label{
+  font-size:0.65em;
+  color:#555;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+/* Spinner Animation */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0,153,255,0.2);
+  border-radius: 50%;
+  border-top-color: #0099ff;
+  animation: spin 0.8s linear infinite;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Toast alert */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #0a0a0a;
+  border: 1px solid #00ff88;
+  border-radius: 6px;
+  padding: 12px 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  font-family:'Share Tech Mono', monospace;
+  font-size:0.8em;
+  color:#00ff88;
+  z-index: 10000;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<!-- Cyber Splash Loading Screen -->
+<div id="splash-overlay">
+  <div class="splash-content">
+    <img src="logo.png" class="splash-logo" alt="Aether OS Logo">
+    <div class="splash-title">AETHER GHOST OS</div>
+    <div class="splash-progress-bg">
+      <div id="splash-bar" class="splash-progress-bar"></div>
+    </div>
+    <div id="splash-status" class="splash-status">LOADING SHIELD DRIVERS...</div>
+  </div>
+</div>
+
+<header style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+  <img src="logo.png" alt="Aether Ghost OS Logo" style="width: 54px; height: 54px; border-radius: 10px; border: 1px solid #1a1a1a; box-shadow: 0 0 12px rgba(0, 255, 136, 0.2);">
+  <h1><span class="aether-emoji"></span> AETHER GHOST OS <span class="aether-emoji"></span></h1>
+  <p>PRIVACY OPERATING SECURITY SUITE</p>
+</header>
+
+<!-- Blinking Unprotected Alert Banner -->
+<div class="unprotected-banner" id="unprotected-banner">
+  <span>⚠️ UNPROTECTED! Connection exposed. Anonymity Engine disabled.</span>
+</div>
+
+<!-- Toast notification element -->
+<div id="toast-notif" class="toast">🛡️ Security Shield Monitor Alert!</div>
+
+<!-- Shield & Threat Metrics -->
+<div class="grid2">
+  <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h3>🛡️ Shield Status</h3>
+      <div class="status-text ok" id="shield" style="margin-top: 8px;">
+        <span class="pulse" id="pdot"></span>READY
+      </div>
+      <div id="last-scan" style="font-size:0.65em; color:#555; margin-top:6px;">Not scanned yet</div>
+      <div id="next-scan-timer" style="font-size:0.65em; color:#00ff88; margin-top:4px; font-family:'Share Tech Mono', monospace;">⏱️ Next Auto-Scan: <span id="timer-countdown">--:--</span></div>
+    </div>
+    <!-- Score Gauge -->
+    <div class="gauge-container">
+      <svg class="gauge-svg">
+        <circle class="gauge-bg" cx="40" cy="40" r="35"/>
+        <circle id="gauge-fill" class="gauge-fill" cx="40" cy="40" r="35"/>
+      </svg>
+      <div id="gauge-score" class="gauge-text">0%</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>🚨 Threats Today</h3>
+    <div class="big-num ok" id="threat-count">0</div>
+  </div>
+</div>
+
+<!-- Anonymizer Configuration -->
+<div class="grid2">
+  <div class="card">
+    <h3>🔒 Anonymity Engine</h3>
+    <select id="engine-select" onchange="changeEngine()" style="width:100%; color:#00ff88;">
+      <option value="tor">😈 Tor Network Proxy</option>
+      <option value="warp">🌐 Cloudflare WARP VPN</option>
+      <option value="proxy">🌍 Public Proxy Rotation</option>
+      <option value="doh">🛡️ Secure DNS-over-HTTPS</option>
+      <option value="none" style="color:#ff3355;">🛑 No Anonymity (UNPROTECTED!)</option>
+    </select>
+  </div>
+  <div class="card" id="spoofer-card">
+    <h3>🌍 Tor Location Spoofer</h3>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <select id="country-select" style="flex-grow:1;">
+        <option value="0">🌍 Random (Auto-select)</option>
+        <option value="1">🇺🇸 United States</option>
+        <option value="2">🇬🇧 United Kingdom</option>
+        <option value="3">🇩🇪 Germany</option>
+        <option value="4">🇳🇱 Netherlands</option>
+        <option value="5">🇫🇷 France</option>
+        <option value="6">🇨🇭 Switzerland</option>
+        <option value="7">🇸🇪 Sweden</option>
+        <option value="8">🇳🇴 Norway</option>
+        <option value="9">🇯🇵 Japan</option>
+        <option value="10">🇨🇦 Canada</option>
+        <option value="11">🇦🇺 Australia</option>
+        <option value="12">🇧🇷 Brazil</option>
+        <option value="13">🇮🇳 India</option>
+        <option value="14">🇸🇬 Singapore</option>
+        <option value="15">🇿🇦 South Africa</option>
+      </select>
+      <button class="btn blue" onclick="changeLocation()" style="width:auto; margin:0; padding:8px 14px;">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- Layout restruct for Visual Hops Visualizer and Credentials -->
+<div class="grid2">
+  <div style="display:flex; flex-direction:column; gap:12px;">
+    <!-- IP Credentials -->
+    <div class="grid3" style="margin-bottom:0">
+      <div class="card">
+        <h3>🌐 Real IP</h3>
+        <div class="ip-val info" id="real-ip" style="font-size:0.9em;">Loading...</div>
+      </div>
+      <div class="card">
+        <h3>🕵️ Spoofed IP</h3>
+        <div class="ip-val" id="tor-ip" style="color:#555; font-size:0.9em;">Not active</div>
+      </div>
+      <div class="card">
+        <h3>📍 Location</h3>
+        <div class="ip-val ok" id="location" style="font-size:0.75em; word-break:break-all;">Loading...</div>
+      </div>
+    </div>
+    
+    <!-- Connection details -->
+    <div class="card" style="flex-grow:1">
+      <h3>📡 Connection Details</h3>
+      <div style="display:flex; flex-direction:column; gap:6px; font-size:0.85em; font-family:monospace; margin-top:2px;">
+        <div>Connection: <span id="conn-type" class="info">Wi-Fi</span></div>
+        <div>SSID Name: <span id="ssid-val" class="ok">Unknown</span></div>
+        <div>SSID Safety: <span id="ssid-safety" class="ok">SECURED</span></div>
+        <div>Wi-Fi Provider: <span id="dns-encryption" class="warn">Exposed</span></div>
+      </div>
+    </div>
+  </div>
+  
+  <div style="display:flex; flex-direction:column; gap:12px;">
+    <!-- Circuit Visualizer Map -->
+    <div class="card" style="flex-grow:1; display:flex; flex-direction:column;">
+      <h3>🌍 Connection Circuit Visualizer</h3>
+      <div class="circuit-map" id="circuit-map-container" style="flex-grow:1; display:flex; justify-content:center; flex-direction:column;">
+        <div class="log-line muted" style="text-align:center; padding:20px;">Fetching route topology...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Automation & Alert Setup with Sound effects -->
+<div class="card" style="margin-bottom:12px">
+  <h3>⚙️ Automation & Alert Profiles</h3>
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px; align-items:center;">
+    <div>
+      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">SECURITY SCAN</label>
+      <select id="scan-interval-select" onchange="updateSchedule()" style="width:100%;">
+        <option value="0">Manual Only</option>
+        <option value="120">Every 2 Min</option>
+        <option value="600">Every 10 Min</option>
+        <option value="1800">Every 30 Min</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">LOCATION SPOOF</label>
+      <select id="loc-interval-select" onchange="updateSchedule()" style="width:100%;">
+        <option value="0">Manual Only</option>
+        <option value="120">Every 2 Min</option>
+        <option value="1800">Every 30 Min</option>
+        <option value="3600">Every 1 Hr</option>
+        <option value="7200">Every 2 Hr</option>
+      </select>
+      <div style="font-size: 0.58em; color: #444; margin-top: 4px;">*Manual: auto-rotation off.</div>
+    </div>
+    <div>
+      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">NOTIFICATION PROFILE</label>
+      <select id="notif-select" onchange="updateSchedule()" style="width:100%; color:#00ff88;">
+        <option value="sound_vibrate">⚡ Sound & Haptics</option>
+        <option value="silent">🔇 Silent banner</option>
+        <option value="none">🛑 Disabled</option>
+      </select>
+    </div>
+  </div>
+  
+  <div style="display:grid; grid-template-columns:2fr 1fr; gap:12px; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid #141414;">
+    <div>
+      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">ALERT SOUND EFFECT</label>
+      <select id="sound-profile-select" onchange="changeSoundProfile()" style="width:100%; color:#00ff88;">
+        <option value="ghost_wail">👻 Ghost Wail (Spooky)</option>
+        <option value="digital_phantom">🕵️ Digital Phantom (Echo)</option>
+        <option value="eerie_sweep">⚡ Cyber Sweep (Original)</option>
+        <option value="specter_warning">🚨 Specter Warning (Sub Bass)</option>
+        <option value="poltergeist_glitch">👾 Poltergeist Glitch (Beeps)</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:0.7em; color:transparent; display:block; margin-bottom:4px;">TEST</label>
+      <button class="btn blue" onclick="previewSound()" style="margin:0; padding:8px 12px; font-size:0.85em; letter-spacing:1px;">🔊 Test Alarm</button>
+    </div>
+  </div>
+
+  <div style="margin-top:12px; padding-top:12px; border-top:1px solid #141414;">
+    <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">CUSTOM PHONE NOTIFICATION SOUND FILE</label>
+    <div style="display:flex; gap:8px;">
+      <input type="text" id="custom-sound-path-input" placeholder="e.g. /sdcard/Download/sound.mp3" style="flex-grow:1; background:#0f0f0f; color:#fff; border:1px solid #202020; padding:10px; border-radius:6px; font-family:monospace; font-size:0.85em; outline:none;">
+      <button class="btn blue" onclick="saveCustomSoundPath()" style="width:auto; margin:0; padding:8px 14px; font-size:0.85em; letter-spacing:1px;">Save Path</button>
+    </div>
+    <div style="font-size:0.58em; color:#444; margin-top:4px;">*Path to a local audio file on your phone. Will be triggered by background daemon.</div>
+  </div>
+
+  <div style="margin-top:12px; padding-top:12px; border-top:1px solid #141414;">
+    <button class="btn blue" id="gamemode-btn" onclick="toggleGameMode()" style="margin:0; font-size:0.85em; letter-spacing:1px;">🎮 Game Mode: OFF</button>
+  </div>
+</div>
+
+<!-- Speed Test and Scan badges -->
+<div class="grid2">
+  <div class="card">
+    <h3>🔍 Security Check Layers</h3>
+    <div class="badge-grid" id="checks">
+      <span class="badge pend" id="badge-network">⏳ Network Audit</span>
+      <span class="badge pend" id="badge-ports">⏳ Ports Scan</span>
+      <span class="badge pend" id="badge-miccam">⏳ Mic/Camera</span>
+      <span class="badge pend" id="badge-arp">⏳ ARP integrity</span>
+      <span class="badge pend" id="badge-dnsleak">⏳ DNS Leak check</span>
+      <span class="badge pend" id="badge-dnspoison">⏳ DNS Hijack Check</span>
+      <span class="badge pend" id="badge-ssid">⏳ SSID Safety</span>
+      <span class="badge pend" id="badge-process">⏳ Process Audits</span>
+      <span class="badge pend" id="badge-blocker">⏳ Blocker Status</span>
+      <span class="badge pend" id="badge-temp">⏳ CPU Thermal</span>
+      <span class="badge pend" id="badge-engine">⏳ Engine Anonymity</span>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h3>🚀 Network Speed Test</h3>
+    <div class="speed-meter">
+      <div>
+        <div class="speed-val" id="ping-val">-</div>
+        <div class="speed-label">Ping ms</div>
+      </div>
+      <div>
+        <div class="speed-val" id="down-val">-</div>
+        <div class="speed-label">Download Mbps</div>
+      </div>
+      <div>
+        <div class="speed-val" id="up-val">-</div>
+        <div class="speed-label">Upload Mbps</div>
+      </div>
+    </div>
+    <button class="btn blue" id="speed-btn" onclick="runSpeedTest()" style="padding:6px; font-size:0.75em; letter-spacing:1px;">🚀 Run speed test</button>
+  </div>
+</div>
+
+<!-- Logs -->
+<div class="card" style="margin-bottom:12px">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <h3 style="margin-bottom:0">📋 Live Security Log Console</h3>
+    <button class="btn blue" onclick="toggleLog(event)" style="width:auto; margin:0; padding:4px 10px; font-size:0.7em;">Hide</button>
+  </div>
+  <div class="log-box" id="log">
+    <div class="log-line info">[--:--:--] 💀 Aether Ghost OS Dashboard initialized. Ready.</div>
+    <div class="log-line">[--:--:--] Choose options and click RUN GHOST SCAN below.</div>
+  </div>
+</div>
+
+<!-- Main controls -->
+<button class="btn" onclick="runScan()">💀 RUN ACTIVE SHIELD SCAN 😈🤫</button>
+<div class="grid2">
+  <button class="btn blue" onclick="refreshNetworkData()">🌐 Refresh Credentials</button>
+  <button class="btn red" onclick="triggerPanic()">🚨 PANIC DE-AUTHENTICATE</button>
+</div>
+
+<script>
+function ts(){return new Date().toLocaleTimeString('en-GB')}
+const logBox=document.getElementById('log');
+
+function addLog(msg,cls=''){
+  const d=document.createElement('div');
+  d.className='log-line '+(cls||'');
+  d.textContent=`[${ts()}] ${msg}`;
+  logBox.appendChild(d);
+  logBox.scrollTop=logBox.scrollHeight;
+}
+
+function toggleLog(e) {
+  const logBox = document.getElementById('log');
+  const btn = e.target;
+  if (logBox.style.display === 'none') {
+    logBox.style.display = 'block';
+    btn.textContent = 'Hide';
+  } else {
+    logBox.style.display = 'none';
+    btn.textContent = 'Show';
+  }
+}
+
+function showToast(text, isAlert = false) {
+  const toast = document.getElementById('toast-notif');
+  toast.textContent = text;
+  toast.style.borderColor = isAlert ? '#ff3355' : '#00ff88';
+  toast.style.color = isAlert ? '#ff3355' : '#00ff88';
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 4000);
+}
+
+// 5 selectable spooky Audio Synthesizers
+function playGhostWail(ctx) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = 'sine';
+  const now = ctx.currentTime;
+  osc.frequency.setValueAtTime(300, now);
+  osc.frequency.exponentialRampToValueAtTime(800, now + 0.4);
+  osc.frequency.exponentialRampToValueAtTime(400, now + 0.8);
+  gain.gain.setValueAtTime(0.01, now);
+  gain.gain.linearRampToValueAtTime(0.12, now + 0.2);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+  osc.start(now);
+  osc.stop(now + 0.85);
+}
+
+function playDigitalPhantom(ctx) {
+  const now = ctx.currentTime;
+  const notes = [880, 1046.5, 1318.5, 1568];
+  notes.forEach((freq, idx) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+    gain.gain.setValueAtTime(0.08, now + idx * 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.12);
+    osc.start(now + idx * 0.08);
+    osc.stop(now + idx * 0.08 + 0.12);
+  });
+}
+
+function playEerieSweep(ctx) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = 'sawtooth';
+  const now = ctx.currentTime;
+  osc.frequency.setValueAtTime(400, now);
+  osc.frequency.exponentialRampToValueAtTime(1600, now + 0.4);
+  gain.gain.setValueAtTime(0.1, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+  osc.start(now);
+  osc.stop(now + 0.45);
+}
+
+function playSpecterWarning(ctx) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = 'square';
+  const now = ctx.currentTime;
+  osc.frequency.setValueAtTime(100, now);
+  osc.frequency.linearRampToValueAtTime(50, now + 0.3);
+  gain.gain.setValueAtTime(0.18, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+  osc.start(now);
+  osc.stop(now + 0.45);
+  
+  setTimeout(() => {
+    try {
+      const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
+      const osc2 = ctx2.createOscillator();
+      const gain2 = ctx2.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx2.destination);
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(1000, ctx2.currentTime);
+      gain2.gain.setValueAtTime(0.08, ctx2.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.01, ctx2.currentTime + 0.15);
+      osc2.start(ctx2.currentTime);
+      osc2.stop(ctx2.currentTime + 0.15);
+    } catch(e) {}
+  }, 220);
+}
+
+function playPoltergeistGlitch(ctx) {
+  const now = ctx.currentTime;
+  for(let i=0; i<8; i++) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = Math.random() > 0.5 ? 'sawtooth' : 'square';
+    osc.frequency.setValueAtTime(Math.random() * 2000 + 100, now + i * 0.04);
+    gain.gain.setValueAtTime(0.06, now + i * 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.04 + 0.03);
+    osc.start(now + i * 0.04);
+    osc.stop(now + i * 0.04 + 0.03);
+  }
+}
+
+function playCyberAlertSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const soundType = document.getElementById('sound-profile-select').value;
+    
+    if (soundType === 'ghost_wail') {
+      playGhostWail(ctx);
+    } else if (soundType === 'digital_phantom') {
+      playDigitalPhantom(ctx);
+    } else if (soundType === 'eerie_sweep') {
+      playEerieSweep(ctx);
+    } else if (soundType === 'specter_warning') {
+      playSpecterWarning(ctx);
+    } else if (soundType === 'poltergeist_glitch') {
+      playPoltergeistGlitch(ctx);
+    }
+  } catch (e) {}
+}
+
+function changeSoundProfile() {
+  const val = document.getElementById('sound-profile-select').value;
+  localStorage.setItem('ghost_alert_sound', val);
+  playCyberAlertSound();
+}
+
+function previewSound() {
+  playCyberAlertSound();
+}
+
+function triggerHaptics() {
+  if (navigator.vibrate) {
+    navigator.vibrate([120, 60, 120]);
+  }
+}
+
+// Request desktop notification permission on startup
+if (window.Notification && Notification.permission === "default") {
+  Notification.requestPermission();
+}
+
+function pushSystemNotification(title, body) {
+  const mode = document.getElementById('notif-select').value;
+  if (mode === "none") return;
+  
+  if (mode === "sound_vibrate") {
+    playCyberAlertSound();
+    triggerHaptics();
+  }
+  
+  if (window.Notification && Notification.permission === "granted") {
+    new Notification(title, {
+      body: body,
+      icon: "logo.png"
+    });
+  } else {
+    showToast(title + ": " + body);
+  }
+}
+
+async function checkIP(){
+  // Real IP is now retrieved directly from local server daemon response
+}
+
+// Dynamic circular progress gauge update
+function updateGauge(score) {
+  const fill = document.getElementById('gauge-fill');
+  const text = document.getElementById('gauge-score');
+  
+  // Circumference = 2 * pi * r = 2 * 3.14159 * 35 = 219.9
+  const circumference = 219.9;
+  const offset = circumference - (score / 100) * circumference;
+  
+  fill.style.strokeDashoffset = offset;
+  text.textContent = score + '%';
+  
+  // Color shifting based on score
+  if (score >= 80) {
+    fill.style.stroke = '#00ff88';
+  } else if (score >= 50) {
+    fill.style.stroke = '#ffaa00';
+  } else {
+    fill.style.stroke = '#ff3355';
+  }
+}
+
+async function checkLocation(){
+  try {
+    const res = await fetch('/api/engine-status?t=' + Date.now());
+    if (res.ok) {
+      const status = await res.json();
+      document.getElementById('real-ip').textContent = status.real_ip || 'Unavailable';
+      const torIpEl = document.getElementById('tor-ip');
+      const locEl = document.getElementById('location');
+      const selectEl = document.getElementById('engine-select');
+      const spoofer = document.getElementById('spoofer-card');
+      const dnsEl = document.getElementById('dns-encryption');
+      const warningBanner = document.getElementById('unprotected-banner');
+      
+      selectEl.value = status.engine;
+      document.getElementById('notif-select').value = status.notification_profile;
+      
+      // Calculate Privacy Index Score
+      let score = 15; // base score for audit components
+      if (status.engine !== "none") score += 15; // engine active
+      if (status.active) score += 25; // connection active
+      if (status.dns_encrypted) score += 25; // encrypted path
+      
+      // Honeypot active
+      score += 20; 
+      updateGauge(score);
+      
+      // Warning banner toggler for No Anonymity choice
+      if (status.engine === "none") {
+        warningBanner.style.display = 'flex';
+        spoofer.style.display = 'none';
+        torIpEl.textContent = 'Exposed';
+        torIpEl.style.color = '#ff3355';
+        locEl.textContent = 'None (Connection Leak)';
+        locEl.style.color = '#ff3355';
+      } else {
+        warningBanner.style.display = 'none';
+        if (status.engine === "tor") {
+          spoofer.style.display = 'block';
+        } else {
+          spoofer.style.display = 'none';
+        }
+        
+        if (status.active) {
+          torIpEl.textContent = status.ip;
+          torIpEl.style.color = '#00ff88';
+          locEl.textContent = status.location;
+          locEl.style.color = '#00ff88';
+        } else {
+          torIpEl.textContent = 'Disconnected';
+          torIpEl.style.color = '#555';
+          locEl.textContent = 'Unknown (Shield off)';
+          locEl.style.color = '#555';
+        }
+      }
+      
+      if (status.dns_encrypted) {
+        dnsEl.textContent = 'Encrypted (Provider Blocked)';
+        dnsEl.className = 'ok';
+      } else {
+        dnsEl.textContent = 'Exposed (Provider spying)';
+        dnsEl.className = 'warn';
+      }
+    }
+  } catch(e) {
+    document.getElementById('tor-ip').textContent = 'API Offline';
+    document.getElementById('tor-ip').style.color = '#ff3355';
+  }
+  await updateCircuitVisualizer();
+}
+
+async function updateCircuitVisualizer() {
+  const container = document.getElementById('circuit-map-container');
+  try {
+    const res = await fetch('/api/circuit?t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      if (data.hops && data.hops.length > 0) {
+        container.innerHTML = '';
+        data.hops.forEach((hop, idx) => {
+          const node = document.createElement('div');
+          node.className = 'circuit-node';
+          
+          let dotClass = 'active';
+          if (hop.ip === "UNPROTECTED" || hop.ip === "Exposed") {
+            dotClass = 'alert';
+          }
+          
+          node.innerHTML = `
+            <div class="node-dot ${dotClass}">${idx + 1}</div>
+            <div class="node-info">
+              <div class="node-title">${hop.type}</div>
+              <div class="node-desc">${hop.ip} (${hop.loc})</div>
+            </div>
+          `;
+          container.appendChild(node);
+        });
+        return;
+      }
+    }
+  } catch(e) {}
+  container.innerHTML = '<div class="log-line muted" style="text-align:center; padding:20px;">Circuit mapping offline.</div>';
+}
+
+async function changeEngine() {
+  const engine = document.getElementById('engine-select').value;
+  addLog(`🔄 Requests engine switch to: ${engine.toUpperCase()}...`, 'info');
+  
+  if (engine === "none") {
+    playCyberAlertSound();
+    showToast("⚠️ Warning: Anonymity layers disabled!", true);
+  }
+  
+  try {
+    const res = await fetch('/api/engine', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ engine: engine })
+    });
+    if (res.ok) {
+      addLog(`✅ Anonymity engine set to ${engine.toUpperCase()}. Tunnel configuration synchronizing...`, 'ok');
+      await checkLocation();
+      await checkIP();
+    } else {
+      addLog('❌ Failed to update anonymity engine.', 'alert');
+    }
+  } catch(e) {
+    addLog('❌ Local API Server is offline.', 'alert');
+  }
+}
+
+async function changeLocation(){
+  const val = document.getElementById('country-select').value;
+  addLog('🌍 Requesting Tor country route rotation...','info');
+  try {
+    const res = await fetch('/api/location', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ codes: val })
+    });
+    if (res.ok) {
+      addLog('🌍 Tor exit nodes configured. Restarting proxy circuits...','ok');
+      showToast('🔄 Tor restarting country nodes...');
+      setTimeout(async () => {
+        await checkLocation();
+        addLog('🌐 New anonymous credentials synchronized.','ok');
+      }, 10000);
+    } else {
+      addLog('❌ Tor location spoofer failed. Check config.','alert');
+    }
+  } catch(e) {
+    addLog('❌ Spoofer API offline.','alert');
+  }
+}
+
+async function runScan(){
+  timeToNextScan = scanInterval; // Reset countdown timer
+  addLog('💀 Triggering active security shield audit in Termux...','ok');
+  setShieldStatus('SCANNING...','warn');
+
+  try {
+    await fetch('/api/scan', { method: 'POST' });
+    addLog('✅ Active scan complete. Fetching updated status metrics...','ok');
+  } catch(e) {
+    addLog('⚠️ Scan server disconnected. Check local terminal.','warn');
+  }
+
+  setTimeout(async () => {
+    try {
+      const res = await fetch('report.json?t=' + Date.now());
+      if (res.ok) {
+        const r = await res.json();
+        
+        document.getElementById('conn-type').textContent = r.connection_type || "Unknown";
+        document.getElementById('ssid-val').textContent = r.ssid || "N/A";
+        document.getElementById('badge-temp').textContent = `🌡️ ${r.battery_temp}°C`;
+        
+        if (r.connection_type.includes("Wi-Fi") && (r.ssid.toLowerCase().includes("free") || r.ssid.toLowerCase().includes("public"))) {
+          document.getElementById('ssid-safety').textContent = "⚠️ UNSECURED PUBLIC";
+          document.getElementById('ssid-safety').className = "alert";
+          document.getElementById('badge-ssid').className = "badge alert";
+          document.getElementById('badge-ssid').textContent = "⚠️ Insecure SSID";
+        } else {
+          document.getElementById('ssid-safety').textContent = "SECURED / PRIVATE";
+          document.getElementById('ssid-safety').className = "ok";
+          document.getElementById('badge-ssid').className = "badge ok";
+          document.getElementById('badge-ssid').textContent = "✅ SSID Verified";
+        }
+        
+        const threats = r.threats_today || 0;
+        document.getElementById('threat-count').textContent = threats;
+        document.getElementById('threat-count').className = 'big-num ' + (threats ? 'alert' : 'ok');
+        
+        const badgeClasses = threats ? 'alert' : 'ok';
+        const prefix = threats ? '⚠️' : '✅';
+        document.getElementById('badge-network').className = `badge ${badgeClasses}`;
+        document.getElementById('badge-network').textContent = `${prefix} Network Active`;
+        document.getElementById('badge-ports').className = `badge ${badgeClasses}`;
+        document.getElementById('badge-ports').textContent = `${prefix} Ports Clean`;
+        document.getElementById('badge-miccam').className = `badge ${badgeClasses}`;
+        document.getElementById('badge-miccam').textContent = `${prefix} Cam/Mic Sealed`;
+        document.getElementById('badge-arp').className = `badge ${badgeClasses}`;
+        document.getElementById('badge-arp').textContent = `${prefix} ARP Integrity`;
+        document.getElementById('badge-dnsleak').className = `badge ${badgeClasses}`;
+        document.getElementById('badge-dnsleak').textContent = `${prefix} No DNS Leaks`;
+        document.getElementById('badge-dnspoison').className = `badge ${badgeClasses}`;
+        document.getElementById('badge-dnspoison').textContent = `${prefix} Route Verified`;
+        document.getElementById('badge-process').className = `badge ${badgeClasses}`;
+        document.getElementById('badge-process').textContent = `${prefix} Process Clean`;
+        document.getElementById('badge-blocker').className = "badge ok";
+        document.getElementById('badge-blocker').textContent = "✅ Tracker Blocked";
+        
+        if (r.battery_temp >= 42.0) {
+          document.getElementById('badge-temp').className = "badge alert";
+        } else {
+          document.getElementById('badge-temp').className = "badge ok";
+        }
+        
+        if (r.status === "CLEAN") {
+          setShieldStatus('ALL CLEAR 👻', 'ok');
+          pushSystemNotification("Shield Scan Completed 👻", "All systems clean. You are invisible.");
+        } else {
+          setShieldStatus('⚠️ THREATS DETECTED', 'alert');
+          pushSystemNotification("SECURITY ALERT", "Threats found! Open your console terminal.");
+        }
+      }
+    } catch(e) {
+      addLog('❌ Simulated check fallback. Started offline.','warn');
+    }
+    await loadSystemLogs();
+    await checkLocation();
+  }, 1000);
+}
+
+function setShieldStatus(text, cls) {
+  const el = document.getElementById('shield');
+  const dot = document.getElementById('pdot');
+  el.className = 'status-text ' + cls;
+  dot.className = 'pulse ' + (cls === 'alert' ? 'dead' : '');
+  el.innerHTML = `<span class="pulse ${cls==='alert'?'dead':''}" id="pdot"></span>${text}`;
+  document.getElementById('last-scan').textContent = `Last scan: ${ts()}`;
+}
+
+async function triggerPanic() {
+  if (confirm("🚨 WARNING: This will instantly wipe all security configurations, shield logs, threats database, and shell bash history. Are you sure?")) {
+    try {
+      await fetch('/api/scan', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ panic: true })
+      });
+      window.location.reload();
+    } catch(e) {
+      addLog("🚨 Panic wipe failed. Manual deletion recommended.","alert");
+    }
+  }
+}
+
+async function loadSystemLogs() {
+  try {
+    const res = await fetch('/api/logs?t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      if (data.logs && data.logs.length > 0) {
+        const lastLogLines = logBox.innerHTML;
+        logBox.innerHTML = '';
+        data.logs.forEach(line => {
+          const d = document.createElement('div');
+          d.className = 'log-line';
+          if (line.includes('💀') || line.includes('⚠️') || line.includes('ALERT') || line.includes('POISONING') || line.includes('🚨')) {
+            d.className += ' alert';
+          } else if (line.includes('🤫') || line.includes('✅') || line.includes('ACTIVE') || line.includes('cool') || line.includes('Active') || line.includes('Spoof')) {
+            d.className += ' ok';
+          } else if (line.includes('Checking') || line.includes('Auditing') || line.includes('Switching') || line.includes('Applying') || line.includes('Rotating')) {
+            d.className += ' info';
+          }
+          d.textContent = line;
+          logBox.appendChild(d);
+        });
+        logBox.scrollTop = logBox.scrollHeight;
+        
+        if (lastLogLines !== logBox.innerHTML && lastLogLines.includes('[') && !logBox.innerHTML.includes('Triggering active security')) {
+          const lastLine = data.logs[data.logs.length - 1];
+          if (lastLine.includes("Background scheduled scan complete")) {
+            pushSystemNotification("Aether Background Scan", "Automatic periodic scan completed successfully.");
+          }
+        }
+      }
+    }
+  } catch(e) {}
+}
+
+async function runSpeedTest() {
+  const btn = document.getElementById('speed-btn');
+  btn.disabled = true;
+  btn.innerHTML = `Running download test <span class="spinner"></span>`;
+  
+  document.getElementById('ping-val').textContent = "...";
+  document.getElementById('down-val').textContent = "...";
+  document.getElementById('up-val').textContent = "...";
+  
+  try {
+    const res = await fetch('/api/speedtest?t=' + Date.now());
+    if (!res.ok) throw new Error("Speedtest API failed");
+    const data = await res.json();
+    
+    document.getElementById('ping-val').textContent = data.ping;
+    document.getElementById('down-val').textContent = data.download;
+    document.getElementById('up-val').textContent = data.upload;
+    
+    addLog(`🚀 Speed Test results: Ping: ${data.ping}ms | Down: ${data.download}Mbps | Up: ${data.upload}Mbps`, 'info');
+  } catch(e) {
+    addLog("❌ Network speed test query failed. Check connection.", "warn");
+    document.getElementById('ping-val').textContent = "ERR";
+    document.getElementById('down-val').textContent = "ERR";
+    document.getElementById('up-val').textContent = "ERR";
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "🚀 Run speed test";
+  }
+}
+
+let pollIntervalId = null;
+let isGameMode = false;
+let timeToNextScan = 120;
+let scanInterval = 120;
+
+function formatCountdown(sec) {
+  if (sec <= 0) return "Scanning...";
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}m ${s}s`;
+}
+
+// Live background scan countdown timer tick
+setInterval(() => {
+  if (isGameMode) {
+    document.getElementById('timer-countdown').textContent = "Paused (Game Mode)";
+    return;
+  }
+  if (scanInterval <= 0) {
+    document.getElementById('timer-countdown').textContent = "Manual Only";
+    return;
+  }
+  timeToNextScan--;
+  if (timeToNextScan < 0) {
+    // Background scan has run and resets countdown
+    timeToNextScan = scanInterval;
+  }
+  document.getElementById('timer-countdown').textContent = formatCountdown(timeToNextScan);
+}, 1000);
+
+function startPolling(seconds) {
+  if (pollIntervalId) {
+    clearInterval(pollIntervalId);
+  }
+  pollIntervalId = setInterval(async () => {
+    await loadSystemLogs();
+    await checkLocation();
+  }, seconds * 1000);
+}
+
+async function getSchedule() {
+  try {
+    const res = await fetch('/api/schedule?t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('scan-interval-select').value = data.scan_interval;
+      document.getElementById('loc-interval-select').value = data.location_interval;
+      document.getElementById('notif-select').value = data.notification_profile;
+      if (data.custom_sound_path) {
+        document.getElementById('custom-sound-path-input').value = data.custom_sound_path;
+      }
+      
+      scanInterval = data.scan_interval;
+      timeToNextScan = scanInterval;
+      
+      isGameMode = !!data.game_mode;
+      const btn = document.getElementById('gamemode-btn');
+      if (isGameMode) {
+        btn.textContent = '🎮 Game Mode: ACTIVE (CPU Saver)';
+        btn.className = 'btn red';
+        startPolling(30);
+      } else {
+        btn.textContent = '🎮 Game Mode: OFF';
+        btn.className = 'btn blue';
+        startPolling(6);
+      }
+    }
+  } catch(e) {
+    startPolling(6);
+  }
+}
+
+async function toggleGameMode() {
+  isGameMode = !isGameMode;
+  const btn = document.getElementById('gamemode-btn');
+  if (isGameMode) {
+    btn.textContent = '🎮 Game Mode: ACTIVE (CPU Saver)';
+    btn.className = 'btn red';
+    addLog('🎮 Game Mode activated. Dashboard polling set to 30s. Background scans throttled.', 'warn');
+    startPolling(30);
+  } else {
+    btn.textContent = '🎮 Game Mode: OFF';
+    btn.className = 'btn blue';
+    addLog('🎮 Game Mode deactivated. Standard 6s polling restored.', 'ok');
+    startPolling(6);
+  }
+  
+  try {
+    await fetch('/api/schedule', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ game_mode: isGameMode })
+    });
+  } catch(e) {}
+}
+
+async function saveCustomSoundPath() {
+  const path = document.getElementById('custom-sound-path-input').value.trim();
+  addLog('⚙️ Saving custom sound path: ' + path, 'info');
+  try {
+    const res = await fetch('/api/schedule', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ custom_sound_path: path })
+    });
+    if (res.ok) {
+      addLog('✅ Custom notification sound path saved.', 'ok');
+      showToast('⚙️ Sound path saved');
+    }
+  } catch(e) {
+    addLog('❌ Server is offline.', 'alert');
+  }
+}
+
+async function refreshNetworkData() {
+  addLog('🔄 Synchronizing credentials...','info');
+  await checkIP();
+  await checkLocation();
+  addLog('✅ Network details updated.','ok');
+}
+
+// Dom Boot Splash Screen Controller
+window.addEventListener('DOMContentLoaded', () => {
+  const bar = document.getElementById('splash-bar');
+  const status = document.getElementById('splash-status');
+  const overlay = document.getElementById('splash-overlay');
+  
+  const steps = [
+    { p: 15, t: "INITIALIZING TUNNEL SOCKETS..." },
+    { p: 35, t: "AUDITING NETWORK INTERFACES..." },
+    { p: 55, t: "SECURING DNS RESOLVERS..." },
+    { p: 80, t: "STARTING DECOY HONEYPOT DAEMON..." },
+    { p: 100, t: "SHIELD PROTECTION ENGAGED." }
+  ];
+  
+  let currentStep = 0;
+  const interval = setInterval(() => {
+    if (currentStep < steps.length) {
+      bar.style.width = steps[currentStep].p + '%';
+      status.textContent = steps[currentStep].t;
+      currentStep++;
+    } else {
+      clearInterval(interval);
+      overlay.classList.add('fade-out');
+      setTimeout(runScan, 600);
+    }
+  }, 400);
+});
+
+// Restore saved sound profile on load
+const savedSound = localStorage.getItem('ghost_alert_sound');
+if (savedSound) {
+  document.getElementById('sound-profile-select').value = savedSound;
+}
+
+window.onload=async()=>{
+  await checkIP();
+  await checkLocation();
+  await getSchedule();
+  await loadSystemLogs();
+};
+</script>
+</body>
+</html>
