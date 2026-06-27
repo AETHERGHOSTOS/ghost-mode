@@ -207,63 +207,78 @@ This starts the real-time background monitor, checks active webcam/microphone st
 
 ---
 
-## 🧹 Cleanup, Updating & Reinstallation
+## 🧹 Step-by-Step Clean Reset & Reinstallation Guide
 
-If you already have a version of Ghost Mode running and want to perform a clean update, stop background processes, or completely remove the project, run the following commands in your Termux or Linux terminal:
+If your installation is frozen, buggy, has permission errors, or you simply want to wipe everything clean and start completely fresh, follow these step-by-step instructions.
 
-### ⏹️ Step 1: Kill All Active Background Services
-Running background components (like the web dashboard daemon or Tor circuits) can lock files and block package updates. Terminate them safely:
-```bash
-# Terminate the background web server daemon
-pkill -f server_daemon.py
+### 🛑 Phase 1: Wiping Everything Clean (The Kill & Delete Steps)
+We must ensure no hidden background scripts are running or locking directories before we delete them.
 
-# Terminate active security scanner processes
-pkill -f ghost_mode.py
+1. **Kill all active background services:**
+   Open Termux and force-terminate the active server, scanner daemon, Tor, and cron processes:
+   ```bash
+   pkill -f server_daemon.py
+   pkill -f ghost_mode.py
+   pkill tor
+   pkill cron
+   ```
+2. **Wipe all files, configurations, and logs:**
+   Delete all project folders, scripts, HTML dashboard caches, and log files:
+   ```bash
+   rm -rf ~/ghost-mode
+   rm -rf ~/aether-ghost-os
+   rm -rf ~/ghost_tools
+   rm -f ~/ghost.sh ~/ghost_mode.py ~/setup.sh
+   ```
+3. **Reset Termux configuration (Optional but Recommended):**
+   If you want to clear Termux styling or reload basic configuration files:
+   ```bash
+   rm -f ~/.termux/font.ttf
+   termux-reload-settings 2>/dev/null
+   ```
+4. **Clear App Storage (Optional - Hard Reset):**
+   If packages are totally broken, go to your phone's Android settings ➔ Apps ➔ Termux ➔ Storage ➔ **Clear Storage / Clear Data**. This resets Termux back to factory defaults.
 
-# Stop background Tor proxy routing
-pkill tor
+---
 
-# Stop background cron schedulers
-pkill cron
-```
+### 📥 Phase 2: Installing Fresh from Scratch (The Build Steps)
 
-### 🗑️ Step 2: Remove Old Project Files & Folders
-Delete the old source folders, dashboard configs, and logs:
-```bash
-# Delete main project source folder (if installed via git clone)
-rm -rf ~/ghost-mode
-
-# Delete dashboard web files and log registries
-rm -rf ~/ghost_tools
-
-# Delete executable scripts in your home directory
-rm -f ~/ghost.sh ~/ghost_mode.py ~/setup.sh
-```
-
-### 🔄 Step 3: Run a Fresh Installation
-After stopping old daemons and clearing directories, boot up the new version using the setup script:
-```bash
-curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
-```
-*(Replace `YOURUSERNAME` with your real GitHub username).*
-
-### 🔑 Step 4: Re-grant Camera & Mic Scan Permissions
-If you cleared Termux app data or did a clean reinstall, you must re-grant the log-reading permission so that the scanner can audit camera and microphone usage without root:
-1. Enable **USB Debugging** in your phone's Developer Settings.
-2. Connect your phone to your PC.
-3. Open a Command Prompt/Terminal on your PC and run:
+1. **Get Termux from F-Droid:**
+   If you had to clear data, ensure you are using F-Droid's Termux app, NOT the Google Play Store version (which fails package installation).
+2. **Grant Storage Access:**
+   Open Termux and run:
+   ```bash
+   termux-setup-storage
+   ```
+   Accept the storage permissions popup.
+3. **Execute the Setup Installer Script:**
+   Download and execute your setup script (replace `YOURUSERNAME` with your real GitHub handle):
+   ```bash
+   curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
+   ```
+4. **Grant Android Log-Reading Permission:**
+   To scan microphone and camera usage without root, connect your phone to a PC with USB debugging enabled, and run this command inside the PC terminal:
    ```bash
    adb shell pm grant com.termux android.permission.READ_LOGS
    ```
-4. Restart Termux.
+   *Note: If the Termux API addon app is not installed or has a signature mismatch, see the warning checklist in the installer output.*
 
-### 💀 Step 5: Launch & Verify
-Open Termux on your phone and start the control menu:
-```bash
-bash ~/ghost.sh
-```
-Select option `[5] 🖥️ Open Dashboard` to boot the daemon, then open your mobile web browser and go to `http://localhost:8080/ghost_dashboard.html` to confirm that the security suite is active and running!
+---
 
+### 🚀 Phase 3: Launching & Configuring Sentry Alerts (The Launch & Optional Steps)
+
+1. **Launch the Control Panel:**
+   Type the launch command in Termux:
+   ```bash
+   bash ~/ghost.sh
+   ```
+2. **Start the background consoles:**
+   Select option `[5] 🖥️ Open Dashboard` to start the daemon, then visit `http://localhost:8080/ghost_dashboard.html` in your phone browser.
+3. **Set up optional Telegram alerts (Highly Recommended):**
+   * Open the dashboard in your mobile browser.
+   * Scroll down to the **🤖 Telegram Threat Alerts** card.
+   * Enable the alerts checkmark, paste your **Bot API Token** (from `@BotFather`) and your **Chat ID** (from `@userinfobot`).
+   * Click **Save Settings** and tap **⚡ Test Sentry** to test your connection!
 
 ---
 
