@@ -485,6 +485,51 @@ If you lose your Bot API Token, Chat ID, or want to secure your connection, foll
     *   *Via Dashboard:* Uncheck "Enable Telegram Alerts", delete the Token and Chat ID values, and click **Save Settings**.
     *   *Via Termux CLI:* Open Termux and run: `rm ~/ghost_tools/telegram_config.json` to delete the settings file directly.
 
+#### 🛠️ Sentry Bot Troubleshooting & Connection Diagnostics
+
+If your Telegram Sentry Bot is completely silent and does not respond to `/status` or `/scan` commands, follow this diagnostic guide based on your operating system:
+
+##### 1. Understanding the Telegram Chat ID
+*   **⚠️ Crucial Concept:** Your **Chat ID is your personal Telegram User ID**. It is **not** unique to a specific bot.
+*   Your personal Chat ID is a single, unique numerical string that represents **your Telegram account**. It is the **exact same number** for Sentry Bot, Support Bot, or any utility bot.
+*   If you enter the wrong Chat ID or use letters (like your `@username`) in the configuration, the bot will **silently ignore all commands** for safety to prevent unauthorized users from hijacking your device console!
+*   **How to get it:** Open Telegram, search for **`@GetIDBot`** or **`@userinfobot`**, tap **Start**, and copy the numerical User ID (e.g. `7636054971`).
+
+##### 2. Diagnostic Steps by Operating System
+
+*   **📱 On Mobile (Android / Termux):**
+    1.  **Check if Sentry Settings saved correctly:**
+        Run `cat ~/ghost_tools/telegram_config.json` in Termux. It should display your token, chat ID, and `"enabled": true`. If the file is missing or disabled, run this command to create it manually:
+        ```bash
+        cat > ~/ghost_tools/telegram_config.json << 'EOF'
+        {
+          "enabled": true,
+          "token": "YOUR_BOT_TOKEN",
+          "chat_id": "YOUR_CHAT_ID"
+        }
+        EOF
+        ```
+    2.  **Inspect connection error logs:**
+        Run `cat ~/ghost_tools/ghost.log` or choose Option `[6] 📋 View Logs` in the launcher menu. Check for lines stating `⚠️ Telegram alert failed: <reason>`. A timeout indicates Tor routing blocks or no internet connection.
+    3.  **Ensure the daemon server is running:**
+        The bot poller only works if Option `[5] 🖥️ Open Dashboard` is actively running. Restart the server daemon:
+        ```bash
+        pkill -f server_daemon.py
+        bash ~/ghost.sh   # select option 5
+        ```
+
+*   **🖥️ On Desktop PC (Windows):**
+    1.  **Locate your local settings file:**
+        Open File Explorer and navigate to `C:\Users\YOUR_USER\.ghost_tools\telegram_config.json` (or look in your project directory). Verify the token and chat ID.
+    2.  **Verify background python processes:**
+        Open PowerShell and check if the PC engine is active: `Get-Process | Where-Object { $_.Name -eq "python" }`.
+    3.  **Check logs:** Open `ghost_tools\ghost.log` inside your project directory to inspect socket timeout errors.
+
+*   **🖥️ On Desktop PC (Linux / macOS):**
+    1.  **Locate settings:** Check `~/.ghost_tools/telegram_config.json` (or your project directory).
+    2.  **Restart the daemon:** Run `pkill -f ghost_mode_pc.py && python3 ghost_mode_pc.py` in your terminal.
+    3.  **Check logs:** Review `~/ghost_tools/ghost.log` or `ghost_tools/ghost.log`.
+
 ---
 
 ## ☕ Support & Donate
