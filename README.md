@@ -10,7 +10,21 @@ Ghost Mode is a unified, sovereign privacy ecosystem designed to secure all your
 
 ## 🤔 Why Ghost Mode?
 
-Most security tools are built for experts on laptops. Ghost Mode is different — it's built for **anyone** who wants to protect themselves on their phone. One command installs everything. One menu controls everything.
+Most security suites are either too complex (built only for enterprise networks or expert laptops) or too restricted (like basic mobile VPNs). Ghost Mode is different — it is a cross-platform, user-space defensive shield that secures both your mobile devices (via Termux on Android) and your computer workstations (via native Python engines on Windows, Linux, and macOS). It is built for anyone who wants sovereign protection across all their hardware, without needing complex setups or administrative root access.
+
+---
+
+## 📊 Global OS Compatibility Matrix
+
+| Feature / Module | Android (Termux) | Windows PC | Linux (Ubuntu/Debian) | macOS |
+| :--- | :---: | :---: | :---: | :---: |
+| **🎙️ Privacy Sentry (Mic/Cam Monitor)** | ✅ Yes (Logcat Audit) | ✅ Yes (Win32 API) | ✅ Yes (lsof/procfs) | ✅ Yes (AVFoundation) |
+| **🛡️ Deception Sentry (SSH Honeypot)** | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) |
+| **🌐 Sovereign Tor Routing** | ✅ Yes (Tor daemon) | ✅ Yes (Tor service) | ✅ Yes (Tor daemon) | ✅ Yes (Tor daemon) |
+| **💬 Scam Sentry (SMS/Clipboard)** | ✅ Yes (SMS / Copy) | ✅ Yes (Clipboard scan) | ✅ Yes (Clipboard scan) | ✅ Yes (Clipboard scan) |
+| **🔄 Failover Daemon** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| **🖥️ Web Dashboard Console** | ✅ Yes (Port 8080) | ✅ Yes (Port 8080) | ✅ Yes (Port 8080) | ✅ Yes (Port 8080) |
+| **⏰ Automated Sentry Alerts** | ✅ Yes (Telegram Sentry) | ✅ Yes (Telegram Sentry) | ✅ Yes (Telegram Sentry) | ✅ Yes (Telegram Sentry) |
 
 ---
 
@@ -209,76 +223,109 @@ This starts the real-time background monitor, checks active webcam/microphone st
 
 ## 🧹 Step-by-Step Clean Reset & Reinstallation Guide
 
-If your installation is frozen, buggy, has permission errors, or you simply want to wipe everything clean and start completely fresh, follow these step-by-step instructions.
+If your installation is frozen, buggy, has permission errors, or you simply want to wipe everything clean and start completely fresh, follow these step-by-step instructions for your specific platform.
 
-### 🛑 Phase 1: Wiping Everything Clean (The Kill & Delete Steps)
-We must ensure no hidden background scripts are running or locking directories before we delete them.
+### 📱 Path A: For Mobile Devices (Android / Termux)
 
-1. **Kill all active background services:**
-   Open Termux and force-terminate the active server, scanner daemon, Tor, and cron processes:
+#### 🛑 Phase 1: Wiping & Deleting Clean
+1. **Kill background processes:**
+   Open Termux and terminate the active server, scanner daemon, Tor, and cron schedulers:
    ```bash
    pkill -f server_daemon.py
    pkill -f ghost_mode.py
    pkill tor
    pkill cron
    ```
-2. **Wipe all files, configurations, and logs:**
-   Delete all project folders, scripts, HTML dashboard caches, and log files:
+2. **Wipe project directories:**
+   Delete all configurations, executable scripts, dashboard templates, and logs:
    ```bash
-   rm -rf ~/ghost-mode
-   rm -rf ~/aether-ghost-os
-   rm -rf ~/ghost_tools
+   rm -rf ~/ghost-mode ~/aether-ghost-os ~/ghost_tools
    rm -f ~/ghost.sh ~/ghost_mode.py ~/setup.sh
    ```
-3. **Reset Termux configuration (Optional but Recommended):**
-   If you want to clear Termux styling or reload basic configuration files:
-   ```bash
-   rm -f ~/.termux/font.ttf
-   termux-reload-settings 2>/dev/null
-   ```
-4. **Clear App Storage (Optional - Hard Reset):**
-   If packages are totally broken, go to your phone's Android settings ➔ Apps ➔ Termux ➔ Storage ➔ **Clear Storage / Clear Data**. This resets Termux back to factory defaults.
+3. **Hard Reset (Optional):**
+   If packages are totally broken, go to Android Settings ➔ Apps ➔ Termux ➔ Storage ➔ **Clear Storage / Data** to factory reset Termux.
 
----
-
-### 📥 Phase 2: Installing Fresh from Scratch (The Build Steps)
-
-1. **Get Termux from F-Droid:**
-   If you had to clear data, ensure you are using F-Droid's Termux app, NOT the Google Play Store version (which fails package installation).
-2. **Grant Storage Access:**
-   Open Termux and run:
-   ```bash
-   termux-setup-storage
-   ```
-   Accept the storage permissions popup.
-3. **Execute the Setup Installer Script:**
-   Download and execute your setup script (replace `YOURUSERNAME` with your real GitHub handle):
+#### 📥 Phase 2: Fresh Installation & Launch
+1. Ensure Termux is installed from F-Droid (not Google Play).
+2. Set up storage access: `termux-setup-storage` and accept the popup.
+3. Download and run the installer (replace `YOURUSERNAME` with your real GitHub handle):
    ```bash
    curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
    ```
-4. **Grant Android Log-Reading Permission:**
-   To scan microphone and camera usage without root, connect your phone to a PC with USB debugging enabled, and run this command inside the PC terminal:
+4. Grant Mic/Cam auditing permission: Connect to a PC with USB debugging on, and run:
    ```bash
    adb shell pm grant com.termux android.permission.READ_LOGS
    ```
-   *Note: If the Termux API addon app is not installed or has a signature mismatch, see the warning checklist in the installer output.*
 
 ---
 
-### 🚀 Phase 3: Launching & Configuring Sentry Alerts (The Launch & Optional Steps)
+### 🖥️ Path B: For PC & Desktop Systems (Windows, Linux, macOS)
 
-1. **Launch the Control Panel:**
-   Type the launch command in Termux:
+#### 🛑 Phase 1: Wiping & Deleting Clean
+*   **On Windows:**
+    1. Close any running command windows showing `ghost_mode_pc.py` or the Python daemon.
+    2. Open PowerShell and force-close any locking processes: `Stop-Process -Name "python" -Force`
+    3. Delete the repository folders and local tool config:
+       ```powershell
+       Remove-Item -Path "$HOME\ghost-mode", "$HOME\aether-ghost-os", "$HOME\.ghost_tools" -Recurse -Force -ErrorAction SilentlyContinue
+       ```
+*   **On Linux / macOS:**
+    1. Open your terminal and kill running daemons: `pkill -f ghost_mode_pc.py`
+    2. Wipe the folders: `rm -rf ~/ghost-mode ~/aether-ghost-os ~/.ghost_tools`
+
+#### 📥 Phase 2: Fresh Installation & Launch
+1. Make sure Python 3 is installed on your computer.
+2. Clone or download your repository from GitHub.
+3. Open a Command Prompt or Terminal inside the repository folder and install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Run the security engine:
+   ```bash
+   python ghost_mode_pc.py
+   ```
+
+---
+
+## 🔄 Reboot & Power-Off Recovery Guide
+
+If your device or machine loses power, shuts down, or restarts, follow these quick steps to get Aether Ghost OS back up and running.
+
+### 📱 On Android (Termux)
+1. Reopen the **Termux** app on your phone.
+2. Launch the launcher menu:
    ```bash
    bash ~/ghost.sh
    ```
-2. **Start the background consoles:**
-   Select option `[5] 🖥️ Open Dashboard` to start the daemon, then visit `http://localhost:8080/ghost_dashboard.html` in your phone browser.
-3. **Set up optional Telegram alerts (Highly Recommended):**
-   * Open the dashboard in your mobile browser.
-   * Scroll down to the **🤖 Telegram Threat Alerts** card.
-   * Enable the alerts checkmark, paste your **Bot API Token** (from `@BotFather`) and your **Chat ID** (from `@userinfobot`).
-   * Click **Save Settings** and tap **⚡ Test Sentry** to test your connection!
+3. Run Option `[5] 🖥️ Open Dashboard` to start the web console daemon, then select Option `[1] 💀 Run Security Scan` to restart background threat scanning.
+4. **💡 Automation Tip:** You can install the **Termux:Boot** addon app from F-Droid and add `bash ~/ghost.sh --boot` to your `~/.termux/boot/` script to start Aether automatically whenever your phone boots up!
+
+### 🖥️ On Desktop PC (Windows, Linux, macOS)
+1. Open your terminal, command prompt, or PowerShell.
+2. Navigate to your project folder:
+   ```bash
+   cd ~/ghost-mode
+   ```
+3. Launch the engine:
+   ```bash
+   python ghost_mode_pc.py
+   ```
+4. **💡 Automation Tip:** On Windows, you can add a shortcut of `ghost_mode_pc.py` to your Startup folder (`shell:startup`) to launch Aether automatically on login. On Linux, you can configure a systemd service file.
+
+---
+
+## 💬 Automated Scam Scanning Add-on
+
+Aether Ghost OS can be upgraded to scan incoming messages and clipboard text automatically in the background, rather than requiring you to copy-paste them manually.
+
+### 📱 Android Background Scan (Requires Termux:API)
+If you install the **Termux:API** companion app from F-Droid and run the setup script, the Sentry gains these features:
+*   **Automated SMS Audits:** Direct access to incoming SMS databases. Any incoming SMS text will be automatically parsed by the Sentry bot, sending you a Telegram notification warning if a phishing link or scam message is detected.
+*   **Phone Notifications:** Native Android popup notifications on your lock screen when network threats are detected.
+
+### 🖥️ PC Background Scan (Requires Clipboard Access)
+On desktop platforms, Aether runs clipboard loop hooks:
+*   **Instant Clipboard Audit:** Whenever you copy any text or URL to your clipboard, Aether automatically inspects the domain for spoofing (e.g. `paypa1.com`) or high-risk TLDs, instantly showing a tray notification bubble if it is unsafe!
 
 ---
 
@@ -325,7 +372,7 @@ Core scanning (network, mic/camera, ARP, ports) works fully offline. Tor anonymi
 Ghost Mode is lightweight. The scan runs in under 5 seconds every 2 minutes and uses minimal resources.
 
 **Can websites detect Tor?**
-Some sites (Netflix, banking apps) block known Tor IPs. For regular browsing and anonymity, Tor works well. Pair with Surfshark VPN for better results.
+Some sites (streaming services, banking apps) block known Tor exit nodes. For regular browsing and anonymity, Tor works well. You can pair it with a commercial VPN or custom proxies for layered protection. Note: We are currently developing our own sovereign VPN/proxy routing network (Aether Tunnel) to bypass Tor blocks natively!
 
 **Does my location change automatically?**
 Yes — every time you restart Tor or start a new session, you get a different IP. You can also manually pick a location using option 3.
