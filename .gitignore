@@ -44,3 +44,8 @@ env/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Telegram support bot secrets & databases
+bot_config.json
+bot_data.json
+telegram_config.json

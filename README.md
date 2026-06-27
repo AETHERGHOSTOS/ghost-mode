@@ -2,9 +2,9 @@
 
 > *Go invisible. Stay protected. Any Android. No root.*
 
-Ghost Mode is a free, open-source personal security suite that runs silently on any Android phone through Termux. It detects threats, anonymizes your internet traffic through Tor, and monitors your device — all without rooting your phone or paying for anything.
+Ghost Mode is a unified, sovereign privacy ecosystem designed to secure all your personal devices and networks. It runs locally and sandbox-isolated inside user-space, focusing on complete privacy and absolute digital sovereignty without requiring root access or sending your data to any cloud servers.
 
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-aetherghost.os-orange?style=flat-square&logo=buy-me-a-coffee)](https://buymeacoffee.com/aetherghost.os) [![PayPal](https://img.shields.io/badge/Donate-PayPal-blue?style=flat-square&logo=paypal)](https://paypal.me/aetherghostos) [![Bitcoin](https://img.shields.io/badge/Crypto-Bitcoin-yellow?style=flat-square&logo=bitcoin)](https://github.com/AETHERGHOSTOS/ghost-mode#-support--donate)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-aetherghost.os-orange?style=flat-square&logo=buy-me-a-coffee)](https://buymeacoffee.com/aetherghost.os) [![Bitcoin](https://img.shields.io/badge/Crypto-Accepted-yellow?style=flat-square&logo=bitcoin)](https://github.com/AETHERGHOSTOS/ghost-mode#-support--donate)
 
 ---
 
@@ -14,18 +14,17 @@ Most security tools are built for experts on laptops. Ghost Mode is different �
 
 ---
 
-## 💀 What It Does
+## 💀 Core Modules
 
 | Module | What it protects you from |
 |--------|--------------------------|
-| 🎙️ Mic/Camera Monitor | Apps secretly recording you |
-| 🌐 Network Monitor | Suspicious outbound connections, spyware traffic |
-| 👻 ARP Spoof Detector | Man-in-the-middle attacks on your WiFi |
-| 🔍 Port Scanner | Exposed ports attackers can use |
-| 😈 Tor Anonymity | Hides your real IP — you appear from another country |
-| 🌍 Location Picker | Choose which country your traffic appears from |
-| 🖥️ Browser Dashboard | Visual interface showing all scan results |
-| ⏰ Auto-scan | Runs silently every 2 minutes in background |
+| **🎙️ Privacy Sentry** | Monitors Android camera and microphone log access in real-time, preventing spy apps from recording you. |
+| **🛡️ Deception Sentry** | Traps and delays unauthorized network scans on port `2222` with a decoy SSH tarpit honeypot, reporting intrusions instantly. |
+| **🌐 Sovereign Tor Routing** | Routes Termux web requests and scans securely through Tor, utilizing country-rotational SOCKS5 proxy circuits. |
+| **💬 Scam Sentry** | Offline-compatible link and message scanner running inside Telegram to check incoming SMS for fraud, phishing, and bad links. |
+| **🔄 Failover Daemon** | Background loop that tests connection health and automatically rotates between Tor, Cloudflare WARP, and secure DNS. |
+| **🖥️ Browser Dashboard** | Interactive local console showing all hardware scan results, speed tests, and log streams. |
+| **⏰ Auto-scan** | Lightweight loop that runs silently every 2 minutes in the background, consuming minimal battery. |
 
 ---
 
@@ -359,6 +358,73 @@ Ghost Mode is the only **no-root, one-command, defensive security suite** design
 
 ---
 
+## 🤖 Optional: Telegram Sentry & Scam Detection Bot
+
+Aether Ghost OS includes a companion Telegram Bot system that sends real-time push alerts to your phone and lets you audit your device remotely or analyze incoming scam messages.
+
+### 🌟 Bot Capabilities & Scenarios
+
+| Trigger / Action | Bot Response | Risk Assessment / Result |
+|---|---|---|
+| **🚨 Intrusion Detection** | Real-time push notification | `"🚨 Intrusion Alert! Decoy Honeypot port scan detected from IP 192.168.1.15."` |
+| **🚨 Security Threat** | Threat Alert | `"⚠️ Threat Alert! Microphones currently in use by background process: SpywareAgent"` |
+| **🔄 Failover Routing** | Status Alert | `"🔄 Anonymity Pivot: Tor tunnel connection lost. Failover engine WARP connect succeeded."` |
+| **💬 Forwarded Phishing link** | Domain Risk Analysis | **🔴 HIGH RISK:** `"❌ paypa1-verification.xyz — Lookalike domain spoofing PayPal with high-risk TLD."` |
+| **💬 Forwarded SMS scam text** | Text Keyword Audit | **🔴 HIGH RISK:** `"Urgency/Fraud Language Detected (lottery winner, m-pesa reference code)."` |
+| **💬 Forwarded Safe message** | Domain Verification | **🟢 LOW RISK:** `"✅ safaricom.co.ke — Recognized domain. No scam indicators detected."` |
+
+### 🕹️ Remote Bot Commands (Send to your private bot chat)
+* `/status` — Fetches current spoofed IP, anonymity health status, CPU thermalzone temperature, and threat counts.
+* `/scan` — Triggers an active hardware/network security shield check instantly and returns the results.
+* `/panic` — Remotely kills all Termux logs, decoys, active daemons, and disconnects all ports.
+
+---
+
+### ⚙️ Step-by-Step Setup Guide
+
+#### 1. Generate Your Bot Credentials
+1. Open Telegram, search for **`@BotFather`** and start a chat. Send `/newbot` and follow the prompts to get your **Bot Token** (looks like `73829104:AAG9x...`).
+2. Search for **`@userinfobot`** on Telegram and click Start to get your numerical **Chat ID** (looks like `583920194`).
+
+#### 2. Install/Update Aether Ghost OS on Phone
+Open **Termux** and run:
+```bash
+# Clean up older background operations
+pkill -f server_daemon.py
+pkill -f ghost_mode.py
+pkill tor
+pkill cron
+
+# Clear older versions
+rm -rf ~/ghost_tools
+rm -f ~/ghost.sh ~/ghost_mode.py ~/setup.sh
+
+# Install latest files from GitHub (replace YOURUSERNAME with your repo handle)
+curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
+
+# Run the launcher
+bash ~/ghost.sh
+```
+
+#### 3. Save Settings & Test
+1. Launch Option `5` in the menu (or visit `http://localhost:8080` in your phone browser) to open the dashboard.
+2. Scroll to the **Telegram Threat Alerts** panel.
+3. Turn on the checkmark, paste your **Token** and **Chat ID**, and click **Save Settings**.
+4. Click **Test Sentry**. You will receive an instant verification message on Telegram!
+
+#### 🔑 Token Recovery & Reset Guide
+
+If you lose your Bot API Token, Chat ID, or want to secure your connection, follow these steps:
+
+*   **To Retrieve Your Bot Token:** Open Telegram, open your chat with **`@BotFather`**, send `/token`, select your bot, and copy it.
+*   **To Revoke & Refresh Bot Token:** If your token is compromised, send `/revoke` to **`@BotFather`**, select your bot, and it will instantly cancel the old one and generate a fresh token. Update the new token in your dashboard settings.
+*   **To Retrieve Your Chat ID:** Open Telegram, search for **`@userinfobot`**, tap Start (or send `/start`), and copy the numerical ID.
+*   **To Clear Credentials & Reset Bot:**
+    *   *Via Dashboard:* Uncheck "Enable Telegram Alerts", delete the Token and Chat ID values, and click **Save Settings**.
+    *   *Via Termux CLI:* Open Termux and run: `rm ~/ghost_tools/telegram_config.json` to delete the settings file directly.
+
+---
+
 ## ☕ Support & Donate
 
 Ghost Mode is built and maintained independently. If this tool keeps you safe, consider supporting its development:
@@ -367,22 +433,19 @@ Ghost Mode is built and maintained independently. If this tool keeps you safe, c
 | Platform | Link |
 |---|---|
 | ☕ Buy Me a Coffee | [buymeacoffee.com/aetherghost.os](https://buymeacoffee.com/aetherghost.os) |
-| 💳 PayPal | [paypal.me/aetherghostos](https://paypal.me/aetherghostos) |
-
-### 📱 Mobile Money
-| Method | Details |
-|---|---|
-| M-Pesa (Kenya) | **+254 742454100** — Account: **L.W** |
 
 ### 🪙 Crypto
-| Coin | Network | Address |
+| Token | Network | Address |
 |---|---|---|
-| Bitcoin | SegWit (BTC) | `bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj` |
-| Bitcoin | Native (BTC) | `15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k` |
-| Ethereum | ERC20 | `0x09cad574c2c39a88ce931307361682680b795490` |
-| Solana | SOL | `9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui` |
-| Tron | TRC20 | `TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU` |
-| BNB | BEP20 | `0x09cad574c2c39a88ce931307361682680b795490` |
+| USDT | TRX — Tron (TRC20) | `TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU` |
+| USDC | SOL — Solana | `9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui` |
+| USDT | ETH — Ethereum (ERC20) | `0x09cad574c2c39a88ce931307361682680b795490` |
+| BNB | BSC — BNB Smart Chain (BEP20) | `0x09cad574c2c39a88ce931307361682680b795490` |
+| BNB | ETH — Ethereum (ERC20) | `0x09cad574c2c39a88ce931307361682680b795490` |
+| Bitcoin | BTC — Bitcoin | `15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k` |
+| Bitcoin | BSC — BNB Smart Chain (BEP20) | `0x09cad574c2c39a88ce931307361682680b795490` |
+| Bitcoin | ETH — Ethereum (ERC20) | `0x09cad574c2c39a88ce931307361682680b795490` |
+| Bitcoin | SEGWIT — BTC (SegWit) | `bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj` |
 
 *Every contribution — no matter how small — keeps Ghost Mode alive and free for everyone.*
 

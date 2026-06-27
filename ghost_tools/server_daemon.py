@@ -13,6 +13,7 @@ import json
 import time
 import socket
 import urllib.request
+import urllib.parse
 import subprocess
 import threading
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -122,6 +123,8 @@ def run_security_scan():
             
             title = "⚠️ GHOST SECURITY ALERT" if is_threat else "🛡️ Ghost OS Background Scan"
             trigger_native_notification(title, status_msg)
+            if is_threat:
+                send_telegram_alert(f"⚠️ *SECURITY THREAT DETECTED!*\n{status_msg}\nCheck the visual dashboard for detail logs.")
         except Exception as e:
             log_message(f"⚠️ Scan failed to run: {e}")
     else:
@@ -219,6 +222,205 @@ def verify_connection_health(engine):
 
     return (True, masked_ip, country, real_ip)
 
+# --- Telegram Helper Functions ---
+def send_telegram_alert(message):
+    config_path = os.path.join(LOG_DIR, "telegram_config.json")
+    if not os.path.exists(config_path):
+        return
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+        if not cfg.get("enabled", False):
+            return
+        token = cfg.get("token")
+        chat_id = cfg.get("chat_id")
+        if not token or not chat_id:
+            return
+        
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        data = urllib.parse.urlencode({"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}).encode('utf-8')
+        req = urllib.request.Request(url, data=data)
+        with urllib.request.urlopen(req, timeout=8) as response:
+            response.read()
+    except Exception as e:
+        log_message(f"⚠️ Telegram alert failed: {e}")
+
+def run_telegram_bot_poller():
+    last_update_id = 0
+    config_path = os.path.join(LOG_DIR, "telegram_config.json")
+    
+    while True:
+        try:
+            if not os.path.exists(config_path):
+                time.sleep(10)
+                continue
+            with open(config_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+            if not cfg.get("enabled", False):
+                time.sleep(10)
+                continue
+            token = cfg.get("token")
+            chat_id = cfg.get("chat_id")
+            if not token or not chat_id:
+                time.sleep(10)
+                continue
+            
+            # Get updates
+            url = f"https://api.telegram.org/bot{token}/getUpdates?offset={last_update_id + 1}&timeout=5"
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, timeout=10) as response:
+                res_data = json.loads(response.read().decode('utf-8'))
+            
+            if res_data.get("ok") and res_data.get("result"):
+                for update in res_data.get("result"):
+                    last_update_id = update.get("update_id")
+                    message = update.get("message")
+                    if not message:
+                        continue
+                    sender_chat = message.get("chat", {})
+                    sender_id = str(sender_chat.get("id"))
+                    
+                    # Only respond to the configured Chat ID for security
+                    if sender_id != str(chat_id):
+                        continue
+                        
+                    text = message.get("text", "").strip()
+                    if not text:
+                        continue
+                        
+                    if text.startswith("/start"):
+                        send_telegram_alert("💀 *Aether Ghost OS Sentry is Active!*\n\nAvailable commands:\n/status - View system & connection state\n/scan - Rerun active shield scan\n/panic - Trigger panic de-authentication")
+                    elif text.startswith("/status"):
+                        # Get status info
+                        cfg_os = load_config()
+                        engine = cfg_os.get("anonymity_engine", "tor")
+                        ok, ip, loc, real_ip = verify_connection_health(engine)
+                        status_icon = "🟢" if ok else "🔴"
+                        
+                        # Get CPU temp if possible
+                        temp_msg = "Unknown"
+                        if sys.platform != "win32":
+                            try:
+                                temp_res = subprocess.run("cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null", shell=True, capture_output=True, text=True)
+                                if temp_res.stdout.strip():
+                                    temp_msg = f"{round(float(temp_res.stdout.strip()) / 1000, 1)}C"
+                            except:
+                                pass
+                        
+                        report_file = os.path.join(LOG_DIR, "report.json")
+                        threats_info = "0 threats detected"
+                        if os.path.exists(report_file):
+                            try:
+                                with open(report_file) as f:
+                                    rep = json.load(f)
+                                if rep.get("status") != "CLEAN":
+                                    threats_info = f"⚠️ {rep.get('threats_today', 0)} threats detected!"
+                            except:
+                                pass
+                        
+                        msg = (
+                            f"🛡️ *Aether Ghost OS Status*\n"
+                            f"-----------------------------\n"
+                            f"Engine: *{engine.upper()}*\n"
+                            f"Connection: *{status_icon} {'Protected' if ok else 'Exposed'}*\n"
+                            f"Spoofed IP: `{ip}`\n"
+                            f"Location: *{loc}*\n"
+                            f"Real IP: `{real_ip}`\n"
+                            f"CPU Temp: *{temp_msg}*\n"
+                            f"Sentry Logs: *{threats_info}*"
+                        )
+                        send_telegram_alert(msg)
+                    elif text.startswith("/scan"):
+                        send_telegram_alert("🔄 *Security scan triggered...* please wait.")
+                        run_security_scan()
+                        
+                        report_file = os.path.join(LOG_DIR, "report.json")
+                        msg = "✅ *Scan Completed:* All systems clean."
+                        if os.path.exists(report_file):
+                            try:
+                                with open(report_file) as f:
+                                    rep = json.load(f)
+                                if rep.get("status") != "CLEAN":
+                                    msg = f"⚠️ *Scan Completed:* Threats detected! {rep.get('threats_today', 0)} issues found."
+                            except:
+                                pass
+                        send_telegram_alert(msg)
+                    elif text.startswith("/panic"):
+                        send_telegram_alert("🚨 *PANIC COMMAND RECEIVED! De-authenticating...*")
+                        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        script_path = os.path.join(base_dir, "ghost_mode.py")
+                        if not os.path.exists(script_path):
+                            script_path = os.path.expanduser("~/ghost_mode.py")
+                        if os.path.exists(script_path):
+                            subprocess.run([sys.executable, script_path, "--panic"])
+                        send_telegram_alert("🤫 *De-authentication sequence executed.* Session offline.")
+                    else:
+                        # Treat it as a scam/link analysis query!
+                        send_telegram_alert("🔍 *Analyzing message for scams and phishing...*")
+                        import re
+                        urls = re.findall(r'(https?://\S+)', text)
+                        scam_keywords = [
+                            "m-pesa reference", "congratulations", "win", "won", "reward", "lottery",
+                            "package delivery", "unclaimed", "suspension", "locked account", "verify identity",
+                            "click here", "urgent", "update password", "banking support", "invest", "profit",
+                            "cash prize", "sent you money", "reference number", "cashback"
+                        ]
+                        
+                        has_scam_keyword = any(kw in text.lower() for kw in scam_keywords)
+                        reports = []
+                        
+                        for url in urls:
+                            domain = url.split("://")[-1].split("/")[0].lower()
+                            suspicious_tlds = [".xyz", ".top", ".club", ".info", ".bid", ".icu", ".click", ".gq", ".cf", ".tk", ".ml", ".ga"]
+                            is_suspicious_tld = any(domain.endswith(tld) for tld in suspicious_tlds)
+                            
+                            is_lookalike = False
+                            matched_brand = ""
+                            for brand in ["safaricom", "paypal", "google", "facebook", "netflix", "binance", "blockchain"]:
+                                if brand in domain and domain != f"{brand}.com" and not domain.endswith(f".{brand}.com") and not domain.endswith(f"safaricom.co.ke"):
+                                    is_lookalike = True
+                                    matched_brand = brand
+                            
+                            if is_lookalike:
+                                reports.append(f"❌ `{domain}` — *Lookalike domain!* (Spoofing {matched_brand})")
+                            elif is_suspicious_tld:
+                                reports.append(f"⚠️ `{domain}` — Uses a high-risk TLD ({domain.split('.')[-1]}).")
+                            else:
+                                reports.append(f"ℹ️ `{domain}` — Extracted for analysis.")
+                        
+                        risk_level = "🟢 LOW RISK"
+                        risk_color = "🟢"
+                        if reports or has_scam_keyword:
+                            risk_level = "🟡 MEDIUM RISK"
+                            risk_color = "🟡"
+                        if any("❌" in r for r in reports) or (has_scam_keyword and len(urls) > 0):
+                            risk_level = "🔴 HIGH RISK (PHISHING/SCAM)"
+                            risk_color = "🔴"
+                            
+                        msg = [
+                            f"🤖 *Scam Detection Report*",
+                            f"-----------------------------",
+                            f"Risk Assessment: *{risk_level}*",
+                            f"Urgency/Fraud Language: *{'Detected ⚠️' if has_scam_keyword else 'None detected'}*",
+                        ]
+                        if urls:
+                            msg.append(f"\nExtracted Links ({len(urls)}):")
+                            msg.extend(reports)
+                        else:
+                            msg.append("\nNo links found in message.")
+                            
+                        if risk_color == "🔴":
+                            msg.append("\n❗ *Warning:* Do NOT click any links or reply to the sender of this message.")
+                        elif risk_color == "🟡":
+                            msg.append("\n⚠️ *Caution:* Verify the sender before taking any action.")
+                        else:
+                            msg.append("\n✅ *Note:* No obvious scam indicators found, but always remain vigilant.")
+                            
+                        send_telegram_alert("\n".join(msg))
+        except Exception as poller_err:
+            pass
+        time.sleep(2.5) # Poll updates every 2.5 seconds
+
 # --- Switch Engine Command Execution ---
 def activate_engine_routing(engine):
     log_message(f"🔄 Activating engine routing for: {engine.upper()}")
@@ -266,6 +468,7 @@ def run_honeypot_listener():
                 json.dump(threats[-50:], f, indent=2)
                 
             trigger_native_notification("SECURITY INTRUSION", f"Rogue network scan detected from IP: {ip}!")
+            send_telegram_alert(f"🚨 *SECURITY INTRUSION ALERT!*\nHoneypot Decoy Intrusion: Rogue scan detected from IP `{ip}` on port 2222.")
             conn.close()
     except Exception as e:
         log_message(f"⚠️ Honeypot decoy could not start: {e}")
@@ -307,6 +510,7 @@ def run_daemon_loop():
                             msg = f"Switched to {next_engine.upper()} because {engine.upper()} failed."
                             log_message(f"✅ Anonymity failover succeeded: {msg}")
                             trigger_native_notification("ANONYMITY FAILOVER", msg)
+                            send_telegram_alert(f"🔄 *ANONYMITY FAILOVER EVENT*\n{msg}")
                             
                             run_security_scan()
                             failover_success = True
@@ -353,7 +557,18 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         url_path = self.path.split('?')[0]
         cfg = load_config()
 
-        if url_path == '/api/engine-status':
+        if url_path == '/api/telegram_config':
+            config_path = os.path.join(LOG_DIR, "telegram_config.json")
+            data = {"enabled": False, "token": "", "chat_id": ""}
+            if os.path.exists(config_path):
+                try:
+                    with open(config_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                except:
+                    pass
+            self.send_json_response(data)
+
+        elif url_path == '/api/engine-status':
             engine = cfg.get("anonymity_engine", "tor")
             is_active, ip, loc, real_ip = verify_connection_health(engine)
             dns_encrypted = (engine != "none")
@@ -460,7 +675,39 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         except:
             body = {}
 
-        if url_path == '/api/engine':
+        if url_path == '/api/telegram_config':
+            config_path = os.path.join(LOG_DIR, "telegram_config.json")
+            try:
+                with open(config_path, "w", encoding="utf-8") as f:
+                    json.dump(body, f, indent=2)
+                self.send_json_response({"status": "ok"})
+            except Exception as e:
+                self.send_json_response({"status": "error", "message": str(e)}, 500)
+
+        elif url_path == '/api/telegram_test':
+            token = body.get("token")
+            chat_id = body.get("chat_id")
+            if not token or not chat_id:
+                self.send_json_response({"status": "error", "message": "Missing credentials"}, 400)
+                return
+            try:
+                url = f"https://api.telegram.org/bot{token}/sendMessage"
+                payload_data = urllib.parse.urlencode({
+                    "chat_id": chat_id, 
+                    "text": "💀 *Aether Ghost OS: Sentry Bot Connected successfully!*", 
+                    "parse_mode": "Markdown"
+                }).encode('utf-8')
+                req = urllib.request.Request(url, data=payload_data)
+                with urllib.request.urlopen(req, timeout=8) as response:
+                    res_val = json.loads(response.read().decode('utf-8'))
+                if res_val.get("ok"):
+                    self.send_json_response({"status": "ok"})
+                else:
+                    self.send_json_response({"status": "error", "message": "Telegram API reject"}, 400)
+            except Exception as e:
+                self.send_json_response({"status": "error", "message": str(e)}, 500)
+
+        elif url_path == '/api/engine':
             engine = body.get("engine", "tor")
             cfg["anonymity_engine"] = engine
             save_config(cfg)
@@ -521,6 +768,9 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
 def main():
     daemon_thread = threading.Thread(target=run_daemon_loop, daemon=True)
     daemon_thread.start()
+
+    telegram_thread = threading.Thread(target=run_telegram_bot_poller, daemon=True)
+    telegram_thread.start()
 
     honeypot_thread = threading.Thread(target=run_honeypot_listener, daemon=True)
     honeypot_thread.start()

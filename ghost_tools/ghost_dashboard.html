@@ -638,6 +638,44 @@ select:focus{border-color:#00ff88}
   </div>
 </div>
 
+<!-- Telegram Sentry Alerts Card -->
+<div class="card" style="margin-bottom:12px">
+  <h3>🤖 Telegram Threat Alerts (Optional)</h3>
+  <p style="font-size:0.8em; color:#888; margin-bottom:12px; line-height:1.5;">
+    Receive real-time push notifications on your phone when threat monitors trigger. Each user must create their own private bot.
+  </p>
+  
+  <div style="font-size:0.75em; color:#666; background:#050505; border:1px solid #141414; padding:10px; border-radius:6px; margin-bottom:12px; line-height:1.6;">
+    <strong>How to get your credentials (Free):</strong><br>
+    1. Search for <strong>@BotFather</strong> on Telegram, click Start, and send <code>/newbot</code> to get your token.<br>
+    2. Search for <strong>@userinfobot</strong> on Telegram and click Start to get your numerical Chat ID.<br>
+    3. Paste them below, toggle Enabled, and click Save.
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:10px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <label style="font-size:0.85em; color:#d0d0d0;">Enable Telegram Alerts</label>
+      <input type="checkbox" id="telegram-enabled" onchange="toggleTelegramCheckbox()" style="width:20px; height:20px; accent-color:#00ff88; cursor:pointer;">
+    </div>
+    
+    <div id="telegram-fields" style="display:none; flex-direction:column; gap:10px; border-top:1px solid #141414; padding-top:10px;">
+      <div>
+        <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">BOT API TOKEN</label>
+        <input type="password" id="telegram-token" placeholder="e.g. 73829104:AAG9x..." style="width:100%; background:#0f0f0f; color:#fff; border:1px solid #202020; padding:10px; border-radius:6px; font-family:monospace; font-size:0.85em; outline:none;">
+      </div>
+      <div>
+        <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">USER CHAT ID</label>
+        <input type="text" id="telegram-chatid" placeholder="e.g. 583920194" style="width:100%; background:#0f0f0f; color:#fff; border:1px solid #202020; padding:10px; border-radius:6px; font-family:monospace; font-size:0.85em; outline:none;">
+      </div>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;">
+        <button class="btn blue" onclick="saveTelegramConfig()" style="margin:0; padding:8px; font-size:0.85em; letter-spacing:1px;">Save Settings</button>
+        <button class="btn" onclick="testTelegramBot()" style="margin:0; padding:8px; font-size:0.85em; letter-spacing:1px;">⚡ Test Sentry</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Speed Test and Scan badges -->
 <div class="grid2">
   <div class="card">
@@ -693,53 +731,57 @@ select:focus{border-color:#00ff88}
 <div class="card" style="margin-bottom:12px">
   <h3>☕ Project Support & Donations</h3>
   <p style="font-size:0.8em; color:#888; margin-bottom:12px; line-height:1.5;">
-    If Aether Ghost OS keeps you safe and anonymous, consider supporting our independent development. Click any address or phone number to copy it instantly.
+    If Aether Ghost OS keeps you safe and anonymous, consider supporting our independent development. Click any address to copy it instantly.
   </p>
   
   <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
     <!-- Web & Mobile Money -->
     <div style="background:#050505; border:1px solid #141414; padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:8px;">
-      <h4 style="font-size:0.75em; color:#00ff88; letter-spacing:1px; text-transform:uppercase;">🌐 Fiat & Mobile Money</h4>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85em; padding:6px 0; border-bottom:1px solid #111;">
+      <h4 style="font-size:0.75em; color:#00ff88; letter-spacing:1px; text-transform:uppercase;">🌐 Fiat & Web Donations</h4>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85em; padding:6px 0;">
         <span>☕ Buy Me a Coffee:</span>
         <a href="https://buymeacoffee.com/aetherghost.os" target="_blank" style="color:#0099ff; text-decoration:none; font-family: monospace;">aetherghost.os ➔</a>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85em; padding:6px 0; border-bottom:1px solid #111;">
-        <span>💳 PayPal:</span>
-        <a href="https://paypal.me/aetherghostos" target="_blank" style="color:#0099ff; text-decoration:none; font-family: monospace;">paypal.me/aetherghostos ➔</a>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85em; padding:6px 0; cursor:pointer;" onclick="copyVal('+254742454100', 'M-Pesa Number')">
-        <span>📱 M-Pesa (Kenya):</span>
-        <span style="color:#00ff88; font-family:monospace;">+254 742454100 (L.W) 📋</span>
       </div>
     </div>
 
     <!-- Crypto Addresses -->
     <div style="background:#050505; border:1px solid #141414; padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:6px;">
       <h4 style="font-size:0.75em; color:#00ff88; letter-spacing:1px; text-transform:uppercase;">🪙 Crypto Addresses</h4>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj', 'Bitcoin SegWit Address')">
-        <span>BTC (SegWit):</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">bc1qqm...aqrpmj 📋</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k', 'Bitcoin Native Address')">
-        <span>BTC (Native):</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">15dzX3...ahJ5k 📋</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'Ethereum Address')">
-        <span>ETH (ERC20):</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui', 'Solana Address')">
-        <span>SOL (Solana):</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">9pU3D8...BKNFw 📋</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU', 'Tron Address')">
-        <span>TRX (TRC20):</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU', 'USDT TRX Tron TRC20')">
+        <span>USDT | TRX — Tron (TRC20):</span>
         <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">TKPkbk...FieaQU 📋</span>
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'BNB BEP20 Address')">
-        <span>BNB (BEP20):</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui', 'USDC SOL Solana')">
+        <span>USDC | SOL — Solana:</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">9pU3D8...BKNFw 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'USDT ETH Ethereum ERC20')">
+        <span>USDT | ETH — Ethereum (ERC20):</span>
         <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'BNB BSC BNB Smart Chain BEP20')">
+        <span>BNB | BSC — BNB Smart Chain (BEP20):</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'BNB ETH Ethereum ERC20')">
+        <span>BNB | ETH — Ethereum (ERC20):</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k', 'Bitcoin BTC Native')">
+        <span>BTC | BTC — Bitcoin:</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">15dzX3...ahJ5k 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'Bitcoin BSC BNB Smart Chain BEP20')">
+        <span>BTC | BSC — BNB Smart Chain (BEP20):</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'Bitcoin ETH Ethereum ERC20')">
+        <span>BTC | ETH — Ethereum (ERC20):</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj', 'Bitcoin SEGWIT BTC SegWit')">
+        <span>BTC | SEGWIT — BTC (SegWit):</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">bc1qqm...aqrpmj 📋</span>
       </div>
     </div>
   </div>
@@ -1427,6 +1469,90 @@ async function refreshNetworkData() {
   addLog('✅ Network details updated.','ok');
 }
 
+// Telegram Config Script Helpers
+async function loadTelegramConfig() {
+  try {
+    const res = await fetch('/api/telegram_config?t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('telegram-enabled').checked = !!data.enabled;
+      document.getElementById('telegram-token').value = data.token || '';
+      document.getElementById('telegram-chatid').value = data.chat_id || '';
+      toggleTelegramFields(!!data.enabled);
+    }
+  } catch (e) {
+    console.error("Failed to load telegram config:", e);
+  }
+}
+
+function toggleTelegramCheckbox() {
+  const enabled = document.getElementById('telegram-enabled').checked;
+  toggleTelegramFields(enabled);
+  if (!enabled) {
+    saveTelegramConfig();
+  }
+}
+
+function toggleTelegramFields(show) {
+  const fields = document.getElementById('telegram-fields');
+  fields.style.display = show ? 'flex' : 'none';
+}
+
+async function saveTelegramConfig() {
+  const enabled = document.getElementById('telegram-enabled').checked;
+  const token = document.getElementById('telegram-token').value.trim();
+  const chat_id = document.getElementById('telegram-chatid').value.trim();
+  
+  if (enabled && (!token || !chat_id)) {
+    showToast("⚠️ Token and Chat ID are required when enabled!", true);
+    return;
+  }
+  
+  const payload = { enabled, token, chat_id };
+  try {
+    const res = await fetch('/api/telegram_config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      showToast("✅ Telegram settings saved!");
+      addLog("Telegram Alert configuration updated.");
+    } else {
+      showToast("❌ Failed to save settings", true);
+    }
+  } catch (e) {
+    showToast("❌ Network error saving configuration", true);
+  }
+}
+
+async function testTelegramBot() {
+  const token = document.getElementById('telegram-token').value.trim();
+  const chat_id = document.getElementById('telegram-chatid').value.trim();
+  if (!token || !chat_id) {
+    showToast("⚠️ Enter Token and Chat ID first!", true);
+    return;
+  }
+  
+  addLog("⏳ Sending Telegram test notification...");
+  try {
+    const res = await fetch('/api/telegram_test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, chat_id })
+    });
+    if (res.ok) {
+      showToast("✅ Test message sent! Check Telegram.");
+      addLog("Telegram test alert sent successfully.");
+    } else {
+      showToast("❌ Test failed. Check token/chat ID.", true);
+      addLog("Telegram test alert failed.", "warn");
+    }
+  } catch (e) {
+    showToast("❌ Network error testing bot", true);
+  }
+}
+
 // Dom Boot Splash Screen Controller
 window.addEventListener('DOMContentLoaded', () => {
   const bar = document.getElementById('splash-bar');
@@ -1466,6 +1592,7 @@ window.onload=async()=>{
   await checkLocation();
   await getSchedule();
   await loadSystemLogs();
+  await loadTelegramConfig();
 };
 </script>
 </body>
