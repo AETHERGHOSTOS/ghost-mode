@@ -689,6 +689,62 @@ select:focus{border-color:#00ff88}
   </div>
 </div>
 
+<!-- Support & Donations Card -->
+<div class="card" style="margin-bottom:12px">
+  <h3>☕ Project Support & Donations</h3>
+  <p style="font-size:0.8em; color:#888; margin-bottom:12px; line-height:1.5;">
+    If Aether Ghost OS keeps you safe and anonymous, consider supporting our independent development. Click any address or phone number to copy it instantly.
+  </p>
+  
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
+    <!-- Web & Mobile Money -->
+    <div style="background:#050505; border:1px solid #141414; padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:8px;">
+      <h4 style="font-size:0.75em; color:#00ff88; letter-spacing:1px; text-transform:uppercase;">🌐 Fiat & Mobile Money</h4>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85em; padding:6px 0; border-bottom:1px solid #111;">
+        <span>☕ Buy Me a Coffee:</span>
+        <a href="https://buymeacoffee.com/aetherghost.os" target="_blank" style="color:#0099ff; text-decoration:none; font-family: monospace;">aetherghost.os ➔</a>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85em; padding:6px 0; border-bottom:1px solid #111;">
+        <span>💳 PayPal:</span>
+        <a href="https://paypal.me/aetherghostos" target="_blank" style="color:#0099ff; text-decoration:none; font-family: monospace;">paypal.me/aetherghostos ➔</a>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85em; padding:6px 0; cursor:pointer;" onclick="copyVal('+254742454100', 'M-Pesa Number')">
+        <span>📱 M-Pesa (Kenya):</span>
+        <span style="color:#00ff88; font-family:monospace;">+254 742454100 (L.W) 📋</span>
+      </div>
+    </div>
+
+    <!-- Crypto Addresses -->
+    <div style="background:#050505; border:1px solid #141414; padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:6px;">
+      <h4 style="font-size:0.75em; color:#00ff88; letter-spacing:1px; text-transform:uppercase;">🪙 Crypto Addresses</h4>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj', 'Bitcoin SegWit Address')">
+        <span>BTC (SegWit):</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">bc1qqm...aqrpmj 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k', 'Bitcoin Native Address')">
+        <span>BTC (Native):</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">15dzX3...ahJ5k 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'Ethereum Address')">
+        <span>ETH (ERC20):</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui', 'Solana Address')">
+        <span>SOL (Solana):</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">9pU3D8...BKNFw 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU', 'Tron Address')">
+        <span>TRX (TRC20):</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">TKPkbk...FieaQU 📋</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'BNB BEP20 Address')">
+        <span>BNB (BEP20):</span>
+        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Main controls -->
 <button class="btn" onclick="runScan()">💀 RUN ACTIVE SHIELD SCAN 😈🤫</button>
 <div class="grid2">
@@ -697,6 +753,22 @@ select:focus{border-color:#00ff88}
 </div>
 
 <script>
+function copyVal(val, name) {
+  navigator.clipboard.writeText(val).then(() => {
+    showToast(`✅ ${name} copied!`);
+    addLog(`${name} copied to clipboard.`);
+  }).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = val;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast(`✅ ${name} copied!`);
+    addLog(`${name} copied to clipboard.`);
+  });
+}
+
 function ts(){return new Date().toLocaleTimeString('en-GB')}
 const logBox=document.getElementById('log');
 

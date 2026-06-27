@@ -37,8 +37,9 @@ while true; do
   echo -e "  \e[1;32m[6]\e[0m 📋 View System Logs 👻"
   echo -e "  \e[1;32m[7]\e[0m ⏹️  Stop Everything & Exit"
   echo -e "  \e[1;32m[8]\e[0m 🔤 Reset Termux Font to Default"
+  echo -e "  \e[1;32m[9]\e[0m ☕ Support & Donate to Project"
   echo ""
-  read -p "  Choose [1-8]: " c
+  read -p "  Choose [1-9]: " c
   echo ""
 
   case $c in
@@ -205,6 +206,31 @@ while true; do
       rm -f ~/.termux/font.ttf
       termux-reload-settings 2>/dev/null
       echo "✅ Monospace font reset. Termux styling reverted to system default."
+      ;;
+    9)
+      echo "=========================================================="
+      echo "  ☕ SUPPORT AETHER GHOST OS DEVELOPMENT"
+      echo "=========================================================="
+      echo "  If this tool keeps you secure, consider supporting us!"
+      echo ""
+      echo "  🌐 Web Donations:"
+      echo "     Buy Me a Coffee: https://buymeacoffee.com/aetherghost.os"
+      echo "     PayPal:          https://paypal.me/aetherghostos"
+      echo ""
+      echo "  📱 Mobile Money (Kenya M-Pesa):"
+      echo "     Phone Number:    +254 742454100"
+      echo "     Account Name:    L.W"
+      echo ""
+      echo "  🪙 Crypto Addresses:"
+      echo "     Bitcoin (SegWit): bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj"
+      echo "     Bitcoin (Native): 15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k"
+      echo "     Ethereum (ERC20): 0x09cad574c2c39a88ce931307361682680b795490"
+      echo "     Solana (SOL):     9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui"
+      echo "     Tron (TRC20):     TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU"
+      echo "     BNB (BEP20):      0x09cad574c2c39a88ce931307361682680b795490"
+      echo ""
+      echo "  Thank you for keeping Aether Ghost OS active and secure!"
+      echo "=========================================================="
       ;;
     *)
       echo "Invalid choice."

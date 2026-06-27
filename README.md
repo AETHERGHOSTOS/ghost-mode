@@ -4,6 +4,8 @@
 
 Ghost Mode is a free, open-source personal security suite that runs silently on any Android phone through Termux. It detects threats, anonymizes your internet traffic through Tor, and monitors your device — all without rooting your phone or paying for anything.
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-aetherghost.os-orange?style=flat-square&logo=buy-me-a-coffee)](https://buymeacoffee.com/aetherghost.os) [![PayPal](https://img.shields.io/badge/Donate-PayPal-blue?style=flat-square&logo=paypal)](https://paypal.me/aetherghostos) [![Bitcoin](https://img.shields.io/badge/Crypto-Bitcoin-yellow?style=flat-square&logo=bitcoin)](https://github.com/AETHERGHOSTOS/ghost-mode#-support--donate)
+
 ---
 
 ## 🤔 Why Ghost Mode?
@@ -354,6 +356,35 @@ The developer takes no responsibility for misuse.
 | **Ghost Mode** | ❌ **No** | ✅ **One command** | ✅ **Defensive** |
 
 Ghost Mode is the only **no-root, one-command, defensive security suite** designed specifically for everyday Android users who want privacy and protection without being security experts.
+
+---
+
+## ☕ Support & Donate
+
+Ghost Mode is built and maintained independently. If this tool keeps you safe, consider supporting its development:
+
+### 🌐 Web Donations
+| Platform | Link |
+|---|---|
+| ☕ Buy Me a Coffee | [buymeacoffee.com/aetherghost.os](https://buymeacoffee.com/aetherghost.os) |
+| 💳 PayPal | [paypal.me/aetherghostos](https://paypal.me/aetherghostos) |
+
+### 📱 Mobile Money
+| Method | Details |
+|---|---|
+| M-Pesa (Kenya) | **+254 742454100** — Account: **L.W** |
+
+### 🪙 Crypto
+| Coin | Network | Address |
+|---|---|---|
+| Bitcoin | SegWit (BTC) | `bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj` |
+| Bitcoin | Native (BTC) | `15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k` |
+| Ethereum | ERC20 | `0x09cad574c2c39a88ce931307361682680b795490` |
+| Solana | SOL | `9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui` |
+| Tron | TRC20 | `TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU` |
+| BNB | BEP20 | `0x09cad574c2c39a88ce931307361682680b795490` |
+
+*Every contribution — no matter how small — keeps Ghost Mode alive and free for everyone.*
 
 ---
 
