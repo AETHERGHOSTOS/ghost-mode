@@ -58,7 +58,7 @@ ok "Terminal font size configured to auto-fit. Folders created"
 # ─── STEP 5: DOWNLOAD FILES FROM GITHUB ───────────────────
 echo -e "${CYAN}[5/5] Downloading Aether Ghost OS files...${NC}"
 
-BASE="https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main"
+BASE="https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main"
 
 curl -sL "$BASE/ghost_mode.py" -o ~/ghost_mode.py 2>/dev/null && ok "ghost_mode.py" || warn "ghost_mode.py failed"
 curl -sL "$BASE/ghost.sh" -o ~/ghost.sh 2>/dev/null && ok "ghost.sh" || warn "ghost.sh failed"
