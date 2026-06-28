@@ -1,215 +1,272 @@
 #!/bin/bash
-# 💀 AETHER GHOST OS LAUNCHER
+# 💀 AETHER GHOST OS LAUNCHER v1.1.0
 
-# Auto-start background server and scheduler if not already running
+VERSION="1.1.0"
+
+# Auto-start background server daemon if not running
 if ! pgrep -f server_daemon.py >/dev/null; then
-  # Try home directory, then fallbacks
-  if [ -f "$HOME/ghost_tools/server_daemon.py" ]; then
-    python3 ~/ghost_tools/server_daemon.py >/dev/null 2>&1 &
-  elif [ -f "./ghost_tools/server_daemon.py" ]; then
-    python3 ./ghost_tools/server_daemon.py >/dev/null 2>&1 &
-  elif [ -f "../ghost_tools/server_daemon.py" ]; then
-    python3 ../ghost_tools/server_daemon.py >/dev/null 2>&1 &
-  fi
-  sleep 1
+  for path in "$HOME/ghost_tools/server_daemon.py" "./ghost_tools/server_daemon.py"; do
+    if [ -f "$path" ]; then
+      python3 "$path" >/dev/null 2>&1 &
+      sleep 1
+      break
+    fi
+  done
 fi
 
 while true; do
   clear
-  if [ -f "$HOME/ghost_tools/render_logo.py" ]; then
-    python3 ~/ghost_tools/render_logo.py
-  elif [ -f "./ghost_tools/render_logo.py" ]; then
-    python3 ./ghost_tools/render_logo.py
-  else
-    # Simple fallback ASCII
-    echo "       👻 A E T H E R   G H O S T   O S 👻"
-  fi
+
+  # Try to render logo
+  for path in "$HOME/ghost_tools/render_logo.py" "./ghost_tools/render_logo.py"; do
+    if [ -f "$path" ]; then
+      python3 "$path" 2>/dev/null
+      break
+    fi
+  done
+
   echo ""
-  echo "  👻 A E T H E R   G H O S T   O S 👻"
-  echo "  ========================================"
+  echo "  👻 A E T H E R   G H O S T   O S  v${VERSION} 👻"
+  echo "  ============================================="
   echo "  Privacy Operating Security Suite for Termux"
   echo ""
   echo -e "  \e[1;32m[1]\e[0m 💀 Run Security Scan"
-  echo -e "  \e[1;32m[2]\e[0m 👻 Select Anonymity Engine 🤫"
-  echo -e "  \e[1;32m[3]\e[0m 🌍 Pick Tor Location Node 👻"
-  echo -e "  \e[1;32m[4]\e[0m 🌐 Check My Connection 🔒"
-  echo -e "  \e[1;32m[5]\e[0m 🖥️  Open Dashboard Link 👻"
-  echo -e "  \e[1;32m[6]\e[0m 📋 View System Logs 👻"
-  echo -e "  \e[1;32m[7]\e[0m ⏹️  Stop Everything & Exit"
-  echo -e "  \e[1;32m[8]\e[0m 🔤 Reset Termux Font to Default"
-  echo -e "  \e[1;32m[9]\e[0m ☕ Support & Donate to Project"
+  echo -e "  \e[1;32m[2]\e[0m 👻 Select Anonymity Engine"
+  echo -e "  \e[1;32m[3]\e[0m 🌍 Pick Tor Location Node"
+  echo -e "  \e[1;32m[4]\e[0m 🌐 Check My Connection"
+  echo -e "  \e[1;32m[5]\e[0m 🖥️  Open Dashboard"
+  echo -e "  \e[1;32m[6]\e[0m 📋 View System Logs"
+  echo -e "  \e[1;32m[7]\e[0m 🔧 Change DNS Resolver"
+  echo -e "  \e[1;32m[8]\e[0m 🚨 PANIC — Self Destruct"
+  echo -e "  \e[1;32m[9]\e[0m ⏹️  Stop Everything & Exit"
+  echo -e "  \e[1;32m[0]\e[0m 🔤 Reset Termux Font"
+  echo -e "  \e[1;32m[10]\e[0m ☕ Support & Donate to Project"
   echo ""
-  read -p "  Choose [1-9]: " c
+  read -p "  Choose [0-10]: " c
   echo ""
 
   case $c in
     1)
-      # Try running ghost_mode.py from Home or Local
-      if [ -f "$HOME/ghost_mode.py" ]; then
-        python3 ~/ghost_mode.py
-      elif [ -f "./ghost_mode.py" ]; then
-        python3 ./ghost_mode.py
-      elif [ -f "../ghost_mode.py" ]; then
-        python3 ../ghost_mode.py
+      SCRIPT=$(find "$HOME" ./  -name "ghost_mode.py" 2>/dev/null | head -1)
+      if [ -n "$SCRIPT" ]; then
+        python3 "$SCRIPT"
       else
         echo "❌ ghost_mode.py not found."
       fi
       ;;
+
     2)
       echo "  😈 SELECT ANONYMITY ENGINE:"
-      echo "  ---------------------------"
-      echo "  [1] Tor Proxy Network"
-      echo "  [2] Cloudflare WARP VPN"
-      echo "  [3] Public SOCKS5 Proxy Rotation"
-      echo "  [4] Encrypted DNS-over-HTTPS (DoH)"
-      echo "  [5] No Anonymity (⚠️ UNPROTECTED!)"
+      echo "  ----------------------------"
+      echo "  [1] 😈 Tor Proxy Network"
+      echo "  [2] 🌐 Cloudflare WARP VPN"
+      echo "  [3] 🌍 Public SOCKS5 Proxy Rotation"
+      echo "  [4] 🛡️  Secure DNS-over-HTTPS (DoH)"
+      echo "  [5] ⚠️  No Anonymity (UNPROTECTED!)"
       echo ""
       read -p "  Select [1-5]: " eng_c
-      echo ""
+
       CFG="$HOME/ghost_tools/schedule_config.json"
-      [ ! -d "$HOME/ghost_tools" ] && mkdir -p "$HOME/ghost_tools"
-      
+      mkdir -p "$HOME/ghost_tools"
+
       case $eng_c in
         1)
           echo "😈 Activating Tor Proxy..."
-          pkill tor 2>/dev/null
+          pkill tor 2>/dev/null; sleep 1
           tor > /dev/null 2>&1 &
-          python3 -c "import json, os; p=os.path.expanduser('~/ghost_tools/schedule_config.json'); c=json.load(open(p)) if os.path.exists(p) else {}; c['anonymity_engine']='tor'; json.dump(c, open(p,'w'), indent=2)" 2>/dev/null
-          echo "⏳ Warming up circuits (10 seconds)..."
-          sleep 10
+          python3 -c "
+import json, os
+p = os.path.expanduser('~/ghost_tools/schedule_config.json')
+c = json.load(open(p)) if os.path.exists(p) else {}
+c['anonymity_engine'] = 'tor'
+json.dump(c, open(p,'w'), indent=2)
+" 2>/dev/null
+          echo "⏳ Warming up Tor circuits (15 seconds)..."
+          sleep 15
+          ANON=$(curl -s --max-time 10 --socks5-hostname 127.0.0.1:9050 https://icanhazip.com 2>/dev/null)
+          REAL=$(curl -s --max-time 5 https://icanhazip.com)
+          if [ -n "$ANON" ] && [ "$ANON" != "$REAL" ]; then
+            echo -e "💀 \e[1;32m[ GHOST ACTIVE ]\e[0m Anonymous IP: $ANON"
+          else
+            echo "⏳ Tor still bootstrapping. Check option 4 in a moment."
+          fi
           ;;
         2)
-          echo "🌐 Connecting Cloudflare WARP VPN..."
+          echo "🌐 Activating Cloudflare WARP VPN..."
           pkill tor 2>/dev/null
-          warp-cli register 2>/dev/null
-          warp-cli connect 2>/dev/null
-          python3 -c "import json, os; p=os.path.expanduser('~/ghost_tools/schedule_config.json'); c=json.load(open(p)) if os.path.exists(p) else {}; c['anonymity_engine']='warp'; json.dump(c, open(p,'w'), indent=2)" 2>/dev/null
-          sleep 4
+          warp-cli connect 2>/dev/null || echo "⚠️  WARP not installed. Install: pkg install cloudflare-warp"
+          python3 -c "
+import json, os
+p = os.path.expanduser('~/ghost_tools/schedule_config.json')
+c = json.load(open(p)) if os.path.exists(p) else {}
+c['anonymity_engine'] = 'warp'
+json.dump(c, open(p,'w'), indent=2)
+" 2>/dev/null
           ;;
         3)
-          echo "🌍 Initializing SOCKS5 Proxy Rotation..."
+          echo "🌍 SOCKS5 Proxy Rotation selected."
           pkill tor 2>/dev/null
-          python3 -c "import json, os; p=os.path.expanduser('~/ghost_tools/schedule_config.json'); c=json.load(open(p)) if os.path.exists(p) else {}; c['anonymity_engine']='proxy'; json.dump(c, open(p,'w'), indent=2)" 2>/dev/null
-          # Trigger a scrape request via localhost API
-          curl -s -X POST -d '{"engine":"proxy"}' http://localhost:8080/api/engine >/dev/null 2>&1
-          sleep 5
+          python3 -c "
+import json, os
+p = os.path.expanduser('~/ghost_tools/schedule_config.json')
+c = json.load(open(p)) if os.path.exists(p) else {}
+c['anonymity_engine'] = 'proxy'
+json.dump(c, open(p,'w'), indent=2)
+" 2>/dev/null
           ;;
         4)
-          echo "🔒 Activating DNS-over-HTTPS Encryption..."
+          echo "🛡️  Activating DNS-over-HTTPS..."
           pkill tor 2>/dev/null
-          python3 -c "import json, os; p=os.path.expanduser('~/ghost_tools/schedule_config.json'); c=json.load(open(p)) if os.path.exists(p) else {}; c['anonymity_engine']='doh'; json.dump(c, open(p,'w'), indent=2)" 2>/dev/null
-          sleep 2
+          python3 -c "
+import json, os
+p = os.path.expanduser('~/ghost_tools/schedule_config.json')
+c = json.load(open(p)) if os.path.exists(p) else {}
+c['anonymity_engine'] = 'doh'
+json.dump(c, open(p,'w'), indent=2)
+" 2>/dev/null
+          echo "✅ DoH active — DNS queries encrypted."
+          echo "   Your IP is NOT hidden. Only DNS is encrypted."
           ;;
         5)
-          echo "⚠️ Disabling anonymity... Connection will be UNPROTECTED!"
+          echo "⚠️  WARNING: Disabling anonymity. Your real IP will be exposed."
           pkill tor 2>/dev/null
-          warp-cli disconnect >/dev/null 2>&1
-          python3 -c "import json, os; p=os.path.expanduser('~/ghost_tools/schedule_config.json'); c=json.load(open(p)) if os.path.exists(p) else {}; c['anonymity_engine']='none'; json.dump(c, open(p,'w'), indent=2)" 2>/dev/null
-          sleep 2
+          warp-cli disconnect 2>/dev/null
+          python3 -c "
+import json, os
+p = os.path.expanduser('~/ghost_tools/schedule_config.json')
+c = json.load(open(p)) if os.path.exists(p) else {}
+c['anonymity_engine'] = 'none'
+json.dump(c, open(p,'w'), indent=2)
+" 2>/dev/null
+          echo "⚠️  Anonymity disabled. Connection is now UNPROTECTED."
           ;;
         *)
-          echo "Invalid engine choice."
+          echo "Invalid choice."
           ;;
       esac
       ;;
+
     3)
-      if [ -f "$HOME/ghost_tools/location_picker.py" ]; then
-        python3 ~/ghost_tools/location_picker.py
-      elif [ -f "./ghost_tools/location_picker.py" ]; then
-        python3 ./ghost_tools/location_picker.py
+      PICKER=$(find "$HOME/ghost_tools" ./ -name "location_picker.py" 2>/dev/null | head -1)
+      if [ -n "$PICKER" ]; then
+        python3 "$PICKER"
       else
         echo "❌ location_picker.py not found."
       fi
       ;;
+
     4)
+      # Check connection status
       CFG="$HOME/ghost_tools/schedule_config.json"
       ENG="tor"
       if [ -f "$CFG" ]; then
-        ENG=$(python3 -c "import json; print(json.load(open('$CFG')).get('anonymity_engine', 'tor'))" 2>/dev/null)
+        ENG=$(python3 -c "import json; print(json.load(open('$CFG')).get('anonymity_engine','tor'))" 2>/dev/null)
       fi
+
       echo "🔒 Active Engine: ${ENG^^}"
       REAL=$(curl -s --max-time 5 https://icanhazip.com)
-      echo "🌐 Default IP:   $REAL"
-      
-      if [ "$ENG" == "tor" ]; then
-        ANON=$(curl -s --max-time 6 --socks5-hostname 127.0.0.1:9050 https://icanhazip.com 2>/dev/null)
-        if [ -n "$ANON" ]; then
-          echo -e "💀  \e[1;31m[ GHOST ACTIVE ]\e[0m ➔ \e[1;32mYou are a ghost!\e[0m \e[1;36m👻\e[0m"
-          echo "🕵️ Tor Spoof:   $ANON"
+      echo "🌐 Your Real IP:  $REAL"
+
+      if [ "$ENG" = "tor" ]; then
+        ANON=$(curl -s --max-time 10 --socks5-hostname 127.0.0.1:9050 https://icanhazip.com 2>/dev/null)
+        if [ -n "$ANON" ] && [ "$ANON" != "$REAL" ]; then
+          echo -e "💀 \e[1;32m[ GHOST ACTIVE ]\e[0m You are anonymous!"
+           echo "🕵️ Tor Anonymous IP: $ANON"
+           echo ""
+           echo "🔍 To verify full anonymity or route your browser:"
+           echo "   → Install Orbot app → enable VPN mode, then visit check.torproject.org"
+           echo "   → Or manually set your browser SOCKS5 proxy to: 127.0.0.1:9050"
+           echo ""
+           echo -e "  \e[0;36m🚀 COMING SOON FROM AETHER:\e[0m"
+           echo "   📱 Aether Mobile App — protect every app on your phone"
+           echo "   🔒 Aether VPN     — full-device encrypted tunnel"
+           echo "   🌍 Aether Proxy   — rotating SOCKS5 proxy network"
+           echo "   🌐 Aether Browser — private, proxy-integrated browser"
         else
-          echo "⚠️ Tor proxy not responding."
+          echo "⚠️  Tor not masking IP yet. Wait 15 seconds and try again."
         fi
-      elif [ "$ENG" == "warp" ]; then
-        IS_WARP=$(curl -s --max-time 5 https://www.cloudflare.com/cdn-cgi/trace | grep warp=on)
-        if [ -n "$IS_WARP" ]; then
-          echo -e "💀  \e[1;31m[ GHOST ACTIVE ]\e[0m ➔ \e[1;32mYou are a ghost!\e[0m \e[1;36m👻\e[0m"
-          echo "🕵️ WARP Mask:   Active (IP $REAL)"
+      elif [ "$ENG" = "warp" ]; then
+        TRACE=$(curl -s --max-time 5 https://www.cloudflare.com/cdn-cgi/trace)
+        if echo "$TRACE" | grep -q "warp=on"; then
+          echo -e "💀 \e[1;32m[ GHOST ACTIVE ]\e[0m WARP VPN connected!"
         else
-          echo "⚠️ WARP VPN disconnected."
+          echo "⚠️  WARP disconnected."
         fi
-      elif [ "$ENG" == "proxy" ]; then
-        PXY=$(python3 -c "import json, os; p=os.path.expanduser('~/ghost_tools/active_proxy.json'); print(json.load(open(p)).get('proxy','')) if os.path.exists(p) else print('')" 2>/dev/null)
-        if [ -n "$PXY" ]; then
-          PXY_ADDR=${PXY#*//}
-          ANON=$(curl -s --max-time 6 -x socks5://$PXY_ADDR https://icanhazip.com 2>/dev/null)
-          if [ -n "$ANON" ]; then
-            echo -e "💀  \e[1;31m[ GHOST ACTIVE ]\e[0m ➔ \e[1;32mYou are a ghost!\e[0m \e[1;36m👻\e[0m"
-            echo "🕵️ Proxy Spoof: $ANON"
-          else
-            echo "⚠️ Rotated proxy unresponsive."
-          fi
-        else
-          echo "⚠️ No rotated SOCKS5 proxy configured yet."
-        fi
-      elif [ "$ENG" == "doh" ]; then
-        echo -e "💀  \e[1;31m[ GHOST ACTIVE ]\e[0m ➔ \e[1;32mYou are a ghost!\e[0m \e[1;36m👻\e[0m"
-        echo "🕵️ Secure DNS:  Active (Bypassing router logs)"
-      elif [ "$ENG" == "none" ]; then
-        echo -e "⚠️ \e[1;31mUNPROTECTED! Connection exposed.\e[0m"
+      elif [ "$ENG" = "doh" ]; then
+        echo "🛡️  DoH active — DNS encrypted. IP not hidden."
+      elif [ "$ENG" = "none" ]; then
+        echo -e "⚠️  \e[1;31mUNPROTECTED — Enable an engine!\e[0m"
       fi
       ;;
+
     5)
+      # Open dashboard
       if ! pgrep -f server_daemon.py >/dev/null; then
-        echo "🖥️ Starting background dashboard server..."
-        if [ -f "$HOME/ghost_tools/server_daemon.py" ]; then
-          python3 ~/ghost_tools/server_daemon.py >/dev/null 2>&1 &
-        else
-          python3 ./ghost_tools/server_daemon.py >/dev/null 2>&1 &
+        echo "🖥️  Starting dashboard server..."
+        DAEMON=$(find "$HOME/ghost_tools" ./ -name "server_daemon.py" 2>/dev/null | head -1)
+        if [ -n "$DAEMON" ]; then
+          python3 "$DAEMON" >/dev/null 2>&1 &
+          sleep 2
         fi
-        sleep 2
       fi
-      echo "🌐 Opening dashboard in browser..."
+      echo "🌐 Dashboard: http://localhost:8080/ghost_dashboard.html"
       termux-open "http://localhost:8080/ghost_dashboard.html" 2>/dev/null || \
-      echo "Open in browser: http://localhost:8080/ghost_dashboard.html"
+        echo "Open in browser: http://localhost:8080/ghost_dashboard.html"
       ;;
+
     6)
-      echo "📋 Last 30 log lines:"
+      echo "📋 Last 40 log lines:"
       echo "---------------------"
-      if [ -f "$HOME/ghost_tools/ghost.log" ]; then
-        tail -30 ~/ghost_tools/ghost.log
-      elif [ -f "./ghost_tools/ghost.log" ]; then
-        tail -30 ./ghost_tools/ghost.log
+      LOG_FILE="$HOME/ghost_tools/ghost.log"
+      if [ -f "$LOG_FILE" ]; then
+        tail -40 "$LOG_FILE"
       else
-        echo "No logs yet. Run a scan first."
+        echo "No logs yet. Run a scan first (option 1)."
       fi
       ;;
+
     7)
-      echo "⏹️ Stopping Ghost Mode..."
+      # DNS Changer
+      SCRIPT=$(find "$HOME" ./ -name "ghost_mode.py" 2>/dev/null | head -1)
+      if [ -n "$SCRIPT" ]; then
+        python3 "$SCRIPT" --dns
+      else
+        echo "❌ ghost_mode.py not found."
+      fi
+      ;;
+
+    8)
+      echo "🚨 PANIC MODE — This will wipe ALL logs, threats, and config!"
+      read -p "Type 'CONFIRM' to proceed: " confirm
+      if [ "$confirm" = "CONFIRM" ]; then
+        SCRIPT=$(find "$HOME" ./ -name "ghost_mode.py" 2>/dev/null | head -1)
+        if [ -n "$SCRIPT" ]; then
+          python3 "$SCRIPT" --panic
+        fi
+      else
+        echo "Panic cancelled."
+      fi
+      ;;
+
+    9)
+      echo "⏹️  Stopping Aether Ghost OS..."
       pkill tor 2>/dev/null && echo "✅ Tor stopped"
-      warp-cli disconnect >/dev/null 2>&1 && echo "✅ WARP VPN stopped"
+      warp-cli disconnect 2>/dev/null
       pkill -f server_daemon.py 2>/dev/null && echo "✅ Dashboard server stopped"
+      pkill crond 2>/dev/null && echo "✅ Auto-scan stopped"
       echo "🤫 Ghost Mode deactivated."
       break
       ;;
-    8)
-      echo "🔤 Resetting Termux Font size and clearing custom style files..."
+
+    0)
       rm -f ~/.termux/font.ttf
       termux-reload-settings 2>/dev/null
-      echo "✅ Monospace font reset. Termux styling reverted to system default."
+      echo "✅ Font reset to system default."
       ;;
-    9)
+
+    10)
       echo "=========================================================="
-      echo "  ☕ SUPPORT GHOST MODE DEVELOPMENT"
+      echo "  ☕ SUPPORT AETHER GHOST OS DEVELOPMENT"
       echo "=========================================================="
       echo "  If this tool keeps you secure, consider supporting us!"
       echo ""
@@ -217,23 +274,25 @@ while true; do
       echo "     Buy Me a Coffee: https://buymeacoffee.com/aetherghost.os"
       echo ""
       echo "  🪙 Crypto Addresses:"
-      echo "     USDT  | TRX - Tron (TRC20):          TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU"
-      echo "     USDC  | SOL - Solana:                9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui"
-      echo "     USDT  | ETH - Ethereum (ERC20):      0x09cad574c2c39a88ce931307361682680b795490"
-      echo "     BNB   | BSC - BNB Smart Chain (BEP20):0x09cad574c2c39a88ce931307361682680b795490"
-      echo "     BNB   | ETH - Ethereum (ERC20):      0x09cad574c2c39a88ce931307361682680b795490"
-      echo "     BTC   | BTC - Bitcoin:               15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k"
-      echo "     BTC   | BSC - BNB Smart Chain (BEP20):0x09cad574c2c39a88ce931307361682680b795490"
-      echo "     BTC   | ETH - Ethereum (ERC20):      0x09cad574c2c39a88ce931307361682680b795490"
-      echo "     BTC   | SEGWIT - BTC (SegWit):       bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj"
+      echo "     USDT  | TRX - Tron (TRC20):           TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU"
+      echo "     USDC  | SOL - Solana:                 9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui"
+      echo "     USDT  | ETH - Ethereum (ERC20):       0x09cad574c2c39a88ce931307361682680b795490"
+      echo "     BNB   | BSC - BNB Smart Chain (BEP20): 0x09cad574c2c39a88ce931307361682680b795490"
+      echo "     BNB   | ETH - Ethereum (ERC20):       0x09cad574c2c39a88ce931307361682680b795490"
+      echo "     BTC   | BTC - Bitcoin:                15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k"
+      echo "     BTC   | BSC - BNB Smart Chain (BEP20): 0x09cad574c2c39a88ce931307361682680b795490"
+      echo "     BTC   | ETH - Ethereum (ERC20):       0x09cad574c2c39a88ce931307361682680b795490"
+      echo "     BTC   | SEGWIT - BTC (SegWit):        bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj"
       echo ""
-      echo "  Thank you for keeping Ghost Mode active and free!"
+      echo "  Thank you for keeping Aether Ghost OS active and secure!"
       echo "=========================================================="
       ;;
+
     *)
       echo "Invalid choice."
       ;;
   esac
+
   echo ""
-  read -p "Press [Enter] to return to the menu..."
+  read -p "Press [Enter] to return to menu..."
 done

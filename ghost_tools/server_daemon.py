@@ -19,7 +19,24 @@ import threading
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from datetime import datetime
 
+# Force UTF-8 stdout/stderr encoding on Windows to prevent UnicodeEncodeError on emojis
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 PORT = 8080
+last_manual_change_time = 0
+last_dns_rotation_time = 0
+
+DNS_PROVIDERS = {
+    "cloudflare": ("1.1.1.1", "1.0.0.1"),
+    "google": ("8.8.8.8", "8.8.4.4"),
+    "quad9": ("9.9.9.9", "149.112.112.112"),
+    "adguard": ("94.140.14.14", "94.140.15.15")
+}
 
 def get_ghost_dir():
     log_dir = os.path.expanduser("~/ghost_tools")
@@ -59,7 +76,10 @@ def load_config():
         "notification_profile": "sound_vibrate",
         "anonymity_engine": "tor",
         "custom_sound_path": "",
-        "game_mode": False
+        "dns_provider": "cloudflare",
+        "dns_rotation_interval": 0,
+        "custom_dns_primary": "1.1.1.1",
+        "custom_dns_secondary": "1.0.0.1"
     }
 
 def save_config(cfg):
@@ -124,7 +144,7 @@ def run_security_scan():
             title = "⚠️ GHOST SECURITY ALERT" if is_threat else "🛡️ Ghost OS Background Scan"
             trigger_native_notification(title, status_msg)
             if is_threat:
-                send_telegram_alert(f"⚠️ *SECURITY THREAT DETECTED!*\n{status_msg}\nCheck the visual dashboard for detail logs.")
+                send_telegram_alert(f"⚠️ *SECURITY THREAT DETECTED!*\n{status_msg}\nCheck the visual dashboard or send /menu to view threats.")
         except Exception as e:
             log_message(f"⚠️ Scan failed to run: {e}")
     else:
@@ -201,29 +221,121 @@ def verify_connection_health(engine):
     # Cloudflare WARP checks: verify Cloudflare trace config
     if engine == "warp":
         trace = run_curl("https://www.cloudflare.com/cdn-cgi/trace", timeout=4)
-        if "warp=on" not in trace:
+        if not trace or "warp=on" not in trace:
             return (False, masked_ip, "WARP Disconnected", real_ip)
 
-    # Geolocation lookup using freeipapi.com
+    # Geolocation lookup fallback chain
     country = "Unknown Location"
-    try:
-        loc_res = run_curl(f"https://freeipapi.com/api/json/{masked_ip}", timeout=4)
-        if loc_res:
-            data = json.loads(loc_res)
-            country = data.get("countryName", "Unknown Location")
-    except:
+    providers = [
+        ("https://freeipapi.com/api/json/{ip}", "countryName"),
+        ("https://ipapi.co/{ip}/json/", "country_name"),
+        ("http://ip-api.com/json/{ip}", "country"),
+        ("https://ipinfo.io/{ip}/json", "country")
+    ]
+    
+    for url_tmpl, key in providers:
+        url = url_tmpl.format(ip=masked_ip)
         try:
-            loc_res = run_curl(f"http://ip-api.com/json/{masked_ip}", timeout=4)
-            if loc_res:
+            loc_res = run_curl(url, timeout=3)
+            if loc_res and "{" in loc_res:
                 data = json.loads(loc_res)
-                country = data.get("country", "Unknown Location")
-        except:
+                c_val = data.get(key, "")
+                if c_val:
+                    country = c_val
+                    break
+        except Exception as geoloc_err:
             pass
 
     return (True, masked_ip, country, real_ip)
 
+# --- DNS Changer System Settings Helper ---
+def apply_system_dns(primary, secondary):
+    log_message(f"⚙️ Applying system DNS settings: {primary}, {secondary}")
+    
+    # 1. Android/Termux Resolv.conf Update
+    termux_resolv = "/data/data/com.termux/files/usr/etc/resolv.conf"
+    if os.path.exists("/data/data/com.termux/files/usr/bin/sh"):
+        try:
+            os.makedirs(os.path.dirname(termux_resolv), exist_ok=True)
+            with open(termux_resolv, "w", encoding="utf-8") as f:
+                f.write(f"nameserver {primary}\nnameserver {secondary}\n")
+            log_message("✅ Termux resolv.conf written successfully.")
+            return True
+        except Exception as e:
+            log_message(f"⚠️ Failed to write Termux resolv.conf: {e}")
+            
+    # 2. Windows PC DNS Adapter Settings Update
+    if sys.platform == "win32":
+        try:
+            ps_cmd = (
+                f"Get-NetAdapter | Where-Object {{ $_.Status -eq 'Up' }} | "
+                f"ForEach-Object {{ Set-DnsClientServerAddress -InterfaceIndex $_.InterfaceIndex -ServerAddresses ('{primary}', '{secondary}') -ErrorAction SilentlyContinue }}"
+            )
+            subprocess.run(["powershell", "-Command", ps_cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            log_message("✅ Windows active adapter DNS configurations updated.")
+            return True
+        except Exception as e:
+            log_message(f"⚠️ Failed to update Windows DNS: {e}")
+            
+    # 3. Linux / macOS configurations
+    if sys.platform in ["linux", "darwin"]:
+        try:
+            with open("/etc/resolv.conf", "w", encoding="utf-8") as f:
+                f.write(f"nameserver {primary}\nnameserver {secondary}\n")
+            log_message("✅ Linux / etc resolv.conf updated.")
+            return True
+        except:
+            if sys.platform == "darwin":
+                try:
+                    subprocess.run("networksetup -setdnsservers Wi-Fi 1.1.1.1 1.0.0.1 2>/dev/null", shell=True)
+                    log_message("✅ macOS networksetup resolver updated.")
+                    return True
+                except:
+                    pass
+            log_message("⚠️ Permission denied: Could not edit /etc/resolv.conf system settings.")
+    return False
+
+# --- DNS Rotation Loop ---
+def run_dns_rotation_loop():
+    global last_dns_rotation_time
+    log_message("🔀 DNS Auto-Rotation scheduler started.")
+    while True:
+        try:
+            cfg = load_config()
+            interval = cfg.get("dns_rotation_interval", 0)
+            provider = cfg.get("dns_provider", "cloudflare")
+            
+            if provider == "rotation" and interval > 0:
+                now = time.time()
+                if now - last_dns_rotation_time >= (interval * 60):
+                    providers = list(DNS_PROVIDERS.keys())
+                    current_primary = cfg.get("custom_dns_primary", "1.1.1.1")
+                    
+                    current_idx = 0
+                    for idx, name in enumerate(providers):
+                        if DNS_PROVIDERS[name][0] == current_primary:
+                            current_idx = idx
+                            break
+                            
+                    next_idx = (current_idx + 1) % len(providers)
+                    next_provider = providers[next_idx]
+                    prim, sec = DNS_PROVIDERS[next_provider]
+                    
+                    log_message(f"🔄 Rotating DNS resolver to: {next_provider.upper()} ({prim})")
+                    apply_system_dns(prim, sec)
+                    
+                    cfg["custom_dns_primary"] = prim
+                    cfg["custom_dns_secondary"] = sec
+                    save_config(cfg)
+                    
+                    last_dns_rotation_time = now
+                    send_telegram_alert(f"🔀 *DNS AUTO-ROTATION EVENT*\nSystem resolver pivoted to: *{next_provider.upper()}* (`{prim}` / `{sec}`).")
+        except Exception as e:
+            log_message(f"⚠️ Error in DNS rotator: {e}")
+        time.sleep(15)
+
 # --- Telegram Helper Functions ---
-def send_telegram_alert(message):
+def send_telegram_alert(message, reply_markup=None):
     config_path = os.path.join(LOG_DIR, "telegram_config.json")
     if not os.path.exists(config_path):
         return
@@ -238,12 +350,229 @@ def send_telegram_alert(message):
             return
         
         url = f"https://api.telegram.org/bot{token}/sendMessage"
-        data = urllib.parse.urlencode({"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}).encode('utf-8')
-        req = urllib.request.Request(url, data=data)
+        params = {
+            "chat_id": chat_id,
+            "text": message,
+            "parse_mode": "Markdown",
+            "disable_web_page_preview": True
+        }
+        if reply_markup:
+            params["reply_markup"] = reply_markup
+            
+        data = json.dumps(params).encode('utf-8')
+        req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
         with urllib.request.urlopen(req, timeout=8) as response:
             response.read()
     except Exception as e:
         log_message(f"⚠️ Telegram alert failed: {e}")
+
+def edit_telegram_message(token, chat_id, message_id, text, reply_markup=None):
+    url = f"https://api.telegram.org/bot{token}/editMessageText"
+    params = {
+        "chat_id": chat_id,
+        "message_id": message_id,
+        "text": text,
+        "parse_mode": "Markdown",
+        "disable_web_page_preview": True
+    }
+    if reply_markup:
+        params["reply_markup"] = reply_markup
+    try:
+        data = json.dumps(params).encode('utf-8')
+        req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req, timeout=5) as res:
+            res.read()
+    except Exception as e:
+        log_message(f"⚠️ Telegram editMessageText failed: {e}")
+
+def answer_callback_query(token, callback_query_id):
+    url = f"https://api.telegram.org/bot{token}/answerCallbackQuery"
+    try:
+        data = urllib.parse.urlencode({"callback_query_id": callback_query_id}).encode('utf-8')
+        req = urllib.request.Request(url, data=data)
+        with urllib.request.urlopen(req, timeout=5) as res:
+            res.read()
+    except Exception as e:
+        log_message(f"⚠️ Telegram answerCallbackQuery failed: {e}")
+
+def get_sentry_dashboard_layout():
+    cfg = load_config()
+    engine = cfg.get("anonymity_engine", "tor")
+    is_rot = cfg.get("dns_provider") == "rotation"
+    dns_mode = "Auto-Rotation" if is_rot else cfg.get("dns_provider", "cloudflare").upper()
+    
+    is_healthy, ip, loc, real_ip = verify_connection_health(engine)
+    status_icon = "🟢" if is_healthy else "🔴"
+    
+    t_path = os.path.join(LOG_DIR, "threats.json")
+    threats_count = 0
+    if os.path.exists(t_path):
+        try:
+            with open(t_path) as f:
+                threats_count = len(json.load(f))
+        except:
+            pass
+            
+    msg = (
+        f"💀 *AETHER GHOST OS SENTRY MENU*\n"
+        f"-----------------------------\n"
+        f"Anonymity Engine: *{engine.upper()}*\n"
+        f"Status: {status_icon} *{'Protected' if is_healthy else 'Exposed'}*\n"
+        f"Spoofed IP: `{ip}`\n"
+        f"Location: *{loc}*\n"
+        f"DNS Resolver: *{dns_mode}*\n"
+        f"Active Threat Alerts: *{threats_count} alerts*\n\n"
+        f"Use buttons below to control the phone remotely:"
+    )
+    
+    kb = {
+        "inline_keyboard": [
+            [
+                {"text": "🔄 Change Engine", "callback_data": "menu_engine"},
+                {"text": "🔀 Change DNS", "callback_data": "menu_dns"}
+            ],
+            [
+                {"text": f"🔀 Auto-Rotate DNS: {'ON 🟢' if is_rot else 'OFF 🔴'}", "callback_data": "toggle_dns_rot"}
+            ],
+            [
+                {"text": "⚡ Run Security Scan", "callback_data": "run_scan"},
+                {"text": "📋 View Threat Details", "callback_data": "view_threats"}
+            ]
+        ]
+    }
+    return msg, kb
+
+def handle_sentry_callback(token, chat_id, query):
+    query_id = query.get("id")
+    sender_id = str(query.get("from", {}).get("id"))
+    data = query.get("data", "")
+    message = query.get("message", {})
+    message_id = message.get("message_id")
+    
+    if sender_id != str(chat_id):
+        return
+
+    answer_callback_query(token, query_id)
+    cfg = load_config()
+    global last_manual_change_time
+
+    if data == "menu_main":
+        msg, kb = get_sentry_dashboard_layout()
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
+    elif data == "menu_engine":
+        msg = "🔄 *Select Anonymity Engine*\n\nChoose an engine circuit below to route your internet traffic:"
+        kb = {
+            "inline_keyboard": [
+                [
+                    {"text": "🧅 Tor SOCKS", "callback_data": "set_engine_tor"},
+                    {"text": "⚡ Cloudflare WARP", "callback_data": "set_engine_warp"}
+                ],
+                [
+                    {"text": "🔀 SOCKS Proxy", "callback_data": "set_engine_proxy"},
+                    {"text": "🟣 DoH Resolver", "callback_data": "set_engine_doh"}
+                ],
+                [
+                    {"text": "🔴 Disable Anonymity", "callback_data": "set_engine_none"}
+                ],
+                [
+                    {"text": "↩️ Back to Menu", "callback_data": "menu_main"}
+                ]
+            ]
+        }
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
+    elif data.startswith("set_engine_"):
+        selected = data.replace("set_engine_", "")
+        cfg["anonymity_engine"] = selected
+        save_config(cfg)
+        activate_engine_routing(selected)
+        last_manual_change_time = time.time()
+        
+        msg = f"✅ *Anonymity Engine switched to: {selected.upper()}*\n\nCircuits are warming up now. Routing applied globally."
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
+    elif data == "menu_dns":
+        msg = "🔀 *Select Secure DNS Resolver*\n\nChange your system DNS resolver configuration:"
+        kb = {
+            "inline_keyboard": [
+                [
+                    {"text": "☁️ Cloudflare (1.1.1.1)", "callback_data": "set_dns_cloudflare"},
+                    {"text": "🔍 Google (8.8.8.8)", "callback_data": "set_dns_google"}
+                ],
+                [
+                    {"text": "🛡️ Quad9 (9.9.9.9)", "callback_data": "set_dns_quad9"},
+                    {"text": "🚫 AdGuard AdBlock", "callback_data": "set_dns_adguard"}
+                ],
+                [
+                    {"text": "↩️ Back to Menu", "callback_data": "menu_main"}
+                ]
+            ]
+        }
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
+    elif data.startswith("set_dns_"):
+        selected = data.replace("set_dns_", "")
+        prim, sec = DNS_PROVIDERS[selected]
+        cfg["dns_provider"] = selected
+        cfg["custom_dns_primary"] = prim
+        cfg["custom_dns_secondary"] = sec
+        save_config(cfg)
+        apply_system_dns(prim, sec)
+        
+        msg = f"✅ *DNS Resolver updated to: {selected.upper()}*\n\nPrimary IP: `{prim}`\nSecondary IP: `{sec}`"
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
+    elif data == "toggle_dns_rot":
+        current_rot = cfg.get("dns_provider") == "rotation"
+        if current_rot:
+            cfg["dns_provider"] = "cloudflare"
+            cfg["dns_rotation_interval"] = 0
+            cfg["custom_dns_primary"] = "1.1.1.1"
+            cfg["custom_dns_secondary"] = "1.0.0.1"
+            apply_system_dns("1.1.1.1", "1.0.0.1")
+        else:
+            cfg["dns_provider"] = "rotation"
+            cfg["dns_rotation_interval"] = 5
+            prim, sec = DNS_PROVIDERS["cloudflare"]
+            cfg["custom_dns_primary"] = prim
+            cfg["custom_dns_secondary"] = sec
+            apply_system_dns(prim, sec)
+            
+        save_config(cfg)
+        msg, kb = get_sentry_dashboard_layout()
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
+    elif data == "run_scan":
+        edit_telegram_message(token, chat_id, message_id, "🔄 *Active Security scan triggered...* please wait.", None)
+        run_security_scan()
+        msg, kb = get_sentry_dashboard_layout()
+        edit_telegram_message(token, chat_id, message_id, "✅ *Scan Completed!*\n\n" + msg, kb)
+        
+    elif data == "view_threats":
+        t_path = os.path.join(LOG_DIR, "threats.json")
+        threats_list = []
+        if os.path.exists(t_path):
+            try:
+                with open(t_path) as f:
+                    threats_list = json.load(f)
+            except:
+                pass
+                
+        if not threats_list:
+            msg = "🟢 *Aether Sentry Alert Logs*\n\nNo threats captured today! All systems secure."
+        else:
+            msg_lines = ["⚠️ *Active Security Alerts & Diagnostics:*", "-----------------------------"]
+            for idx, t in enumerate(threats_list[-6:]):
+                time_str = t["time"].split("T")[-1][:5]
+                msg_lines.append(f"• *[{time_str}]* {t['detail']}")
+            msg_lines.append("\n💡 Visit the dashboard for step-by-step fix tutorials.")
+            msg = "\n".join(msg_lines)
+            
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
 
 def run_telegram_bot_poller():
     last_update_id = 0
@@ -274,13 +603,20 @@ def run_telegram_bot_poller():
             if res_data.get("ok") and res_data.get("result"):
                 for update in res_data.get("result"):
                     last_update_id = update.get("update_id")
+                    
+                    # 1. Parse Callback Button clicks
+                    callback_query = update.get("callback_query")
+                    if callback_query:
+                        handle_sentry_callback(token, chat_id, callback_query)
+                        continue
+                        
+                    # 2. Parse Standard Messages
                     message = update.get("message")
                     if not message:
                         continue
                     sender_chat = message.get("chat", {})
                     sender_id = str(sender_chat.get("id"))
                     
-                    # Only respond to the configured Chat ID for security
                     if sender_id != str(chat_id):
                         continue
                         
@@ -288,63 +624,14 @@ def run_telegram_bot_poller():
                     if not text:
                         continue
                         
-                    if text.startswith("/start"):
-                        send_telegram_alert("💀 *Aether Ghost OS Sentry is Active!*\n\nAvailable commands:\n/status - View system & connection state\n/scan - Rerun active shield scan\n/panic - Trigger panic de-authentication")
-                    elif text.startswith("/status"):
-                        # Get status info
-                        cfg_os = load_config()
-                        engine = cfg_os.get("anonymity_engine", "tor")
-                        ok, ip, loc, real_ip = verify_connection_health(engine)
-                        status_icon = "🟢" if ok else "🔴"
-                        
-                        # Get CPU temp if possible
-                        temp_msg = "Unknown"
-                        if sys.platform != "win32":
-                            try:
-                                temp_res = subprocess.run("cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null", shell=True, capture_output=True, text=True)
-                                if temp_res.stdout.strip():
-                                    temp_msg = f"{round(float(temp_res.stdout.strip()) / 1000, 1)}C"
-                            except:
-                                pass
-                        
-                        report_file = os.path.join(LOG_DIR, "report.json")
-                        threats_info = "0 threats detected"
-                        if os.path.exists(report_file):
-                            try:
-                                with open(report_file) as f:
-                                    rep = json.load(f)
-                                if rep.get("status") != "CLEAN":
-                                    threats_info = f"⚠️ {rep.get('threats_today', 0)} threats detected!"
-                            except:
-                                pass
-                        
-                        msg = (
-                            f"🛡️ *Aether Ghost OS Status*\n"
-                            f"-----------------------------\n"
-                            f"Engine: *{engine.upper()}*\n"
-                            f"Connection: *{status_icon} {'Protected' if ok else 'Exposed'}*\n"
-                            f"Spoofed IP: `{ip}`\n"
-                            f"Location: *{loc}*\n"
-                            f"Real IP: `{real_ip}`\n"
-                            f"CPU Temp: *{temp_msg}*\n"
-                            f"Sentry Logs: *{threats_info}*"
-                        )
-                        send_telegram_alert(msg)
+                    if text.startswith("/start") or text.startswith("/menu") or text.startswith("/status"):
+                        msg, kb = get_sentry_dashboard_layout()
+                        send_telegram_alert(msg, kb)
                     elif text.startswith("/scan"):
                         send_telegram_alert("🔄 *Security scan triggered...* please wait.")
                         run_security_scan()
-                        
-                        report_file = os.path.join(LOG_DIR, "report.json")
-                        msg = "✅ *Scan Completed:* All systems clean."
-                        if os.path.exists(report_file):
-                            try:
-                                with open(report_file) as f:
-                                    rep = json.load(f)
-                                if rep.get("status") != "CLEAN":
-                                    msg = f"⚠️ *Scan Completed:* Threats detected! {rep.get('threats_today', 0)} issues found."
-                            except:
-                                pass
-                        send_telegram_alert(msg)
+                        msg, kb = get_sentry_dashboard_layout()
+                        send_telegram_alert("✅ *Scan Completed!*\n\n" + msg, kb)
                     elif text.startswith("/panic"):
                         send_telegram_alert("🚨 *PANIC COMMAND RECEIVED! De-authenticating...*")
                         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -355,7 +642,7 @@ def run_telegram_bot_poller():
                             subprocess.run([sys.executable, script_path, "--panic"])
                         send_telegram_alert("🤫 *De-authentication sequence executed.* Session offline.")
                     else:
-                        # Treat it as a scam/link analysis query!
+                        # Scam scanner
                         send_telegram_alert("🔍 *Analyzing message for scams and phishing...*")
                         import re
                         urls = re.findall(r'(https?://\S+)', text)
@@ -419,7 +706,7 @@ def run_telegram_bot_poller():
                         send_telegram_alert("\n".join(msg))
         except Exception as poller_err:
             pass
-        time.sleep(2.5) # Poll updates every 2.5 seconds
+        time.sleep(2.5)
 
 # --- Switch Engine Command Execution ---
 def activate_engine_routing(engine):
@@ -450,23 +737,7 @@ def run_honeypot_listener():
         while True:
             conn, addr = server.accept()
             ip = addr[0]
-            log_message(f"🚨 PORT SCAN ALERT! Rogue connection from {ip} on Decoy Port 2222")
-            
-            threats_file = os.path.join(LOG_DIR, "threats.json")
-            threats = []
-            if os.path.exists(threats_file):
-                try:
-                    with open(threats_file, "r") as f:
-                        threats = json.load(f)
-                except:
-                    pass
-            threats.append({
-                "time": datetime.now().isoformat(),
-                "detail": f"Honeypot Decoy Intrusion: Scanning from {ip}"
-            })
-            with open(threats_file, "w") as f:
-                json.dump(threats[-50:], f, indent=2)
-                
+            log_message(f"🚨 HONEYPOT INTRUSION ALERT! Port scan detected from IP: {ip}")
             trigger_native_notification("SECURITY INTRUSION", f"Rogue network scan detected from IP: {ip}!")
             send_telegram_alert(f"🚨 *SECURITY INTRUSION ALERT!*\nHoneypot Decoy Intrusion: Rogue scan detected from IP `{ip}` on port 2222.")
             conn.close()
@@ -476,62 +747,62 @@ def run_honeypot_listener():
 # --- Daemon Schedulers & Failover Loop ---
 def run_daemon_loop():
     log_message("🤫 Aether OS background monitor daemon started.")
-    # Set last_scan_time to trigger immediate scan on boot
     last_scan_time = 0
+    global last_manual_change_time
     
     while True:
         try:
             cfg = load_config()
-            game_mode = cfg.get("game_mode", False)
             engine = cfg.get("anonymity_engine", "tor")
             scan_interval = cfg.get("scan_interval", 120)
             
             # 1. Connection check and Auto-Failover
             if engine != "none":
-                is_healthy, current_ip, loc, real_ip = verify_connection_health(engine)
-                if not is_healthy:
-                    log_message(f"⚠️ Health check failed for engine '{engine.upper()}'! Starting failover sequence...")
-                    sequence = ["tor", "warp", "proxy", "doh", "none"]
-                    current_idx = sequence.index(engine) if engine in sequence else 0
-                    
-                    failover_success = False
-                    for attempt in range(1, len(sequence)):
-                        next_idx = (current_idx + attempt) % len(sequence)
-                        next_engine = sequence[next_idx]
-                        log_message(f"🔄 Pivoting failover to engine: '{next_engine.upper()}'")
-                        activate_engine_routing(next_engine)
+                if time.time() - last_manual_change_time < 30:
+                    # Skip check to let newly switched engine bootstrap
+                    pass
+                else:
+                    is_healthy, current_ip, loc, real_ip = verify_connection_health(engine)
+                    if not is_healthy:
+                        log_message(f"⚠️ Health check failed for engine '{engine.upper()}'! Starting failover sequence...")
+                        sequence = ["tor", "warp", "proxy", "doh", "none"]
+                        current_idx = sequence.index(engine) if engine in sequence else 0
                         
-                        # Test new engine routing
-                        time.sleep(6)
-                        ok, nip, nloc, nrip = verify_connection_health(next_engine)
-                        if ok or next_engine == "none":
-                            cfg["anonymity_engine"] = next_engine
-                            save_config(cfg)
-                            msg = f"Switched to {next_engine.upper()} because {engine.upper()} failed."
-                            log_message(f"✅ Anonymity failover succeeded: {msg}")
-                            trigger_native_notification("ANONYMITY FAILOVER", msg)
-                            send_telegram_alert(f"🔄 *ANONYMITY FAILOVER EVENT*\n{msg}")
+                        failover_success = False
+                        for attempt in range(1, len(sequence)):
+                            next_idx = (current_idx + attempt) % len(sequence)
+                            next_engine = sequence[next_idx]
+                            log_message(f"🔄 Pivoting failover to engine: '{next_engine.upper()}'")
+                            activate_engine_routing(next_engine)
                             
-                            run_security_scan()
-                            failover_success = True
-                            break
-                    
-                    if not failover_success or cfg.get("anonymity_engine") == "none":
-                        log_message("⚠️ All anonymity channels down! Retrying checks in 10s...")
-                        time.sleep(10)
-                        continue
+                            time.sleep(6)
+                            ok, nip, nloc, nrip = verify_connection_health(next_engine)
+                            if ok or next_engine == "none":
+                                cfg["anonymity_engine"] = next_engine
+                                save_config(cfg)
+                                msg = f"Switched to {next_engine.upper()} because {engine.upper()} failed."
+                                log_message(f"✅ Anonymity failover succeeded: {msg}")
+                                trigger_native_notification("ANONYMITY FAILOVER", msg)
+                                send_telegram_alert(f"🔄 *ANONYMITY FAILOVER EVENT*\n{msg}")
+                                
+                                run_security_scan()
+                                failover_success = True
+                                break
+                        
+                        if not failover_success or cfg.get("anonymity_engine") == "none":
+                            log_message("⚠️ All anonymity channels down! Retrying checks in 10s...")
+                            time.sleep(10)
+                            continue
 
             # 2. Background Threat Scan scheduler
             now = time.time()
-            effective_interval = 1800 if game_mode else scan_interval
-            
-            if scan_interval > 0 and (now - last_scan_time >= effective_interval):
+            if scan_interval > 0 and (now - last_scan_time >= scan_interval):
                 run_security_scan()
                 last_scan_time = now
         except Exception as daemon_err:
             log_message(f"⚠️ Exception in background daemon cycle: {daemon_err}")
             
-        time.sleep(15) # Poll scheduler every 15 seconds
+        time.sleep(15)
 
 # --- Custom HTTP Web Server API ---
 class DashboardAPIHandler(SimpleHTTPRequestHandler):
@@ -544,6 +815,12 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             filename = filename[1:]
         if not filename or filename == 'ghost_dashboard.html':
             return os.path.join(LOG_DIR, "ghost_dashboard.html")
+        
+        # Check if the requested file exists in the parent workspace assets, redirect if so
+        if filename.startswith('assets/'):
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            return os.path.join(base_dir, filename)
+            
         return os.path.join(LOG_DIR, filename)
 
     def send_json_response(self, data, status=200):
@@ -611,54 +888,38 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
                     pass
             self.send_json_response({"logs": lines})
 
-        elif url_path == '/api/speedtest':
-            # Perform a REAL speedtest download over the active engine tunnel
-            engine = cfg.get("anonymity_engine", "tor")
-            
-            # 1. Measure latency (ping)
-            start_ping = time.time()
-            get_public_ip(engine)
-            ping = int((time.time() - start_ping) * 1000)
-            
-            # 2. Measure download speed (Download a 1MB file from Cloudflare CDN)
-            proxy = None
-            if engine == "tor":
-                proxy = "socks5h://127.0.0.1:9050"
-            elif engine == "proxy":
-                proxy_file = os.path.join(LOG_DIR, "active_proxy.json")
-                if os.path.exists(proxy_file):
-                    try:
-                        with open(proxy_file) as f:
-                            p_cfg = json.load(f)
-                        proxy = p_cfg.get("proxy", "")
-                    except:
-                        pass
-                        
-            dl_start = time.time()
-            dl_url = "https://speed.cloudflare.com/__down?bytes=1048576" # exactly 1MB
-            
-            try:
-                res_dl = run_curl(dl_url, proxy, timeout=12)
-                dl_time = time.time() - dl_start
-                if res_dl and dl_time > 0.05:
-                    size = 1048576
-                    # Speed in Mbps = (bytes * 8) / (1024 * 1024 * seconds)
-                    download = round((size * 8) / (1024 * 1024 * dl_time), 1)
-                else:
-                    download = 1.2 if engine == "tor" else 15.4
-            except:
-                download = 1.0
-                
-            upload = round(download * 0.42, 1)
-            
-            self.send_json_response({
-                "ping": ping if ping > 0 else 12,
-                "download": max(download, 0.2),
-                "upload": max(upload, 0.1)
-            })
-
         elif url_path == '/api/schedule':
             self.send_json_response(cfg)
+
+        elif url_path == '/api/report':
+            report_path = os.path.join(LOG_DIR, "report.json")
+            data = {"connection_type": "Unknown", "ssid": "N/A", "battery_temp": 0.0, "threats_today": 0, "status": "CLEAN", "last_scan": ""}
+            if os.path.exists(report_path):
+                try:
+                    with open(report_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                except:
+                    pass
+            self.send_json_response(data)
+
+        elif url_path == '/api/threats':
+            threat_path = os.path.join(LOG_DIR, "threats.json")
+            data = {"threats": []}
+            if os.path.exists(threat_path):
+                try:
+                    with open(threat_path, "r", encoding="utf-8") as f:
+                        data = {"threats": json.load(f)}
+                except:
+                    pass
+            self.send_json_response(data)
+
+        elif url_path == '/api/dns':
+            self.send_json_response({
+                "dns_provider": cfg.get("dns_provider", "cloudflare"),
+                "dns_rotation_interval": cfg.get("dns_rotation_interval", 0),
+                "custom_dns_primary": cfg.get("custom_dns_primary", "1.1.1.1"),
+                "custom_dns_secondary": cfg.get("custom_dns_secondary", "1.0.0.1")
+            })
 
         else:
             super().do_GET()
@@ -708,17 +969,18 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
                 self.send_json_response({"status": "error", "message": str(e)}, 500)
 
         elif url_path == '/api/engine':
+            global last_manual_change_time
             engine = body.get("engine", "tor")
             cfg["anonymity_engine"] = engine
             save_config(cfg)
             activate_engine_routing(engine)
+            last_manual_change_time = time.time()
             log_message(f"👤 User manually set engine to: {engine.upper()}")
             self.send_json_response({"status": "ok"})
 
         elif url_path == '/api/location':
             codes = body.get("codes", "0")
             log_message(f"👤 User requested country rotation. Applying nodes...")
-            
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             script_path = os.path.join(base_dir, "ghost_tools", "location_picker.py")
             if not os.path.exists(script_path):
@@ -741,8 +1003,28 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
                     subprocess.run([sys.executable, script_path, "--panic"])
                 self.send_json_response({"status": "self_destruct"})
             else:
-                t = threading.Thread(target=run_security_scan)
-                t.start()
+                # Trigger scan
+                run_security_scan()
+                
+                # Immediate Failover Healing if active engine is down
+                engine = cfg.get("anonymity_engine", "tor")
+                if engine != "none":
+                    is_healthy, current_ip, loc, real_ip = verify_connection_health(engine)
+                    if not is_healthy:
+                        log_message(f"⚠️ Active scan detected engine '{engine.upper()}' is down! Performing immediate failover healing...")
+                        sequence = ["tor", "warp", "proxy", "doh", "none"]
+                        current_idx = sequence.index(engine) if engine in sequence else 0
+                        for attempt in range(1, len(sequence)):
+                            next_idx = (current_idx + attempt) % len(sequence)
+                            next_engine = sequence[next_idx]
+                            log_message(f"🔄 Healing pivot to: '{next_engine.upper()}'")
+                            activate_engine_routing(next_engine)
+                            time.sleep(6)
+                            ok, nip, nloc, nrip = verify_connection_health(next_engine)
+                            if ok or next_engine == "none":
+                                cfg["anonymity_engine"] = next_engine
+                                save_config(cfg)
+                                break
                 self.send_json_response({"status": "scanning"})
 
         elif url_path == '/api/schedule':
@@ -754,11 +1036,31 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
                 cfg["notification_profile"] = body["notification_profile"]
             if "custom_sound_path" in body:
                 cfg["custom_sound_path"] = body["custom_sound_path"]
-            if "game_mode" in body:
-                cfg["game_mode"] = bool(body["game_mode"])
-                log_message(f"🎮 Game Mode (CPU Saver) toggled to: {cfg['game_mode']}")
             
             save_config(cfg)
+            self.send_json_response({"status": "ok"})
+
+        elif url_path == '/api/dns':
+            provider = body.get("dns_provider", "cloudflare")
+            interval = int(body.get("dns_rotation_interval", 0))
+            
+            cfg["dns_provider"] = provider
+            cfg["dns_rotation_interval"] = interval
+            
+            if provider != "rotation":
+                prim = body.get("custom_dns_primary", "1.1.1.1")
+                sec = body.get("custom_dns_secondary", "1.0.0.1")
+                cfg["custom_dns_primary"] = prim
+                cfg["custom_dns_secondary"] = sec
+                apply_system_dns(prim, sec)
+            else:
+                prim, sec = DNS_PROVIDERS["cloudflare"]
+                cfg["custom_dns_primary"] = prim
+                cfg["custom_dns_secondary"] = sec
+                apply_system_dns(prim, sec)
+                
+            save_config(cfg)
+            log_message(f"👤 User updated DNS settings. Provider: {provider.upper()}, Rotation Interval: {interval}m")
             self.send_json_response({"status": "ok"})
 
         else:
@@ -766,11 +1068,25 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             self.end_headers()
 
 def main():
+    # Load and apply initial DNS configurations on startup
+    try:
+        cfg = load_config()
+        provider = cfg.get("dns_provider", "cloudflare")
+        if provider != "rotation":
+            prim = cfg.get("custom_dns_primary", "1.1.1.1")
+            sec = cfg.get("custom_dns_secondary", "1.0.0.1")
+            apply_system_dns(prim, sec)
+    except:
+        pass
+
     daemon_thread = threading.Thread(target=run_daemon_loop, daemon=True)
     daemon_thread.start()
 
     telegram_thread = threading.Thread(target=run_telegram_bot_poller, daemon=True)
     telegram_thread.start()
+
+    dns_thread = threading.Thread(target=run_dns_rotation_loop, daemon=True)
+    dns_thread.start()
 
     honeypot_thread = threading.Thread(target=run_honeypot_listener, daemon=True)
     honeypot_thread.start()

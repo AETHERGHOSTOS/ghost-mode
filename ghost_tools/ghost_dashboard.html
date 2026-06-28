@@ -7,15 +7,25 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Grotesk:wght@300;400;500;600;700&family=Zen+Dots&display=swap');
 
+:root {
+  --bg-color: #050505;
+  --card-bg: #0a0a0a;
+  --text-color: #d0d0d0;
+  --border-color: #121212;
+  --accent-color: #00ff88;
+  --glow-color: rgba(0, 255, 136, 0.2);
+}
+
 *{margin:0;padding:0;box-sizing:border-box}
 html{font-size:15px}
 body{
-  background:#050505;
-  color:#d0d0d0;
+  background: var(--bg-color);
+  color: var(--text-color);
   font-family:'Space Grotesk', sans-serif;
   min-height:100vh;
   padding:16px;
   position:relative;
+  transition: background 0.3s, color 0.3s;
 }
 /* Cyber scanline overlay */
 body::before{
@@ -83,9 +93,24 @@ body::before{
 .splash-status {
   font-family: 'Share Tech Mono', monospace;
   font-size: 0.65rem;
-  color: #444;
+  color: #555;
   letter-spacing: 1px;
   height: 15px;
+}
+.splash-log-container {
+  width: 100%;
+  height: 80px;
+  background: #000000;
+  border: 1px solid #1a1a1a;
+  border-radius: 4px;
+  margin-top: 15px;
+  padding: 8px;
+  overflow-y: auto;
+  text-align: left;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.58rem;
+  color: #00ff88;
+  line-height: 1.4;
 }
 
 /* Circular score gauge */
@@ -106,13 +131,13 @@ body::before{
 }
 .gauge-fill {
   fill: none;
-  stroke: #00ff88;
+  stroke: var(--accent-color);
   stroke-width: 6;
   stroke-dasharray: 251.2;
   stroke-dashoffset: 251.2; /* 2*pi*r where r=40 */
   stroke-linecap: round;
   transition: stroke-dashoffset 0.8s ease-out, stroke 0.8s;
-  filter: drop-shadow(0 0 4px rgba(0, 255, 136, 0.4));
+  filter: drop-shadow(0 0 4px var(--glow-color));
 }
 .gauge-text {
   position: absolute;
@@ -134,9 +159,9 @@ body::before{
   gap: 12px;
   margin-top: 10px;
   padding: 12px;
-  background: #050505;
+  background: var(--bg-color);
   border-radius: 6px;
-  border: 1px solid #111;
+  border: 1px solid var(--border-color);
 }
 .circuit-node {
   display: flex;
@@ -148,156 +173,140 @@ body::before{
   content: '';
   position: absolute;
   left: 10px;
-  top: 22px;
-  width: 1px;
-  height: 18px;
-  border-left: 1px dashed #222;
+  top: 20px;
+  bottom: -16px;
+  width: 2px;
+  background: repeating-linear-gradient(to bottom, #151515, #151515 4px, transparent 4px, transparent 8px);
 }
 .node-dot {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #0c0c0c;
-  border: 1px solid #222;
+  background: #111;
+  border: 2px solid #222;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
-  color: #666;
   font-family: 'Share Tech Mono', monospace;
-  z-index: 1;
+  font-size: 0.65rem;
+  font-weight: bold;
+  z-index: 2;
+  color: #888;
 }
 .node-dot.active {
-  background: #00ff8812;
-  border-color: #00ff88;
-  color: #00ff88;
-  box-shadow: 0 0 8px rgba(0, 255, 136, 0.25);
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #000;
+  box-shadow: 0 0 10px var(--glow-color);
 }
 .node-dot.alert {
-  background: #ff335512;
+  background: #ff3355;
   border-color: #ff3355;
-  color: #ff3355;
-  box-shadow: 0 0 8px rgba(255, 51, 85, 0.25);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(255, 51, 85, 0.4);
 }
 .node-info {
   display: flex;
   flex-direction: column;
 }
 .node-title {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 .node-desc {
+  font-size: 0.65rem;
+  color: #666;
   font-family: 'Share Tech Mono', monospace;
-  font-size: 0.8rem;
-  color: #c0c0c0;
 }
 
-/* Blinking unprotected warning banner */
-.unprotected-banner {
-  background: rgba(255, 51, 85, 0.06);
-  border: 1px solid #ff3355;
-  color: #ff3355;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 0.85em;
+/* Card layouts */
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.card:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 20px var(--glow-color);
+}
+.card h3 {
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 12px;
   font-weight: 600;
-  letter-spacing: 0.5px;
-  display: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 6px;
+}
+
+.status-text {
+  font-family: 'Zen Dots', sans-serif;
+  font-size: 1.1rem;
+  display: flex;
   align-items: center;
   gap: 10px;
+}
+.status-text.ok { color:#00ff88 }
+.status-text.warn { color:#ffaa00 }
+.status-text.alert { color:#ff3355 }
+
+.big-num {
+  font-family: 'Zen Dots', sans-serif;
+  font-size: 3rem;
+  text-align: center;
+  margin: 10px 0;
+  line-height: 1;
+}
+.big-num.ok { color:#00ff88 }
+.big-num.alert { color:#ff3355; text-shadow: 0 0 15px rgba(255, 51, 85, 0.4); }
+
+.unprotected-banner {
+  background: #ff335515;
+  border: 1px solid #ff335540;
+  color: #ff3355;
+  padding: 10px;
+  border-radius: 6px;
   margin-bottom: 12px;
-  animation: border-flash 1.5s infinite ease-in-out;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  animation: blink 2s infinite ease-in-out;
 }
-@keyframes border-flash {
-  0%, 100% { border-color: #ff3355; box-shadow: 0 0 4px rgba(255,51,85,0.1); }
-  50% { border-color: rgba(255,51,85,0.3); box-shadow: none; }
-}
-
-header{
-  text-align:center;
-  padding:12px 0 16px;
-  border-bottom:1px dashed #161616;
-  margin-bottom:16px;
-}
-header h1{
-  font-family:'Zen Dots', sans-serif;
-  font-size:1.4em;
-  letter-spacing:5px;
-  color:#00ff88;
-  text-shadow:0 0 15px rgba(0,255,136,0.3);
-  margin-top:6px;
-}
-.aether-emoji {
-  display: inline-block;
-  width: 1.2em;
-  height: 1.2em;
-  background-image: url('aether_emoji.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  vertical-align: middle;
-  margin-top: -4px;
-}
-header p{
-  font-family:'Share Tech Mono', monospace;
-  color:#444;
-  font-size:0.7em;
-  letter-spacing:4px;
-  margin-top:2px;
-}
-
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-@media (max-width: 600px) {
-  .grid2 { grid-template-columns: 1fr; }
-}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
-@media (max-width: 500px) {
-  .grid3 { grid-template-columns: 1fr; }
-}
-
-.card{
-  background:#0a0a0a;
-  border:1px solid #141414;
-  border-radius:10px;
-  padding:14px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-  transition: border-color 0.3s;
-}
-.card:hover{
-  border-color:#222;
-}
-.card h3{
-  font-weight:700;
-  font-size:0.72em;
-  color:#555;
-  letter-spacing:2px;
-  text-transform:uppercase;
-  margin-bottom:12px;
-  border-bottom:1px solid #141414;
-  padding-bottom:6px;
-}
-
-.status-text{font-size:1.1em;font-weight:600;letter-spacing:1.5px;display:flex;align-items:center;}
-.ok{color:#00ff88}
-.warn{color:#ffaa00}
-.alert{color:#ff3355}
-.info{color:#0099ff}
-.muted{color:#666}
-
-.big-num{font-family:'Share Tech Mono', monospace; font-size:2.4em;font-weight:bold;text-align:center;padding:4px 0;letter-spacing:1px}
+@keyframes blink { 50% { opacity:0.6 } }
 
 .pulse{
-  display:inline-block;
-  width:8px;height:8px;
+  width:10px;
+  height:10px;
   border-radius:50%;
   background:#00ff88;
-  margin-right:8px;
-  animation:pulse 2s infinite;
+  display:inline-block;
+  box-shadow:0 0 8px #00ff88;
+  animation:pulse 2s infinite ease-in-out;
 }
-.pulse.dead{background:#ff3355;animation:none}
+.pulse.dead{background:#ff3355;box-shadow: 0 0 8px #ff3355;animation:none}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.2;transform:scale(0.8)}}
 
 .badge-grid{
@@ -325,7 +334,7 @@ header p{
   font-size:0.7em;
   line-height:1.8;
   padding:10px;
-  background:#050505;
+  background:#020202;
   border-radius:6px;
   border:1px solid #121212;
 }
@@ -363,7 +372,7 @@ header p{
   letter-spacing:0.5px;
   margin-top:2px;
 }
-#last-scan{color:#3a3a3a;font-size:0.65em;margin-top:4px}
+#last-scan{color:#555;font-size:0.65em;margin-top:4px}
 
 /* Form Styles */
 select{
@@ -376,44 +385,7 @@ select{
   font-size:0.85em;
   outline:none;
 }
-select:focus{border-color:#00ff88}
-
-/* Speedtest UI */
-.speed-meter{
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-  margin:10px 0;
-  text-align:center;
-}
-.speed-val{
-  font-family:'Share Tech Mono', monospace;
-  font-size:1.6em;
-  font-weight:bold;
-  color:#0099ff;
-}
-.speed-label{
-  font-size:0.65em;
-  color:#555;
-  text-transform:uppercase;
-  letter-spacing:1px;
-}
-
-/* Spinner Animation */
-.spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(0,153,255,0.2);
-  border-radius: 50%;
-  border-top-color: #0099ff;
-  animation: spin 0.8s linear infinite;
-  margin-left: 6px;
-  vertical-align: middle;
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+select:focus{border-color:var(--accent-color)}
 
 /* Toast alert */
 .toast {
@@ -421,13 +393,13 @@ select:focus{border-color:#00ff88}
   bottom: 20px;
   right: 20px;
   background: #0a0a0a;
-  border: 1px solid #00ff88;
+  border: 1px solid var(--accent-color);
   border-radius: 6px;
   padding: 12px 18px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   font-family:'Share Tech Mono', monospace;
   font-size:0.8em;
-  color:#00ff88;
+  color:var(--accent-color);
   z-index: 10000;
   transform: translateY(100px);
   opacity: 0;
@@ -437,6 +409,16 @@ select:focus{border-color:#00ff88}
   transform: translateY(0);
   opacity: 1;
 }
+
+.aether-emoji {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  background-image: url('aether_emoji.png');
+  background-size: contain;
+  vertical-align: middle;
+  margin: 0 4px;
+}
 </style>
 </head>
 <body>
@@ -444,19 +426,23 @@ select:focus{border-color:#00ff88}
 <!-- Cyber Splash Loading Screen -->
 <div id="splash-overlay">
   <div class="splash-content">
-    <img src="logo.png" class="splash-logo" alt="Aether OS Logo">
-    <div class="splash-title">AETHER GHOST OS</div>
+    <img src="logo.png" class="splash-logo" alt="Aether OS Logo" id="splash-logo-img">
+    <div class="splash-title">💀 AETHER GHOST OS 💀</div>
     <div class="splash-progress-bg">
       <div id="splash-bar" class="splash-progress-bar"></div>
     </div>
     <div id="splash-status" class="splash-status">LOADING SHIELD DRIVERS...</div>
+    <div class="splash-log-container" id="splash-log-box"></div>
   </div>
 </div>
 
-<header style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
-  <img src="logo.png" alt="Aether Ghost OS Logo" style="width: 54px; height: 54px; border-radius: 10px; border: 1px solid #1a1a1a; box-shadow: 0 0 12px rgba(0, 255, 136, 0.2);">
-  <h1><span class="aether-emoji"></span> AETHER GHOST OS <span class="aether-emoji"></span></h1>
-  <p>PRIVACY OPERATING SECURITY SUITE</p>
+<header style="display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative;">
+  <!-- Theme Switch Toggle Button -->
+  <button id="theme-toggle" class="btn blue" style="width:auto; margin:0; padding:6px 12px; font-size:0.7em; position:absolute; top:4px; right:4px; font-family:'Share Tech Mono', monospace;">🌙 Dark Theme</button>
+  
+  <img src="logo.png" alt="Aether Ghost OS Logo" id="header-logo-img" style="width: 54px; height: 54px; border-radius: 10px; border: 1px solid #1a1a1a; box-shadow: 0 0 12px rgba(0, 255, 136, 0.2);">
+  <h1>💀 AETHER GHOST OS 💀</h1>
+  <p style="font-size:0.7em; letter-spacing:3px; color:#666;">PRIVACY OPERATING SECURITY SUITE</p>
 </header>
 
 <!-- Blinking Unprotected Alert Banner -->
@@ -487,29 +473,55 @@ select:focus{border-color:#00ff88}
       <div id="gauge-score" class="gauge-text">0%</div>
     </div>
   </div>
-  <div class="card">
+  <div class="card" id="threats-card" style="cursor: pointer; transition: all 0.2s ease-in-out; border-color: rgba(255, 51, 85, 0.15);" onmouseover="this.style.borderColor='#ff3355'" onmouseout="this.style.borderColor='rgba(255, 51, 85, 0.15)'">
     <h3>🚨 Threats Today</h3>
     <div class="big-num ok" id="threat-count">0</div>
+    <div style="font-size: 0.6em; color: #555; text-align: center; margin-top: 4px; font-family: monospace;">(Click to view details & remediation)</div>
   </div>
 </div>
 
-<!-- Anonymizer Configuration -->
-<div class="grid2">
+<!-- Anonymizer & DNS Configuration -->
+<div class="grid3">
   <div class="card">
     <h3>🔒 Anonymity Engine</h3>
-    <select id="engine-select" onchange="changeEngine()" style="width:100%; color:#00ff88;">
-      <option value="tor">😈 Tor Network Proxy</option>
-      <option value="warp">🌐 Cloudflare WARP VPN</option>
+    <select id="engine-select" onchange="changeEngine()" style="width:100%; color:#00ff88; margin-top:4px;">
+      <option value="tor">🧅 Tor Network Proxy</option>
+      <option value="warp">⚡ Cloudflare WARP VPN</option>
       <option value="proxy">🌍 Public Proxy Rotation</option>
-      <option value="doh">🛡️ Secure DNS-over-HTTPS</option>
-      <option value="none" style="color:#ff3355;">🛑 No Anonymity (UNPROTECTED!)</option>
+      <option value="doh">🟣 Secure DNS (DoH)</option>
+      <option value="none" style="color:#ff3355;">🛑 Disable Anonymity</option>
     </select>
   </div>
+  
+  <div class="card" id="dns-card">
+    <h3>🔀 Secure DNS Changer</h3>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <select id="dns-provider-select" onchange="toggleDnsRotFields()" style="width:100%; color:#00ff88;">
+        <option value="cloudflare">☁️ Cloudflare (1.1.1.1)</option>
+        <option value="google">🔍 Google (8.8.8.8)</option>
+        <option value="quad9">🛡️ Quad9 Secure (9.9.9.9)</option>
+        <option value="adguard">🚫 AdGuard Block (94.140.14.14)</option>
+        <option value="rotation">🔄 Auto-Rotate DNS</option>
+      </select>
+      <div id="dns-rotation-fields" style="display:none; flex-direction:column; gap:2px;">
+        <label style="font-size:0.58em; color:#555; letter-spacing:0.5px; text-transform:uppercase;">Rotation Frequency</label>
+        <select id="dns-rotation-interval-select" style="width:100%;">
+          <option value="1">Every 1 Minute</option>
+          <option value="5">Every 5 Minutes</option>
+          <option value="10">Every 10 Minutes</option>
+          <option value="30">Every 30 Minutes</option>
+          <option value="60">Every 1 Hour</option>
+        </select>
+      </div>
+      <button class="btn blue" onclick="updateDnsSettings()" style="margin:0; padding:6px; font-size:0.75em; letter-spacing:1px;">Apply DNS</button>
+    </div>
+  </div>
+
   <div class="card" id="spoofer-card">
     <h3>🌍 Tor Location Spoofer</h3>
-    <div style="display: flex; gap: 8px; align-items: center;">
+    <div style="display: flex; gap: 8px; align-items: center; margin-top:4px;">
       <select id="country-select" style="flex-grow:1;">
-        <option value="0">🌍 Random (Auto-select)</option>
+        <option value="0">🌍 Random (Auto)</option>
         <option value="1">🇺🇸 United States</option>
         <option value="2">🇬🇧 United Kingdom</option>
         <option value="3">🇩🇪 Germany</option>
@@ -531,7 +543,7 @@ select:focus{border-color:#00ff88}
   </div>
 </div>
 
-<!-- Layout restruct for Visual Hops Visualizer and Credentials -->
+<!-- Credentials & Topology visualizer -->
 <div class="grid2">
   <div style="display:flex; flex-direction:column; gap:12px;">
     <!-- IP Credentials -->
@@ -557,7 +569,7 @@ select:focus{border-color:#00ff88}
         <div>Connection: <span id="conn-type" class="info">Wi-Fi</span></div>
         <div>SSID Name: <span id="ssid-val" class="ok">Unknown</span></div>
         <div>SSID Safety: <span id="ssid-safety" class="ok">SECURED</span></div>
-        <div>Wi-Fi Provider: <span id="dns-encryption" class="warn">Exposed</span></div>
+        <div>DNS Security: <span id="dns-encryption" class="warn">Exposed</span></div>
       </div>
     </div>
   </div>
@@ -632,10 +644,6 @@ select:focus{border-color:#00ff88}
     </div>
     <div style="font-size:0.58em; color:#444; margin-top:4px;">*Path to a local audio file on your phone. Will be triggered by background daemon.</div>
   </div>
-
-  <div style="margin-top:12px; padding-top:12px; border-top:1px solid #141414;">
-    <button class="btn blue" id="gamemode-btn" onclick="toggleGameMode()" style="margin:0; font-size:0.85em; letter-spacing:1px;">🎮 Game Mode: OFF</button>
-  </div>
 </div>
 
 <!-- Telegram Sentry Alerts Card -->
@@ -648,7 +656,7 @@ select:focus{border-color:#00ff88}
   <div style="font-size:0.75em; color:#666; background:#050505; border:1px solid #141414; padding:10px; border-radius:6px; margin-bottom:12px; line-height:1.6;">
     <strong>How to get your credentials (Free):</strong><br>
     1. Search for <strong>@BotFather</strong> on Telegram, click Start, and send <code>/newbot</code> to get your token.<br>
-    2. Search for <strong>@userinfobot</strong> on Telegram and click Start to get your numerical Chat ID.<br>
+    2. Search for <strong>@GetIDBot</strong> on Telegram and click Start to get your numerical Chat ID.<br>
     3. Paste them below, toggle Enabled, and click Save.
   </div>
 
@@ -676,42 +684,21 @@ select:focus{border-color:#00ff88}
   </div>
 </div>
 
-<!-- Speed Test and Scan badges -->
-<div class="grid2">
-  <div class="card">
-    <h3>🔍 Security Check Layers</h3>
-    <div class="badge-grid" id="checks">
-      <span class="badge pend" id="badge-network">⏳ Network Audit</span>
-      <span class="badge pend" id="badge-ports">⏳ Ports Scan</span>
-      <span class="badge pend" id="badge-miccam">⏳ Mic/Camera</span>
-      <span class="badge pend" id="badge-arp">⏳ ARP integrity</span>
-      <span class="badge pend" id="badge-dnsleak">⏳ DNS Leak check</span>
-      <span class="badge pend" id="badge-dnspoison">⏳ DNS Hijack Check</span>
-      <span class="badge pend" id="badge-ssid">⏳ SSID Safety</span>
-      <span class="badge pend" id="badge-process">⏳ Process Audits</span>
-      <span class="badge pend" id="badge-blocker">⏳ Blocker Status</span>
-      <span class="badge pend" id="badge-temp">⏳ CPU Thermal</span>
-      <span class="badge pend" id="badge-engine">⏳ Engine Anonymity</span>
-    </div>
-  </div>
-  
-  <div class="card">
-    <h3>🚀 Network Speed Test</h3>
-    <div class="speed-meter">
-      <div>
-        <div class="speed-val" id="ping-val">-</div>
-        <div class="speed-label">Ping ms</div>
-      </div>
-      <div>
-        <div class="speed-val" id="down-val">-</div>
-        <div class="speed-label">Download Mbps</div>
-      </div>
-      <div>
-        <div class="speed-val" id="up-val">-</div>
-        <div class="speed-label">Upload Mbps</div>
-      </div>
-    </div>
-    <button class="btn blue" id="speed-btn" onclick="runSpeedTest()" style="padding:6px; font-size:0.75em; letter-spacing:1px;">🚀 Run speed test</button>
+<!-- Scan badges -->
+<div class="card" style="margin-bottom: 12px;">
+  <h3>🔍 Security Check Layers</h3>
+  <div class="badge-grid" id="checks">
+    <span class="badge pend" id="badge-network">⏳ Network Audit</span>
+    <span class="badge pend" id="badge-ports">⏳ Ports Scan</span>
+    <span class="badge pend" id="badge-miccam">⏳ Mic/Camera</span>
+    <span class="badge pend" id="badge-arp">⏳ ARP integrity</span>
+    <span class="badge pend" id="badge-dnsleak">⏳ DNS Leak check</span>
+    <span class="badge pend" id="badge-dnspoison">⏳ DNS Hijack Check</span>
+    <span class="badge pend" id="badge-ssid">⏳ SSID Safety</span>
+    <span class="badge pend" id="badge-process">⏳ Process Audits</span>
+    <span class="badge pend" id="badge-blocker">⏳ Blocker Status</span>
+    <span class="badge bg-ok" id="badge-engine">⏳ Engine Anonymity</span>
+    <span class="badge pend" id="badge-temp">⏳ CPU Thermal</span>
   </div>
 </div>
 
@@ -736,8 +723,8 @@ select:focus{border-color:#00ff88}
   
   <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
     <!-- Web & Mobile Money -->
-    <div style="background:#050505; border:1px solid #141414; padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:8px;">
-      <h4 style="font-size:0.75em; color:#00ff88; letter-spacing:1px; text-transform:uppercase;">🌐 Fiat & Web Donations</h4>
+    <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:8px;">
+      <h4 style="font-size:0.75em; color:var(--accent-color); letter-spacing:1px; text-transform:uppercase;">🌐 Fiat & Web Donations</h4>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85em; padding:6px 0;">
         <span>☕ Buy Me a Coffee:</span>
         <a href="https://buymeacoffee.com/aetherghost.os" target="_blank" style="color:#0099ff; text-decoration:none; font-family: monospace;">aetherghost.os ➔</a>
@@ -745,43 +732,43 @@ select:focus{border-color:#00ff88}
     </div>
 
     <!-- Crypto Addresses -->
-    <div style="background:#050505; border:1px solid #141414; padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:6px;">
-      <h4 style="font-size:0.75em; color:#00ff88; letter-spacing:1px; text-transform:uppercase;">🪙 Crypto Addresses</h4>
+    <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:6px;">
+      <h4 style="font-size:0.75em; color:var(--accent-color); letter-spacing:1px; text-transform:uppercase;">🪙 Crypto Addresses</h4>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU', 'USDT TRX Tron TRC20')">
         <span>USDT | TRX — Tron (TRC20):</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">TKPkbk...FieaQU 📋</span>
+        <span style="color:var(--accent-color); font-family:monospace; font-size:0.9em;">TKPkbk...FieaQU 📋</span>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui', 'USDC SOL Solana')">
         <span>USDC | SOL — Solana:</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">9pU3D8...BKNFw 📋</span>
+        <span style="color:var(--accent-color); font-family:monospace; font-size:0.9em;">9pU3D8...BKNFw 📋</span>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'USDT ETH Ethereum ERC20')">
         <span>USDT | ETH — Ethereum (ERC20):</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+        <span style="color:var(--accent-color); font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'BNB BSC BNB Smart Chain BEP20')">
         <span>BNB | BSC — BNB Smart Chain (BEP20):</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+        <span style="color:var(--accent-color); font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'BNB ETH Ethereum ERC20')">
         <span>BNB | ETH — Ethereum (ERC20):</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+        <span style="color:var(--accent-color); font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k', 'Bitcoin BTC Native')">
         <span>BTC | BTC — Bitcoin:</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">15dzX3...ahJ5k 📋</span>
+        <span style="color:var(--accent-color); font-family:monospace; font-size:0.9em;">15dzX3...ahJ5k 📋</span>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'Bitcoin BSC BNB Smart Chain BEP20')">
         <span>BTC | BSC — BNB Smart Chain (BEP20):</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+        <span style="color:var(--accent-color); font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('0x09cad574c2c39a88ce931307361682680b795490', 'Bitcoin ETH Ethereum ERC20')">
         <span>BTC | ETH — Ethereum (ERC20):</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
+        <span style="color:var(--accent-color); font-family:monospace; font-size:0.9em;">0x09ca...95490 📋</span>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8em; cursor:pointer;" onclick="copyVal('bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj', 'Bitcoin SEGWIT BTC SegWit')">
         <span>BTC | SEGWIT — BTC (SegWit):</span>
-        <span style="color:#00ff88; font-family:monospace; font-size:0.9em;">bc1qqm...aqrpmj 📋</span>
+        <span style="color:var(--accent-color); font-family:monospace; font-size:0.9em;">bc1qqm...aqrpmj 📋</span>
       </div>
     </div>
   </div>
@@ -794,7 +781,78 @@ select:focus{border-color:#00ff88}
   <button class="btn red" onclick="triggerPanic()">🚨 PANIC DE-AUTHENTICATE</button>
 </div>
 
+<!-- Info Card -->
+<div class="card" style="margin-top:12px; border-color:var(--border-color);">
+  <h3>ℹ️ How Aether Ghost OS Anonymity Works</h3>
+  <div style="font-size:0.78em; line-height:1.9; color:#555;">
+    <div style="margin-bottom:6px;">
+      <span class="ok">✅ Routing protection:</span> active tunnels protect terminal logs, curl requests, and background security scans.
+    </div>
+    <div style="margin-bottom:6px;">
+      <span class="info">🔍 Browser Routing Options:</span> To route a standard browser through the local Tor tunnel, configure your browser SOCKS5 proxy to point to <strong style="color:var(--accent-color)">127.0.0.1:9050</strong> or use **Orbot** VPN mode.
+    </div>
+    <div>
+      <span class="info">🚀 Upcoming Releases:</span>
+      <div style="margin-top:6px; display:flex; flex-direction:column; gap:4px; padding-left:4px;">
+        <span>📱 <strong style="color:var(--accent-color)">Aether Mobile App</strong> — protect every app on your phone</span>
+        <span>🔒 <strong style="color:var(--accent-color)">Aether VPN / sovereign tunnel</strong> — full-device encrypted proxies</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+// Theme Switcher Logic
+let currentTheme = localStorage.getItem('ghost_theme') || 'dark';
+
+function applyTheme(theme) {
+  const root = document.documentElement;
+  const headerLogo = document.getElementById('header-logo-img');
+  const splashLogo = document.getElementById('splash-logo-img');
+  const btn = document.getElementById('theme-toggle');
+  
+  if (theme === 'light') {
+    root.style.setProperty('--bg-color', '#f5f7fa');
+    root.style.setProperty('--card-bg', '#ffffff');
+    root.style.setProperty('--text-color', '#1a1a2e');
+    root.style.setProperty('--border-color', '#e2e8f0');
+    root.style.setProperty('--accent-color', '#0099ff');
+    root.style.setProperty('--glow-color', 'rgba(0, 153, 255, 0.2)');
+    document.body.style.background = '#f5f7fa';
+    document.body.style.color = '#1a1a2e';
+    
+    // Change logos to light theme path
+    if (headerLogo) headerLogo.src = 'assets/logo_light.png';
+    if (splashLogo) splashLogo.src = 'assets/logo_light.png';
+    
+    btn.textContent = '🌞 Light Theme';
+    btn.className = 'btn blue';
+  } else {
+    // Dark mode default
+    root.style.setProperty('--bg-color', '#050505');
+    root.style.setProperty('--card-bg', '#0a0a0a');
+    root.style.setProperty('--text-color', '#d0d0d0');
+    root.style.setProperty('--border-color', '#121212');
+    root.style.setProperty('--accent-color', '#00ff88');
+    root.style.setProperty('--glow-color', 'rgba(0, 255, 136, 0.2)');
+    document.body.style.background = '#050505';
+    document.body.style.color = '#d0d0d0';
+    
+    if (headerLogo) headerLogo.src = 'assets/logo_dark.png';
+    if (splashLogo) splashLogo.src = 'assets/logo_dark.png';
+    
+    btn.textContent = '🌙 Dark Theme';
+    btn.className = 'btn blue';
+  }
+  localStorage.setItem('ghost_theme', theme);
+  currentTheme = theme;
+}
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+});
+
+// Copy credentials helper
 function copyVal(val, name) {
   navigator.clipboard.writeText(val).then(() => {
     showToast(`✅ ${name} copied!`);
@@ -837,8 +895,8 @@ function toggleLog(e) {
 function showToast(text, isAlert = false) {
   const toast = document.getElementById('toast-notif');
   toast.textContent = text;
-  toast.style.borderColor = isAlert ? '#ff3355' : '#00ff88';
-  toast.style.color = isAlert ? '#ff3355' : '#00ff88';
+  toast.style.borderColor = isAlert ? '#ff3355' : 'var(--accent-color)';
+  toast.style.color = isAlert ? '#ff3355' : 'var(--accent-color)';
   toast.classList.add('show');
   setTimeout(() => {
     toast.classList.remove('show');
@@ -977,7 +1035,6 @@ function triggerHaptics() {
   }
 }
 
-// Request desktop notification permission on startup
 if (window.Notification && Notification.permission === "default") {
   Notification.requestPermission();
 }
@@ -1002,7 +1059,7 @@ function pushSystemNotification(title, body) {
 }
 
 async function checkIP(){
-  // Real IP is now retrieved directly from local server daemon response
+  // Auto-filled by checkLocation
 }
 
 // Dynamic circular progress gauge update
@@ -1010,16 +1067,14 @@ function updateGauge(score) {
   const fill = document.getElementById('gauge-fill');
   const text = document.getElementById('gauge-score');
   
-  // Circumference = 2 * pi * r = 2 * 3.14159 * 35 = 219.9
   const circumference = 219.9;
   const offset = circumference - (score / 100) * circumference;
   
   fill.style.strokeDashoffset = offset;
   text.textContent = score + '%';
   
-  // Color shifting based on score
   if (score >= 80) {
-    fill.style.stroke = '#00ff88';
+    fill.style.stroke = 'var(--accent-color)';
   } else if (score >= 50) {
     fill.style.stroke = '#ffaa00';
   } else {
@@ -1044,46 +1099,47 @@ async function checkLocation(){
       document.getElementById('notif-select').value = status.notification_profile;
       
       // Calculate Privacy Index Score
-      let score = 15; // base score for audit components
-      if (status.engine !== "none") score += 15; // engine active
-      if (status.active) score += 25; // connection active
-      if (status.dns_encrypted) score += 25; // encrypted path
+      let score = 25; // base score for audits
+      if (status.engine !== "none") score += 15;
+      if (status.active) score += 25;
+      if (status.dns_encrypted) score += 25;
       
       // Honeypot active
-      score += 20; 
+      score += 10; 
       updateGauge(score);
       
-      // Warning banner toggler for No Anonymity choice
       if (status.engine === "none") {
         warningBanner.style.display = 'flex';
         spoofer.style.display = 'none';
         torIpEl.textContent = 'Exposed';
         torIpEl.style.color = '#ff3355';
-        locEl.textContent = 'None (Connection Leak)';
+        locEl.textContent = 'None (Unprotected)';
         locEl.style.color = '#ff3355';
       } else {
         warningBanner.style.display = 'none';
-        if (status.engine === "tor") {
-          spoofer.style.display = 'block';
-        } else {
-          spoofer.style.display = 'none';
-        }
-        
+        spoofer.style.display = status.engine === "tor" ? 'block' : 'none';
+
         if (status.active) {
-          torIpEl.textContent = status.ip;
-          torIpEl.style.color = '#00ff88';
-          locEl.textContent = status.location;
-          locEl.style.color = '#00ff88';
+          torIpEl.textContent = status.ip || 'Active';
+          torIpEl.style.color = 'var(--accent-color)';
+          locEl.textContent = status.location || 'Secured';
+          locEl.style.color = 'var(--accent-color)';
+          setShieldStatus('GHOST ACTIVE 👻', 'ok');
+        } else if (status.engine === "doh") {
+          torIpEl.textContent = 'N/A (DNS only)';
+          torIpEl.style.color = '#ffaa00';
+          locEl.textContent = 'DNS Encrypted';
+          locEl.style.color = '#ffaa00';
         } else {
-          torIpEl.textContent = 'Disconnected';
-          torIpEl.style.color = '#555';
-          locEl.textContent = 'Unknown (Shield off)';
-          locEl.style.color = '#555';
+          torIpEl.textContent = 'Connecting...';
+          torIpEl.style.color = '#ffaa00';
+          locEl.textContent = 'Establishing tunnel...';
+          locEl.style.color = '#ffaa00';
         }
       }
       
       if (status.dns_encrypted) {
-        dnsEl.textContent = 'Encrypted (Provider Blocked)';
+        dnsEl.textContent = 'Encrypted (Secure DNS active)';
         dnsEl.className = 'ok';
       } else {
         dnsEl.textContent = 'Exposed (Provider spying)';
@@ -1105,11 +1161,12 @@ async function updateCircuitVisualizer() {
       const data = await res.json();
       if (data.hops && data.hops.length > 0) {
         container.innerHTML = '';
+        const isProtected = data.hops.length > 1 || (data.hops[0] && data.hops[0].ip !== "UNPROTECTED");
+
         data.hops.forEach((hop, idx) => {
           const node = document.createElement('div');
           node.className = 'circuit-node';
-          
-          let dotClass = 'active';
+          let dotClass = isProtected ? 'active' : 'alert';
           if (hop.ip === "UNPROTECTED" || hop.ip === "Exposed") {
             dotClass = 'alert';
           }
@@ -1148,7 +1205,6 @@ async function changeEngine() {
     if (res.ok) {
       addLog(`✅ Anonymity engine set to ${engine.toUpperCase()}. Tunnel configuration synchronizing...`, 'ok');
       await checkLocation();
-      await checkIP();
     } else {
       addLog('❌ Failed to update anonymity engine.', 'alert');
     }
@@ -1168,11 +1224,11 @@ async function changeLocation(){
     });
     if (res.ok) {
       addLog('🌍 Tor exit nodes configured. Restarting proxy circuits...','ok');
-      showToast('🔄 Tor restarting country nodes...');
+      showToast('🌍 Tor routing location changed.');
       setTimeout(async () => {
         await checkLocation();
         addLog('🌐 New anonymous credentials synchronized.','ok');
-      }, 10000);
+      }, 8000);
     } else {
       addLog('❌ Tor location spoofer failed. Check config.','alert');
     }
@@ -1181,8 +1237,54 @@ async function changeLocation(){
   }
 }
 
+// DNS Configurations Scripts
+function toggleDnsRotFields() {
+  const provider = document.getElementById('dns-provider-select').value;
+  const fields = document.getElementById('dns-rotation-fields');
+  fields.style.display = provider === 'rotation' ? 'flex' : 'none';
+}
+
+async function loadDnsConfig() {
+  try {
+    const res = await fetch('/api/dns?t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('dns-provider-select').value = data.dns_provider || 'cloudflare';
+      document.getElementById('dns-rotation-interval-select').value = data.dns_rotation_interval || 5;
+      toggleDnsRotFields();
+    }
+  } catch(e) {}
+}
+
+async function updateDnsSettings() {
+  const provider = document.getElementById('dns-provider-select').value;
+  const interval = document.getElementById('dns-rotation-interval-select').value;
+  
+  addLog(`⚙️ Requests DNS configuration update: ${provider.toUpperCase()}...`, 'info');
+  try {
+    const res = await fetch('/api/dns', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        dns_provider: provider,
+        dns_rotation_interval: interval
+      })
+    });
+    if (res.ok) {
+      addLog(`✅ DNS configurations successfully updated.`, 'ok');
+      showToast('✅ DNS Resolver Saved!');
+    } else {
+      addLog('❌ Failed to update DNS configuration.', 'alert');
+    }
+  } catch(e) {
+    addLog('❌ Server is offline.', 'alert');
+  }
+}
+
 async function runScan(){
-  timeToNextScan = scanInterval; // Reset countdown timer
+  if (scanInterval > 0) {
+    timeToNextScan = scanInterval;
+  }
   addLog('💀 Triggering active security shield audit in Termux...','ok');
   setShieldStatus('SCANNING...','warn');
 
@@ -1195,7 +1297,7 @@ async function runScan(){
 
   setTimeout(async () => {
     try {
-      const res = await fetch('report.json?t=' + Date.now());
+      const res = await fetch('/api/report?t=' + Date.now());
       if (res.ok) {
         const r = await res.json();
         
@@ -1299,7 +1401,7 @@ async function loadSystemLogs() {
             d.className += ' alert';
           } else if (line.includes('🤫') || line.includes('✅') || line.includes('ACTIVE') || line.includes('cool') || line.includes('Active') || line.includes('Spoof')) {
             d.className += ' ok';
-          } else if (line.includes('Checking') || line.includes('Auditing') || line.includes('Switching') || line.includes('Applying') || line.includes('Rotating')) {
+          } else if (line.includes('Checking') || line.includes('Auditing') || line.includes('Stealth') || line.includes('Applying') || line.includes('Rotating')) {
             d.className += ' info';
           }
           d.textContent = line;
@@ -1318,65 +1420,39 @@ async function loadSystemLogs() {
   } catch(e) {}
 }
 
-async function runSpeedTest() {
-  const btn = document.getElementById('speed-btn');
-  btn.disabled = true;
-  btn.innerHTML = `Running download test <span class="spinner"></span>`;
-  
-  document.getElementById('ping-val').textContent = "...";
-  document.getElementById('down-val').textContent = "...";
-  document.getElementById('up-val').textContent = "...";
-  
-  try {
-    const res = await fetch('/api/speedtest?t=' + Date.now());
-    if (!res.ok) throw new Error("Speedtest API failed");
-    const data = await res.json();
-    
-    document.getElementById('ping-val').textContent = data.ping;
-    document.getElementById('down-val').textContent = data.download;
-    document.getElementById('up-val').textContent = data.upload;
-    
-    addLog(`🚀 Speed Test results: Ping: ${data.ping}ms | Down: ${data.download}Mbps | Up: ${data.upload}Mbps`, 'info');
-  } catch(e) {
-    addLog("❌ Network speed test query failed. Check connection.", "warn");
-    document.getElementById('ping-val').textContent = "ERR";
-    document.getElementById('down-val').textContent = "ERR";
-    document.getElementById('up-val').textContent = "ERR";
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = "🚀 Run speed test";
-  }
-}
-
 let pollIntervalId = null;
-let isGameMode = false;
 let timeToNextScan = 120;
 let scanInterval = 120;
+let timerTickId = null;
 
 function formatCountdown(sec) {
   if (sec <= 0) return "Scanning...";
   const m = Math.floor(sec / 60);
   const s = sec % 60;
-  return `${m}m ${s}s`;
+  return `${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
 }
 
-// Live background scan countdown timer tick
-setInterval(() => {
-  if (isGameMode) {
-    document.getElementById('timer-countdown').textContent = "Paused (Game Mode)";
-    return;
-  }
-  if (scanInterval <= 0) {
+function startTimer(interval) {
+  if (timerTickId) clearInterval(timerTickId);
+
+  if (!interval || interval <= 0) {
     document.getElementById('timer-countdown').textContent = "Manual Only";
+    document.getElementById('next-scan-timer').style.color = '#555';
     return;
   }
-  timeToNextScan--;
-  if (timeToNextScan < 0) {
-    // Background scan has run and resets countdown
-    timeToNextScan = scanInterval;
-  }
-  document.getElementById('timer-countdown').textContent = formatCountdown(timeToNextScan);
-}, 1000);
+
+  scanInterval = interval;
+  timeToNextScan = interval;
+  document.getElementById('next-scan-timer').style.color = 'var(--accent-color)';
+
+  timerTickId = setInterval(() => {
+    timeToNextScan--;
+    if (timeToNextScan < 0) {
+      timeToNextScan = scanInterval;
+    }
+    document.getElementById('timer-countdown').textContent = formatCountdown(timeToNextScan);
+  }, 1000);
+}
 
 function startPolling(seconds) {
   if (pollIntervalId) {
@@ -1393,55 +1469,50 @@ async function getSchedule() {
     const res = await fetch('/api/schedule?t=' + Date.now());
     if (res.ok) {
       const data = await res.json();
-      document.getElementById('scan-interval-select').value = data.scan_interval;
-      document.getElementById('loc-interval-select').value = data.location_interval;
-      document.getElementById('notif-select').value = data.notification_profile;
+      const interval = parseInt(data.scan_interval) || 0;
+
+      const scanSel = document.getElementById('scan-interval-select');
+      if (scanSel) {
+        const opts = [...scanSel.options].map(o => parseInt(o.value));
+        scanSel.value = opts.includes(interval) ? interval : 0;
+      }
+      document.getElementById('loc-interval-select').value = data.location_interval || 0;
+      document.getElementById('notif-select').value = data.notification_profile || 'sound_vibrate';
       if (data.custom_sound_path) {
         document.getElementById('custom-sound-path-input').value = data.custom_sound_path;
       }
-      
-      scanInterval = data.scan_interval;
-      timeToNextScan = scanInterval;
-      
-      isGameMode = !!data.game_mode;
-      const btn = document.getElementById('gamemode-btn');
-      if (isGameMode) {
-        btn.textContent = '🎮 Game Mode: ACTIVE (CPU Saver)';
-        btn.className = 'btn red';
-        startPolling(30);
-      } else {
-        btn.textContent = '🎮 Game Mode: OFF';
-        btn.className = 'btn blue';
-        startPolling(6);
-      }
+
+      startTimer(interval);
+      startPolling(6);
     }
   } catch(e) {
     startPolling(6);
+    startTimer(120);
   }
 }
 
-async function toggleGameMode() {
-  isGameMode = !isGameMode;
-  const btn = document.getElementById('gamemode-btn');
-  if (isGameMode) {
-    btn.textContent = '🎮 Game Mode: ACTIVE (CPU Saver)';
-    btn.className = 'btn red';
-    addLog('🎮 Game Mode activated. Dashboard polling set to 30s. Background scans throttled.', 'warn');
-    startPolling(30);
-  } else {
-    btn.textContent = '🎮 Game Mode: OFF';
-    btn.className = 'btn blue';
-    addLog('🎮 Game Mode deactivated. Standard 6s polling restored.', 'ok');
-    startPolling(6);
-  }
-  
+async function updateSchedule() {
+  const interval = parseInt(document.getElementById('scan-interval-select').value) || 0;
+  const locInterval = parseInt(document.getElementById('loc-interval-select').value) || 0;
+  const notif = document.getElementById('notif-select').value;
+
+  startTimer(interval);
+
   try {
     await fetch('/api/schedule', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ game_mode: isGameMode })
+      body: JSON.stringify({
+        scan_interval: interval,
+        location_interval: locInterval,
+        notification_profile: notif
+      })
     });
-  } catch(e) {}
+    addLog(`⚙️ Schedule updated: scan every ${interval > 0 ? interval+'s' : 'manual only'}`, 'info');
+    showToast('⚙️ Schedule saved');
+  } catch(e) {
+    addLog('❌ Server offline — schedule not saved', 'alert');
+  }
 }
 
 async function saveCustomSoundPath() {
@@ -1464,10 +1535,44 @@ async function saveCustomSoundPath() {
 
 async function refreshNetworkData() {
   addLog('🔄 Synchronizing credentials...','info');
-  await checkIP();
   await checkLocation();
   addLog('✅ Network details updated.','ok');
 }
+
+// Dom Boot Splash Screen Controller
+window.addEventListener('DOMContentLoaded', () => {
+  const bar = document.getElementById('splash-bar');
+  const status = document.getElementById('splash-status');
+  const overlay = document.getElementById('splash-overlay');
+  const logBox = document.getElementById('splash-log-box');
+  
+  const steps = [
+    { p: 15, t: "INITIALIZING TUNNEL SOCKETS..." },
+    { p: 35, t: "AUDITING NETWORK INTERFACES..." },
+    { p: 55, t: "SECURING DNS RESOLVERS..." },
+    { p: 80, t: "STARTING DECOY HONEYPOT DAEMON..." },
+    { p: 100, t: "SHIELD PROTECTION ENGAGED." }
+  ];
+  
+  let currentStep = 0;
+  const interval = setInterval(() => {
+    if (currentStep < steps.length) {
+      bar.style.width = steps[currentStep].p + '%';
+      status.textContent = steps[currentStep].t;
+      
+      const d = document.createElement('div');
+      d.innerHTML = `<span style="color:#888;">[${ts()}]</span> <span style="color:#00ff88;">✅ ${steps[currentStep].t}</span>`;
+      logBox.appendChild(d);
+      logBox.scrollTop = logBox.scrollHeight;
+      
+      currentStep++;
+    } else {
+      clearInterval(interval);
+      overlay.classList.add('fade-out');
+      setTimeout(runScan, 600);
+    }
+  }, 400);
+});
 
 // Telegram Config Script Helpers
 async function loadTelegramConfig() {
@@ -1553,47 +1658,111 @@ async function testTelegramBot() {
   }
 }
 
-// Dom Boot Splash Screen Controller
-window.addEventListener('DOMContentLoaded', () => {
-  const bar = document.getElementById('splash-bar');
-  const status = document.getElementById('splash-status');
-  const overlay = document.getElementById('splash-overlay');
-  
-  const steps = [
-    { p: 15, t: "INITIALIZING TUNNEL SOCKETS..." },
-    { p: 35, t: "AUDITING NETWORK INTERFACES..." },
-    { p: 55, t: "SECURING DNS RESOLVERS..." },
-    { p: 80, t: "STARTING DECOY HONEYPOT DAEMON..." },
-    { p: 100, t: "SHIELD PROTECTION ENGAGED." }
-  ];
-  
-  let currentStep = 0;
-  const interval = setInterval(() => {
-    if (currentStep < steps.length) {
-      bar.style.width = steps[currentStep].p + '%';
-      status.textContent = steps[currentStep].t;
-      currentStep++;
-    } else {
-      clearInterval(interval);
-      overlay.classList.add('fade-out');
-      setTimeout(runScan, 600);
-    }
-  }, 400);
-});
-
-// Restore saved sound profile on load
 const savedSound = localStorage.getItem('ghost_alert_sound');
 if (savedSound) {
   document.getElementById('sound-profile-select').value = savedSound;
 }
 
 window.onload=async()=>{
-  await checkIP();
   await checkLocation();
   await getSchedule();
   await loadSystemLogs();
   await loadTelegramConfig();
+  await loadDnsConfig();
+  
+  // Theme Toggle Restoration
+  applyTheme(currentTheme);
 };
+</script>
+
+<!-- Threats Details Modal -->
+<div id="threat-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:20000; align-items:center; justify-content:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:520px; border-color:#ff3355; background:#0a0a0a; box-shadow:0 0 25px rgba(255, 51, 85, 0.25); max-height:85vh; display:flex; flex-direction:column;">
+    <h3 style="color:#ff3355; border-bottom-color:#ff335520; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-family:'Zen Dots', sans-serif;">
+      <span>🚨 SECURITY THREAT LOGS</span>
+      <span onclick="closeThreatModal()" style="cursor:pointer; color:#888; font-size:1.4em; padding:0 6px;">&times;</span>
+    </h3>
+    <div id="threat-modal-body" style="overflow-y:auto; flex-grow:1; margin:12px 0; font-family:'Space Grotesk', sans-serif; font-size:0.85em; line-height:1.6; max-height:55vh; padding-right:8px;">
+      <div class="log-line muted">No threats recorded today.</div>
+    </div>
+    <button class="btn red" onclick="closeThreatModal()" style="margin:0; padding:10px; font-family:'Share Tech Mono', monospace; font-size:0.9em; letter-spacing:1px;">CLOSE</button>
+  </div>
+</div>
+
+<script>
+// Threat description to remediation mapping helper
+function getRemediationGuide(detail) {
+  const d = detail.toLowerCase();
+  if (d.includes("dns leak")) {
+    return `<div style="background:#ffaa0012; border:1px solid #ffaa0025; border-radius:6px; padding:10px; margin-top:6px; color:#ffaa00; font-size:0.78em;">
+      <strong>🔧 How to Fix:</strong> Secure DNS resolver is bypassed. Go to <strong>DoH</strong> anonymity engine, or configure <strong>Auto-Rotate DNS</strong> settings in your dashboard to enforce DNS encryption path.
+    </div>`;
+  }
+  if (d.includes("poisoning") || d.includes("hijack")) {
+    return `<div style="background:#ff335512; border:1px solid #ff335525; border-radius:6px; padding:10px; margin-top:6px; color:#ff3355; font-size:0.78em;">
+      <strong>🔧 How to Fix:</strong> High risk redirection detected! Secure DNS queries are being spoofed. Pivot to <strong>Quad9 Secure DNS</strong> or Cloudflare DNS immediately to purge the poisoning.
+    </div>`;
+  }
+  if (d.includes("camera") || d.includes("microphone") || d.includes("mic")) {
+    return `<div style="background:#ff335512; border:1px solid #ff335525; border-radius:6px; padding:10px; margin-top:6px; color:#ff3355; font-size:0.78em;">
+      <strong>🔧 How to Fix:</strong> A background process was detected using your camera/mic. Go to Android App Settings ➔ Revoke Camera/Microphone permissions from all recently used background apps.
+    </div>`;
+  }
+  if (d.includes("honeypot") || d.includes("decoy") || d.includes("intrusion")) {
+    return `<div style="background:#ffaa0012; border:1px solid #ffaa0025; border-radius:6px; padding:10px; margin-top:6px; color:#ffaa00; font-size:0.78em;">
+      <strong>🔧 How to Fix:</strong> Rogue scan trapped on port 2222. An unauthorized device on your local Wi-Fi network tried to sweep your ports. Disconnect from public Wi-Fi immediately.
+    </div>`;
+  }
+  if (d.includes("thermal") || d.includes("temp")) {
+    return `<div style="background:#ffaa0012; border:1px solid #ffaa0025; border-radius:6px; padding:10px; margin-top:6px; color:#ffaa00; font-size:0.78em;">
+      <strong>🔧 How to Fix:</strong> CPU temperature is critical. Stop active sweeps or allow device to cool. Disengage heavy screen visual animations.
+    </div>`;
+  }
+  return `<div style="background:#111; border:1px solid #222; border-radius:6px; padding:10px; margin-top:6px; color:#aaa; font-size:0.78em;">
+    <strong>🔧 How to Fix:</strong> General threat signature. Run a manual active scan and audit background running terminal processes.
+  </div>`;
+}
+
+function closeThreatModal() {
+  document.getElementById('threat-modal').style.display = 'none';
+}
+async function openThreatModal() {
+  document.getElementById('threat-modal').style.display = 'flex';
+  const body = document.getElementById('threat-modal-body');
+  body.innerHTML = '<div class="log-line info">Loading threat database...</div>';
+  try {
+    const res = await fetch('/api/threats?t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      if (data.threats && data.threats.length > 0) {
+        body.innerHTML = '';
+        [...data.threats].reverse().forEach(t => {
+          const div = document.createElement('div');
+          div.style.padding = '12px 0';
+          div.style.borderBottom = '1px solid #1a1a1a';
+          
+          const timeStr = new Date(t.time).toLocaleString('en-GB');
+          const guide = getRemediationGuide(t.detail);
+          
+          div.innerHTML = `
+            <div style="font-family:'Share Tech Mono', monospace; font-size:0.78em; color:#666;">[${timeStr}]</div>
+            <div style="color:#ff3355; font-weight:bold; margin-top:2px;">⚠️ ${t.detail}</div>
+            ${guide}
+          `;
+          body.appendChild(div);
+        });
+      } else {
+        body.innerHTML = '<div style="color:#00ff88; font-family:\'Share Tech Mono\', monospace; text-align:center; padding:20px;">✅ No threats detected today. Your device shield is holding.</div>';
+      }
+    } else {
+      body.innerHTML = '<div class="log-line alert">Failed to retrieve threat log database.</div>';
+    }
+  } catch (e) {
+    body.innerHTML = '<div class="log-line alert">Threat database offline.</div>';
+  }
+}
+
+document.getElementById('threats-card').addEventListener('click', openThreatModal);
 </script>
 </body>
 </html>

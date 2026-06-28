@@ -10,7 +10,10 @@ import subprocess
 import os
 import json
 import time
+import sys
 from datetime import datetime
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 def get_ghost_dir():
     log_dir = os.path.expanduser("~/ghost_tools")
