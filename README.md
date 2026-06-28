@@ -436,9 +436,15 @@ Aether Ghost OS includes a companion Telegram Bot system that sends real-time pu
 | **💬 Forwarded Safe message** | Domain Verification | **🟢 LOW RISK:** `"✅ safaricom.co.ke — Recognized domain. No scam indicators detected."` |
 
 ### 🕹️ Remote Bot Commands (Send to your private bot chat)
-* `/status` — Fetches current spoofed IP, anonymity health status, CPU thermalzone temperature, and threat counts.
+* `/menu` — Opens the **Interactive Remote Control Dashboard** containing inline buttons to change anonymity engines, swap DNS servers, toggle DNS auto-rotation, view detailed threat reports, and run manual scans directly from Telegram.
+* `/status` — Fetches current spoofed IP, active engine, anonymity health status, CPU thermalzone temperature, active DNS resolver, and threat counts.
 * `/scan` — Triggers an active hardware/network security shield check instantly and returns the results.
 * `/panic` — Remotely kills all Termux logs, decoys, active daemons, and disconnects all ports.
+
+### 📡 Automatic Background Scan Alerts
+The Sentry Bot will automatically send an alert message to your Telegram chat after *every* scheduled background scan completes (runs every 2 minutes):
+* **Clean Scan:** Sends a confirmation confirming all systems are secure and anonymity layers are holding (e.g. `All Systems Secure (0 threats found). Anonymity layers holding. 👻`).
+* **Threat Detected:** Sends a warning showing how many threats were detected, with a recommendation to check the visual dashboard or send `/menu` to audit the issues.
 
 ---
 

@@ -31,7 +31,8 @@ MANIFEST
 
 # Installer logs and local files
 *.log
-ghost_tools/*.log
+**/ghost_tools/*.log
+**/ghost_tools/*.json
 
 # Environment variables
 .env

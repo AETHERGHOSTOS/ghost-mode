@@ -145,6 +145,8 @@ def run_security_scan():
             trigger_native_notification(title, status_msg)
             if is_threat:
                 send_telegram_alert(f"⚠️ *SECURITY THREAT DETECTED!*\n{status_msg}\nCheck the visual dashboard or send /menu to view threats.")
+            else:
+                send_telegram_alert(f"🛡️ *Aether Ghost OS: Scan Complete*\nStatus: All Systems Secure (0 threats found). Anonymity layers holding. 👻")
         except Exception as e:
             log_message(f"⚠️ Scan failed to run: {e}")
     else:
