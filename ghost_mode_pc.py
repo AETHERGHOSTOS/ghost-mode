@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-"""
-# 💀 AETHER GHOST OS — PC Edition (Windows, macOS, Linux)
-# ======================================================
-# Privacy Operating Security Monitor for Desktop Computers.
-# Monitors: Outbound Connections, Listening Ports, ARP spoofing, Mic/Webcam, Tor status.
-"""
-
 import os
 import sys
 import subprocess
@@ -15,6 +7,14 @@ import socket
 import webbrowser
 import threading
 from datetime import datetime
+
+# Force UTF-8 stdout/stderr encoding on Windows to prevent UnicodeEncodeError on emojis
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 
 # --- Auto Dependency Installer ---
 def install_dependencies():
