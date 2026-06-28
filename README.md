@@ -82,7 +82,7 @@ Ghost Mode is built to operate across a wide variety of hardware architectures a
 #### Step 2: Install Ghost Mode
 Open Termux and run the universal setup installer:
 ```bash
-curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh | bash
+curl -sL https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/setup.sh | bash
 ```
 
 ---
@@ -121,7 +121,7 @@ curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh
      ```
 2. Clone this repository and configure permissions:
    ```bash
-   git clone https://github.com/YOURUSERNAME/ghost-mode.git
+   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
    cd ghost-mode
    pip install requests --break-system-packages
    chmod +x ghost.sh
@@ -134,7 +134,7 @@ curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh
 Since Parrot OS and Kali Linux are built specifically for security, they come with dependencies like Python, Tor, and Nmap pre-installed out of the box!
 1. Open your terminal and clone the suite:
    ```bash
-   git clone https://github.com/YOURUSERNAME/ghost-mode.git
+   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
    cd ghost-mode
    pip install requests --break-system-packages 2>/dev/null
    chmod +x ghost.sh
@@ -154,7 +154,7 @@ Since Parrot OS and Kali Linux are built specifically for security, they come wi
    ```
 2. Clone this repository and configure:
    ```bash
-   git clone https://github.com/YOURUSERNAME/ghost-mode.git
+   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
    cd ghost-mode
    pip install requests
    chmod +x ghost.sh
@@ -171,7 +171,7 @@ Perfect for setting up a dedicated security monitor in your house:
    ```
 2. Clone and run in background mode:
    ```bash
-   git clone https://github.com/YOURUSERNAME/ghost-mode.git
+   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
    cd ghost-mode
    pip install requests --break-system-packages
    python3 ghost_mode_pc.py
@@ -248,9 +248,9 @@ If your installation is frozen, buggy, has permission errors, or you simply want
 #### 📥 Phase 2: Fresh Installation & Launch
 1. Ensure Termux is installed from F-Droid (not Google Play).
 2. Set up storage access: `termux-setup-storage` and accept the popup.
-3. Download and run the installer (replace `YOURUSERNAME` with your real GitHub handle):
+3. Download and run the installer (replace `AETHERGHOSTOS` with your real GitHub handle):
    ```bash
-   curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
+   curl -sL https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
    ```
 4. Grant Mic/Cam auditing permission: Connect to a PC with USB debugging on, and run:
    ```bash
@@ -461,8 +461,8 @@ pkill cron
 rm -rf ~/ghost_tools
 rm -f ~/ghost.sh ~/ghost_mode.py ~/setup.sh
 
-# Install latest files from GitHub (replace YOURUSERNAME with your repo handle)
-curl -sL https://raw.githubusercontent.com/YOURUSERNAME/ghost-mode/main/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
+# Install latest files from GitHub (replace AETHERGHOSTOS with your repo handle)
+curl -sL https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
 
 # Run the launcher
 bash ~/ghost.sh
