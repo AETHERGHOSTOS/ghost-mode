@@ -439,9 +439,9 @@ Aether Ghost OS includes a companion Telegram Bot system that sends real-time pu
 | **🚨 Intrusion Detection** | Real-time push notification | `"🚨 Intrusion Alert! Decoy Honeypot port scan detected from IP 192.168.1.15."` |
 | **🚨 Security Threat** | Threat Alert | `"⚠️ Threat Alert! Microphones currently in use by background process: SpywareAgent"` |
 | **🔄 Failover Routing** | Status Alert | `"🔄 Anonymity Pivot: Tor tunnel connection lost. Failover engine WARP connect succeeded."` |
-| **💬 Forwarded Phishing link** | Domain Risk Analysis | **🔴 HIGH RISK:** `"❌ paypa1-verification.xyz — Lookalike domain spoofing PayPal with high-risk TLD."` |
-| **💬 Forwarded SMS scam text** | Text Keyword Audit | **🔴 HIGH RISK:** `"Urgency/Fraud Language Detected (lottery winner, m-pesa reference code)."` |
-| **💬 Forwarded Safe message** | Domain Verification | **🟢 LOW RISK:** `"✅ safaricom.co.ke — Recognized domain. No scam indicators detected."` |
+| **💬 Forwarded Phishing link** | Domain Risk Analysis | **🔴 HIGH RISK:** `"❌ paypa1-verification.xyz — Lookalike domain spoofing PayPal with high-risk TLD etc."` |
+| **💬 Forwarded SMS scam text** | Text Keyword Audit | **🔴 HIGH RISK:** `"Urgency/Fraud Language Detected (lottery winner, reference codes etc )."` |
+| **💬 Forwarded Safe message** | Domain Verification | **🟢 LOW RISK:** `"✅ .com or any other — Recognized domain. No scam indicators detected."` |
 
 ### 🕹️ Remote Bot Commands (Send to your private bot chat)
 * `/menu` — Opens the **Interactive Remote Control Dashboard** containing inline buttons to change anonymity engines, swap DNS servers, toggle DNS auto-rotation, view detailed threat reports, and run manual scans directly from Telegram.
