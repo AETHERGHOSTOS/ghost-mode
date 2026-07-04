@@ -808,6 +808,23 @@ select:focus{border-color:var(--accent-color)}
 
 <script>
 // System theme permanently locked to Dark Neon Green Cyber mode
+let isBackendOffline = false;
+
+function logBackendOffline() {
+  if (!isBackendOffline) {
+    isBackendOffline = true;
+    addLog('❌ Local API Server is offline. Check Termux status.','alert');
+    showToast('⚠️ Scan server disconnected. Check local terminal.', true);
+  }
+}
+
+function logBackendOnline() {
+  if (isBackendOffline) {
+    isBackendOffline = false;
+    addLog('✅ API Server reconnected. System online.','ok');
+    showToast('🛡️ Security Shield Monitor Reconnected.');
+  }
+}
 
 // Copy credentials helper
 function copyVal(val, name) {
@@ -1044,6 +1061,7 @@ async function checkLocation(){
   try {
     const res = await fetch('/api/engine-status?t=' + Date.now());
     if (res.ok) {
+      logBackendOnline();
       const status = await res.json();
       document.getElementById('real-ip').textContent = status.real_ip || 'Unavailable';
       const torIpEl = document.getElementById('tor-ip');
@@ -1082,7 +1100,7 @@ async function checkLocation(){
           torIpEl.style.color = 'var(--accent-color)';
           locEl.textContent = status.location || 'Secured';
           locEl.style.color = 'var(--accent-color)';
-          setShieldStatus('GHOST ACTIVE 👻', 'ok');
+          setShieldStatus('[ GHOST ACTIVE ] ➔ You are a ghost! 👻', 'ok');
         } else if (status.engine === "doh") {
           torIpEl.textContent = 'N/A (DNS only)';
           torIpEl.style.color = '#ffaa00';
@@ -1109,8 +1127,11 @@ async function checkLocation(){
         dnsEl.textContent = 'Exposed (Provider spying)';
         dnsEl.className = 'warn';
       }
+    } else {
+      logBackendOffline();
     }
   } catch(e) {
+    logBackendOffline();
     document.getElementById('tor-ip').textContent = 'API Offline';
     document.getElementById('tor-ip').style.color = '#ff3355';
   }
@@ -1300,13 +1321,15 @@ async function loadScanReport() {
       }
       
       if (r.status === "CLEAN") {
-        setShieldStatus('ALL CLEAR 👻', 'ok');
+        setShieldStatus('[ GHOST ACTIVE ] ➔ You are a ghost! 👻', 'ok');
       } else {
         setShieldStatus('⚠️ THREATS DETECTED', 'alert');
       }
+    } else {
+      logBackendOffline();
     }
   } catch(e) {
-    addLog('❌ Simulated check fallback. Started offline.','warn');
+    logBackendOffline();
   }
 }
 

@@ -39,10 +39,11 @@ while true; do
   echo -e "  \e[1;32m[7]\e[0m 🔧 Change DNS Resolver"
   echo -e "  \e[1;32m[8]\e[0m 🚨 PANIC — Self Destruct"
   echo -e "  \e[1;32m[9]\e[0m ⏹️  Stop Everything & Exit"
+  echo -e "  \e[1;32m[11]\e[0m 🚪 Exit Menu (Keep Services Running)"
   echo -e "  \e[1;32m[0]\e[0m 🔤 Reset Termux Font"
   echo -e "  \e[1;32m[10]\e[0m ☕ Support & Donate to Project"
   echo ""
-  read -p "  Choose [0-10]: " c
+  read -p "  Choose [0-11]: " c
   echo ""
 
   case $c in
@@ -170,7 +171,7 @@ json.dump(c, open(p,'w'), indent=2)
       if [ "$ENG" = "tor" ]; then
         ANON=$(curl -s --max-time 10 --socks5-hostname 127.0.0.1:9050 https://icanhazip.com 2>/dev/null)
         if [ -n "$ANON" ] && [ "$ANON" != "$REAL" ]; then
-          echo -e "💀 \e[1;32m[ GHOST ACTIVE ]\e[0m You are anonymous!"
+          echo -e "💀 \e[1;32m[ GHOST ACTIVE ]\e[0m ➔ \e[1;32mYou are a ghost!\e[0m 👻"
            echo "🕵️ Tor Anonymous IP: $ANON"
            echo ""
            echo "🔍 To verify full anonymity or route your browser:"
@@ -188,7 +189,7 @@ json.dump(c, open(p,'w'), indent=2)
       elif [ "$ENG" = "warp" ]; then
         TRACE=$(curl -s --max-time 5 https://www.cloudflare.com/cdn-cgi/trace)
         if echo "$TRACE" | grep -q "warp=on"; then
-          echo -e "💀 \e[1;32m[ GHOST ACTIVE ]\e[0m WARP VPN connected!"
+          echo -e "💀 \e[1;32m[ GHOST ACTIVE ]\e[0m ➔ \e[1;32mYou are a ghost!\e[0m 👻 (WARP connected)"
         else
           echo "⚠️  WARP disconnected."
         fi
@@ -286,6 +287,13 @@ json.dump(c, open(p,'w'), indent=2)
       echo ""
       echo "  Thank you for keeping Aether Ghost OS active and secure!"
       echo "=========================================================="
+      ;;
+
+    11)
+      echo "🚪 Exiting menu. Background Sentry and Anonymity daemon remains ACTIVE."
+      echo "🌐 Dashboard is online: http://localhost:8080/ghost_dashboard.html"
+      echo ""
+      break
       ;;
 
     *)
