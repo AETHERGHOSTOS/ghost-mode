@@ -16,7 +16,7 @@ import urllib.request
 import urllib.parse
 import subprocess
 import threading
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServer
 from datetime import datetime
 
 # Force UTF-8 stdout/stderr encoding on Windows to prevent UnicodeEncodeError on emojis
@@ -30,6 +30,38 @@ if sys.platform == "win32":
 PORT = 8080
 last_manual_change_time = 0
 last_dns_rotation_time = 0
+
+CONNECTION_STATUS = {
+    "engine": "tor",
+    "active": False,
+    "ip": "Disconnected",
+    "real_ip": "Unavailable",
+    "location": "Offline",
+    "dns_encrypted": False,
+    "notification_profile": "sound_vibrate"
+}
+
+def update_connection_status_cache():
+    global CONNECTION_STATUS
+    try:
+        cfg = load_config()
+        engine = cfg.get("anonymity_engine", "tor")
+        is_healthy, ip, loc, real_ip = verify_connection_health(engine)
+        dns_encrypted = (engine != "none")
+        CONNECTION_STATUS = {
+            "engine": engine,
+            "active": is_healthy,
+            "ip": ip,
+            "real_ip": real_ip or "Unavailable",
+            "location": loc,
+            "dns_encrypted": dns_encrypted,
+            "notification_profile": cfg.get("notification_profile", "sound_vibrate")
+        }
+        return is_healthy, ip, loc, real_ip
+    except Exception as e:
+        log_message(f"Error updating connection health cache: {e}")
+        return False, "Disconnected", "Offline", "Unavailable"
+
 
 DNS_PROVIDERS = {
     "cloudflare": ("1.1.1.1", "1.0.0.1"),
@@ -78,6 +110,7 @@ def load_config():
         "custom_sound_path": "",
         "dns_provider": "cloudflare",
         "dns_rotation_interval": 0,
+        "dns_scheduled_time": "",
         "custom_dns_primary": "1.1.1.1",
         "custom_dns_secondary": "1.0.0.1"
     }
@@ -118,9 +151,10 @@ def sound_cmd_quote(s):
 def run_security_scan():
     log_message("🔄 Background threat scan initiated...")
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    script_path = os.path.join(base_dir, "ghost_mode.py")
+    script_name = "ghost_mode_pc.py" if sys.platform == "win32" else "ghost_mode.py"
+    script_path = os.path.join(base_dir, script_name)
     if not os.path.exists(script_path):
-        script_path = os.path.expanduser("~/ghost_mode.py")
+        script_path = os.path.expanduser(f"~/{script_name}")
         
     if os.path.exists(script_path):
         try:
@@ -150,7 +184,7 @@ def run_security_scan():
         except Exception as e:
             log_message(f"⚠️ Scan failed to run: {e}")
     else:
-        log_message("⚠️ ghost_mode.py script not found. Skipping active scan.")
+        log_message(f"⚠️ {script_name} script not found. Skipping active scan.")
 
 # --- Proxy-Safe CLI Curl Helper ---
 def run_curl(url, proxy=None, timeout=6):
@@ -307,9 +341,23 @@ def run_dns_rotation_loop():
             interval = cfg.get("dns_rotation_interval", 0)
             provider = cfg.get("dns_provider", "cloudflare")
             
-            if provider == "rotation" and interval > 0:
+            if provider == "rotation":
                 now = time.time()
-                if now - last_dns_rotation_time >= (interval * 60):
+                trigger_rotation = False
+                trigger_reason = ""
+                
+                if interval > 0 and (now - last_dns_rotation_time >= (interval * 60)):
+                    trigger_rotation = True
+                    trigger_reason = "Interval Auto-Rotation"
+                
+                scheduled_time = cfg.get("dns_scheduled_time", "")
+                if scheduled_time:
+                    now_str = datetime.now().strftime("%H:%M")
+                    if now_str == scheduled_time and (now - last_dns_rotation_time > 65):
+                        trigger_rotation = True
+                        trigger_reason = f"Daily Scheduled Time ({scheduled_time})"
+                
+                if trigger_rotation:
                     providers = list(DNS_PROVIDERS.keys())
                     current_primary = cfg.get("custom_dns_primary", "1.1.1.1")
                     
@@ -323,7 +371,7 @@ def run_dns_rotation_loop():
                     next_provider = providers[next_idx]
                     prim, sec = DNS_PROVIDERS[next_provider]
                     
-                    log_message(f"🔄 Rotating DNS resolver to: {next_provider.upper()} ({prim})")
+                    log_message(f"🔄 Rotating DNS resolver ({trigger_reason}) to: {next_provider.upper()} ({prim})")
                     apply_system_dns(prim, sec)
                     
                     cfg["custom_dns_primary"] = prim
@@ -331,7 +379,7 @@ def run_dns_rotation_loop():
                     save_config(cfg)
                     
                     last_dns_rotation_time = now
-                    send_telegram_alert(f"🔀 *DNS AUTO-ROTATION EVENT*\nSystem resolver pivoted to: *{next_provider.upper()}* (`{prim}` / `{sec}`).")
+                    send_telegram_alert(f"🔀 *DNS ROTATION EVENT ({trigger_reason})*\nSystem resolver pivoted to: *{next_provider.upper()}* (`{prim}` / `{sec}`).")
         except Exception as e:
             log_message(f"⚠️ Error in DNS rotator: {e}")
         time.sleep(15)
@@ -637,9 +685,10 @@ def run_telegram_bot_poller():
                     elif text.startswith("/panic"):
                         send_telegram_alert("🚨 *PANIC COMMAND RECEIVED! De-authenticating...*")
                         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                        script_path = os.path.join(base_dir, "ghost_mode.py")
+                        script_name = "ghost_mode_pc.py" if sys.platform == "win32" else "ghost_mode.py"
+                        script_path = os.path.join(base_dir, script_name)
                         if not os.path.exists(script_path):
-                            script_path = os.path.expanduser("~/ghost_mode.py")
+                            script_path = os.path.expanduser(f"~/{script_name}")
                         if os.path.exists(script_path):
                             subprocess.run([sys.executable, script_path, "--panic"])
                         send_telegram_alert("🤫 *De-authentication sequence executed.* Session offline.")
@@ -764,7 +813,7 @@ def run_daemon_loop():
                     # Skip check to let newly switched engine bootstrap
                     pass
                 else:
-                    is_healthy, current_ip, loc, real_ip = verify_connection_health(engine)
+                    is_healthy, current_ip, loc, real_ip = update_connection_status_cache()
                     if not is_healthy:
                         log_message(f"⚠️ Health check failed for engine '{engine.upper()}'! Starting failover sequence...")
                         sequence = ["tor", "warp", "proxy", "doh", "none"]
@@ -782,6 +831,7 @@ def run_daemon_loop():
                             if ok or next_engine == "none":
                                 cfg["anonymity_engine"] = next_engine
                                 save_config(cfg)
+                                update_connection_status_cache()
                                 msg = f"Switched to {next_engine.upper()} because {engine.upper()} failed."
                                 log_message(f"✅ Anonymity failover succeeded: {msg}")
                                 trigger_native_notification("ANONYMITY FAILOVER", msg)
@@ -848,22 +898,13 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             self.send_json_response(data)
 
         elif url_path == '/api/engine-status':
-            engine = cfg.get("anonymity_engine", "tor")
-            is_active, ip, loc, real_ip = verify_connection_health(engine)
-            dns_encrypted = (engine != "none")
-            self.send_json_response({
-                "engine": engine,
-                "active": is_active,
-                "ip": ip,
-                "real_ip": real_ip or "Unavailable",
-                "location": loc,
-                "dns_encrypted": dns_encrypted,
-                "notification_profile": cfg.get("notification_profile", "sound_vibrate")
-            })
+            self.send_json_response(CONNECTION_STATUS)
 
         elif url_path == '/api/circuit':
             engine = cfg.get("anonymity_engine", "tor")
-            is_active, ip, loc, real_ip = verify_connection_health(engine)
+            is_active = CONNECTION_STATUS.get("active", False)
+            ip = CONNECTION_STATUS.get("ip", "Disconnected")
+            loc = CONNECTION_STATUS.get("location", "Offline")
             if engine == "tor" and is_active:
                 self.send_json_response({
                     "hops": [
@@ -919,6 +960,7 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             self.send_json_response({
                 "dns_provider": cfg.get("dns_provider", "cloudflare"),
                 "dns_rotation_interval": cfg.get("dns_rotation_interval", 0),
+                "dns_scheduled_time": cfg.get("dns_scheduled_time", ""),
                 "custom_dns_primary": cfg.get("custom_dns_primary", "1.1.1.1"),
                 "custom_dns_secondary": cfg.get("custom_dns_secondary", "1.0.0.1")
             })
@@ -978,6 +1020,8 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             activate_engine_routing(engine)
             last_manual_change_time = time.time()
             log_message(f"👤 User manually set engine to: {engine.upper()}")
+            # Asynchronously update cached connection info
+            threading.Thread(target=update_connection_status_cache, daemon=True).start()
             self.send_json_response({"status": "ok"})
 
         elif url_path == '/api/location':
@@ -998,35 +1042,38 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             if body.get("panic", False):
                 log_message("🚨 PANIC DE-AUTHENTICATE EXECUTING!")
                 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                script_path = os.path.join(base_dir, "ghost_mode.py")
+                script_name = "ghost_mode_pc.py" if sys.platform == "win32" else "ghost_mode.py"
+                script_path = os.path.join(base_dir, script_name)
                 if not os.path.exists(script_path):
-                    script_path = os.path.expanduser("~/ghost_mode.py")
+                    script_path = os.path.expanduser(f"~/{script_name}")
                 if os.path.exists(script_path):
                     subprocess.run([sys.executable, script_path, "--panic"])
                 self.send_json_response({"status": "self_destruct"})
             else:
-                # Trigger scan
-                run_security_scan()
-                
-                # Immediate Failover Healing if active engine is down
-                engine = cfg.get("anonymity_engine", "tor")
-                if engine != "none":
-                    is_healthy, current_ip, loc, real_ip = verify_connection_health(engine)
-                    if not is_healthy:
-                        log_message(f"⚠️ Active scan detected engine '{engine.upper()}' is down! Performing immediate failover healing...")
-                        sequence = ["tor", "warp", "proxy", "doh", "none"]
-                        current_idx = sequence.index(engine) if engine in sequence else 0
-                        for attempt in range(1, len(sequence)):
-                            next_idx = (current_idx + attempt) % len(sequence)
-                            next_engine = sequence[next_idx]
-                            log_message(f"🔄 Healing pivot to: '{next_engine.upper()}'")
-                            activate_engine_routing(next_engine)
-                            time.sleep(6)
-                            ok, nip, nloc, nrip = verify_connection_health(next_engine)
-                            if ok or next_engine == "none":
-                                cfg["anonymity_engine"] = next_engine
-                                save_config(cfg)
-                                break
+                # Trigger scan asynchronously in a worker thread
+                def run_async_scan(config_copy):
+                    run_security_scan()
+                    engine = config_copy.get("anonymity_engine", "tor")
+                    if engine != "none":
+                        is_healthy, current_ip, loc, real_ip = verify_connection_health(engine)
+                        if not is_healthy:
+                            log_message(f"⚠️ Active scan detected engine '{engine.upper()}' is down! Performing immediate failover healing...")
+                            sequence = ["tor", "warp", "proxy", "doh", "none"]
+                            current_idx = sequence.index(engine) if engine in sequence else 0
+                            for attempt in range(1, len(sequence)):
+                                next_idx = (current_idx + attempt) % len(sequence)
+                                next_engine = sequence[next_idx]
+                                log_message(f"🔄 Healing pivot to: '{next_engine.upper()}'")
+                                activate_engine_routing(next_engine)
+                                time.sleep(6)
+                                ok, nip, nloc, nrip = verify_connection_health(next_engine)
+                                if ok or next_engine == "none":
+                                    config_copy["anonymity_engine"] = next_engine
+                                    save_config(config_copy)
+                                    break
+                    update_connection_status_cache()
+
+                threading.Thread(target=run_async_scan, args=(cfg,), daemon=True).start()
                 self.send_json_response({"status": "scanning"})
 
         elif url_path == '/api/schedule':
@@ -1045,9 +1092,11 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         elif url_path == '/api/dns':
             provider = body.get("dns_provider", "cloudflare")
             interval = int(body.get("dns_rotation_interval", 0))
+            scheduled = body.get("dns_scheduled_time", "")
             
             cfg["dns_provider"] = provider
             cfg["dns_rotation_interval"] = interval
+            cfg["dns_scheduled_time"] = scheduled
             
             if provider != "rotation":
                 prim = body.get("custom_dns_primary", "1.1.1.1")
@@ -1070,6 +1119,9 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             self.end_headers()
 
 def main():
+    # Initialize cache status asynchronously
+    threading.Thread(target=update_connection_status_cache, daemon=True).start()
+    
     # Load and apply initial DNS configurations on startup
     try:
         cfg = load_config()
@@ -1095,7 +1147,7 @@ def main():
 
     log_message(f"🚀 Starting Dashboard HTTP Server on port {PORT}...")
     try:
-        httpd = HTTPServer(('', PORT), DashboardAPIHandler)
+        httpd = ThreadingHTTPServer(('', PORT), DashboardAPIHandler)
         httpd.serve_forever()
     except Exception as e:
         log_message(f"❌ Server crash or port already occupied: {e}")

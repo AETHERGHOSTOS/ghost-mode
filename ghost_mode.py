@@ -253,7 +253,9 @@ def check_background_processes():
         found.extend(lines)
 
     if found:
-        log(f"⚠️  External background sessions detected:\n" + "\n".join(found[:3]))
+        msg = f"External background session detected: {found[0][:80]}"
+        log(f"⚠️  {msg}")
+        save_threat(msg)
     else:
         log("🤫 Process tree verified clean")
 

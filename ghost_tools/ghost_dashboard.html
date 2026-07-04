@@ -233,30 +233,33 @@ body::before{
   margin-bottom: 12px;
 }
 .card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 18px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  background: rgba(10, 10, 10, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(0, 255, 136, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.25s, box-shadow 0.25s;
   position: relative;
 }
 .card:hover {
+  transform: translateY(-3px);
   border-color: var(--accent-color);
-  box-shadow: 0 4px 20px var(--glow-color);
+  box-shadow: 0 12px 30px rgba(0, 255, 136, 0.15);
 }
 .card h3 {
   font-size: 0.8rem;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #888;
-  margin-bottom: 12px;
+  color: #a0a0a0;
+  margin-bottom: 14px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 6px;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 6px;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 8px;
 }
 
 .status-text {
@@ -426,7 +429,7 @@ select:focus{border-color:var(--accent-color)}
 <!-- Cyber Splash Loading Screen -->
 <div id="splash-overlay">
   <div class="splash-content">
-    <img src="logo.png" class="splash-logo" alt="Aether OS Logo" id="splash-logo-img" style="border: 2px solid #00ff88; border-radius: 18px; box-shadow: 0 0 20px rgba(0, 255, 136, 0.6); object-fit: contain; width: 90px; height: 90px; margin-bottom: 20px; animation: logo-glow 2s infinite ease-in-out;">
+    <img src="logo.png" class="splash-logo" alt="Aether OS Logo" id="splash-logo-img" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/logo.png';" style="border: 2px solid #00ff88; border-radius: 18px; box-shadow: 0 0 20px rgba(0, 255, 136, 0.6); object-fit: contain; width: 90px; height: 90px; margin-bottom: 20px; animation: logo-glow 2s infinite ease-in-out;">
     <div class="splash-title" style="text-shadow: 0 0 10px #00ff88;">💀 AETHER GHOST OS 💀</div>
     <div class="splash-progress-bg">
       <div id="splash-bar" class="splash-progress-bar"></div>
@@ -437,7 +440,7 @@ select:focus{border-color:var(--accent-color)}
 </div>
 
 <header style="display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; margin-bottom: 16px;">
-  <img src="logo.png" alt="Aether Ghost OS Logo" id="header-logo-img" style="width: 76px; height: 76px; border-radius: 16px; border: 2px solid #00ff88; box-shadow: 0 0 15px rgba(0, 255, 136, 0.5); object-fit: contain;">
+  <img src="logo.png" alt="Aether Ghost OS Logo" id="header-logo-img" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/logo.png';" style="width: 76px; height: 76px; border-radius: 16px; border: 2px solid #00ff88; box-shadow: 0 0 15px rgba(0, 255, 136, 0.5); object-fit: contain;">
   <h1 style="font-family: 'Zen Dots', sans-serif; color: #00ff88; text-shadow: 0 0 8px rgba(0, 255, 136, 0.8), 0 0 15px rgba(0, 255, 136, 0.4); font-size: 1.50rem; letter-spacing: 2px; margin-top: 6px; display: flex; align-items: center; gap: 10px;">
     💀 AETHER GHOST OS 💀
   </h1>
@@ -797,6 +800,7 @@ select:focus{border-color:var(--accent-color)}
       <div style="margin-top:6px; display:flex; flex-direction:column; gap:4px; padding-left:4px;">
         <span>📱 <strong style="color:var(--accent-color)">Aether Mobile App</strong> — protect every app on your phone</span>
         <span>🔒 <strong style="color:var(--accent-color)">Aether VPN / sovereign tunnel</strong> — full-device encrypted proxies</span>
+        <span>💿 <strong style="color:var(--accent-color)">Aether Hardened OS</strong> — a fully operating system for the ghost lovers</span>
       </div>
     </div>
   </div>
@@ -1314,17 +1318,31 @@ async function runScan(){
   setShieldStatus('SCANNING...','warn');
 
   try {
-    await fetch('/api/scan', { method: 'POST' });
-    addLog('✅ Active scan complete. Fetching updated status metrics...','ok');
+    const res = await fetch('/api/scan', { method: 'POST' });
+    if (res.ok) {
+      addLog('📡 Security shield active audit started in background...','info');
+      
+      // Poll logs and report progress live every 1.5 seconds for 15s (10 ticks)
+      let tick = 0;
+      const pollTimer = setInterval(async () => {
+        tick++;
+        await loadSystemLogs();
+        await loadScanReport();
+        
+        if (tick >= 10) {
+          clearInterval(pollTimer);
+          await checkLocation();
+          addLog('✅ Active scan process complete. Shield status verified.','ok');
+        }
+      }, 1500);
+    } else {
+      addLog('❌ Failed to trigger scan.','alert');
+      setShieldStatus('READY','ok');
+    }
   } catch(e) {
     addLog('⚠️ Scan server disconnected. Check local terminal.','warn');
+    setShieldStatus('READY','ok');
   }
-
-  setTimeout(async () => {
-    await loadScanReport();
-    await loadSystemLogs();
-    await checkLocation();
-  }, 1000);
 }
 
 function setShieldStatus(text, cls) {
@@ -1589,6 +1607,7 @@ async function saveTelegramConfig() {
     if (res.ok) {
       showToast("✅ Telegram settings saved!");
       addLog("Telegram Alert configuration updated.");
+      toggleTelegramFields(false);
     } else {
       showToast("❌ Failed to save settings", true);
     }
@@ -1615,6 +1634,7 @@ async function testTelegramBot() {
     if (res.ok) {
       showToast("✅ Test message sent! Check Telegram.");
       addLog("Telegram test alert sent successfully.");
+      toggleTelegramFields(false);
     } else {
       showToast("❌ Test failed. Check token/chat ID.", true);
       addLog("Telegram test alert failed.", "warn");
