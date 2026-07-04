@@ -1,14 +1,14 @@
 #!/bin/bash
 # ============================================================
-# 💀 AETHER GHOST OS — Universal Installer
+# 💀 AETHER GHOST OS — Universal Installer v1.1.0
 # Works on ANY Android phone with Termux
 # No root required.
 # ============================================================
 
 clear
 echo ""
-echo "  💀😈🤫  AETHER GHOST OS INSTALLER  🤫😈💀"
-echo "  ========================================"
+echo "  💀😈🤫  AETHER GHOST OS INSTALLER v1.1.0  🤫😈💀"
+echo "  =================================================="
 echo ""
 
 GREEN='\033[0;32m'
@@ -20,70 +20,135 @@ NC='\033[0m'
 ok()   { echo -e "  ${GREEN}✅ $1${NC}"; }
 warn() { echo -e "  ${YELLOW}⚠️  $1${NC}"; }
 info() { echo -e "  ${CYAN}→  $1${NC}"; }
+err()  { echo -e "  ${RED}❌ $1${NC}"; }
+
+# Replace this with your actual GitHub username before pushing
+GITHUB_USER="AETHERGHOSTOS"
+REPO_NAME="ghost-mode"
+BASE="https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main"
 
 # ─── STEP 1: UPDATE ───────────────────────────────────────
-echo -e "${CYAN}[1/5] Updating packages...${NC}"
+echo -e "${CYAN}[1/6] Updating packages...${NC}"
 pkg update -y -o Dpkg::Options::="--force-confnew" > /dev/null 2>&1
 ok "Packages updated"
 
 # ─── STEP 2: INSTALL TOOLS ────────────────────────────────
-echo -e "${CYAN}[2/5] Installing tools & styling engines...${NC}"
+echo -e "${CYAN}[2/6] Installing tools...${NC}"
 pkg install -y python nmap net-tools curl tor cronie python-pillow termux-api > /dev/null 2>&1
-ok "Tools installed: python, nmap, curl, tor, cronie, python-pillow, termux-api"
+ok "Installed: python, nmap, curl, tor, cronie, pillow, termux-api"
 
 # ─── STEP 3: PYTHON SETUP ─────────────────────────────────
-echo -e "${CYAN}[3/5] Setting up Python...${NC}"
+echo -e "${CYAN}[3/6] Setting up Python...${NC}"
 ln -sf $PREFIX/bin/python $PREFIX/bin/python3 2>/dev/null
 pip install requests --break-system-packages -q 2>/dev/null
-ok "Python ready"
+ok "Python and dependencies ready"
 
-# ─── STEP 4: CREATE DIRECTORIES & CONFIGS ────────────────
-echo -e "${CYAN}[4/5] Creating folders & configuring screen-fit terminal font...${NC}"
+# ─── STEP 4: CREATE DIRECTORIES ───────────────────────────
+echo -e "${CYAN}[4/6] Creating folders...${NC}"
 mkdir -p ~/ghost_tools
 mkdir -p ~/.termux
-PROPS_FILE="$HOME/.termux/termux.properties"
-if [ -f "$PROPS_FILE" ]; then
-  if grep -q "font-size" "$PROPS_FILE"; then
-    echo "  → Preserving existing Termux font-size setting."
-  else
-    echo "font-size = 12" >> "$PROPS_FILE"
+mkdir -p ~/.termux/boot
+
+# Terminal font size configuration (optional)
+PROPS="$HOME/.termux/termux.properties"
+if ! grep -q "font-size" "$PROPS" 2>/dev/null; then
+  echo ""
+  echo "  🔤 Terminal Customization:"
+  read -p "  Would you like to set the default font size to 12? (y/n) [y]: " font_choice
+  if [[ "$font_choice" != "n" && "$font_choice" != "N" ]]; then
+    echo "font-size = 12" >> "$PROPS"
     termux-reload-settings 2>/dev/null
+    ok "Font size set to 12"
+  else
+    ok "Kept your custom font configurations"
   fi
-else
-  echo "font-size = 12" > "$PROPS_FILE"
-  termux-reload-settings 2>/dev/null
 fi
-ok "Terminal font size configured to auto-fit. Folders created"
+ok "Directories and terminal settings audited"
 
-# ─── STEP 5: DOWNLOAD FILES FROM GITHUB ───────────────────
-echo -e "${CYAN}[5/5] Downloading Aether Ghost OS files...${NC}"
+# ─── STEP 5: DOWNLOAD FILES ───────────────────────────────
+echo -e "${CYAN}[5/6] Downloading Aether Ghost OS files...${NC}"
 
-BASE="https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main"
+download() {
+  local url="$1"
+  local dest="$2"
+  local name="$3"
+  
+  local local_file=""
+  if [ -f "./$name" ]; then
+    local_file="./$name"
+  elif [ -f "./ghost_tools/$name" ]; then
+    local_file="./ghost_tools/$name"
+  elif [ -f "./assets/$name" ]; then
+    local_file="./assets/$name"
+  fi
+  
+  if [ -n "$local_file" ]; then
+    cp "$local_file" "$dest" 2>/dev/null && ok "$name (local)" || warn "$name copy failed"
+  else
+    curl -sL "$url" -o "$dest" 2>/dev/null && ok "$name" || warn "$name download failed"
+  fi
+}
 
-curl -sL "$BASE/ghost_mode.py" -o ~/ghost_mode.py 2>/dev/null && ok "ghost_mode.py" || warn "ghost_mode.py failed"
-curl -sL "$BASE/ghost.sh" -o ~/ghost.sh 2>/dev/null && ok "ghost.sh" || warn "ghost.sh failed"
-curl -sL "$BASE/ghost_tools/location_picker.py" -o ~/ghost_tools/location_picker.py 2>/dev/null && ok "location_picker.py" || warn "location_picker.py failed"
-curl -sL "$BASE/ghost_tools/ghost_dashboard.html" -o ~/ghost_tools/ghost_dashboard.html 2>/dev/null && ok "ghost_dashboard.html" || warn "ghost_dashboard.html failed"
-curl -sL "$BASE/ghost_tools/server_daemon.py" -o ~/ghost_tools/server_daemon.py 2>/dev/null && ok "server_daemon.py" || warn "server_daemon.py failed"
-curl -sL "$BASE/assets/logo.png" -o ~/ghost_tools/logo.png 2>/dev/null && ok "logo.png" || warn "logo.png failed"
+download "$BASE/ghost_mode.py"                    ~/ghost_mode.py                         "ghost_mode.py"
+download "$BASE/ghost.sh"                         ~/ghost.sh                              "ghost.sh"
+download "$BASE/ghost_tools/location_picker.py"   ~/ghost_tools/location_picker.py        "location_picker.py"
+download "$BASE/ghost_tools/ghost_dashboard.html" ~/ghost_tools/ghost_dashboard.html      "ghost_dashboard.html"
+download "$BASE/ghost_tools/server_daemon.py"     ~/ghost_tools/server_daemon.py          "server_daemon.py"
+download "$BASE/ghost_tools/render_logo.py"       ~/ghost_tools/render_logo.py            "render_logo.py"
+download "$BASE/assets/aether_emoji.png"          ~/ghost_tools/aether_emoji.png          "aether_emoji.png"
+download "$BASE/assets/logo.png"                  ~/ghost_tools/logo.png                  "logo.png"
+
+# PC Edition (optional)
+download "$BASE/ghost_mode_pc.py" ~/ghost_mode_pc.py "ghost_mode_pc.py (PC Edition)"
 
 chmod +x ~/ghost.sh
 
-# Copy dashboard and logo to sdcard if possible
+# ─── STEP 6: AUTO-BOOT SETUP ──────────────────────────────
+echo -e "${CYAN}[6/6] Setting up auto-boot...${NC}"
+
+# Termux:Boot script — runs when phone boots
+cat > ~/.termux/boot/aether_autostart.sh << 'BOOT_EOF'
+#!/data/data/com.termux/files/usr/bin/bash
+# Aether Ghost OS — Auto-start on phone boot
+# Requires: Termux:Boot app from F-Droid
+
+# Wait for system to settle
+sleep 8
+
+# Start Tor in background
+tor > /dev/null 2>&1 &
+
+# Start cron daemon for scheduled scans
+crond
+
+# Start dashboard server
+python3 ~/ghost_tools/server_daemon.py > /dev/null 2>&1 &
+
+# Run initial scan after 20 seconds
+sleep 20
+python3 ~/ghost_mode.py >> ~/ghost_tools/ghost.log 2>&1
+BOOT_EOF
+chmod +x ~/.termux/boot/aether_autostart.sh
+ok "Auto-boot configured (requires Termux:Boot app from F-Droid)"
+
+# ─── SETUP CRON (AUTO-SCAN) ───────────────────────────────
+crond 2>/dev/null
+(crontab -l 2>/dev/null | grep -v ghost_mode; \
+ echo "*/2 * * * * python3 ~/ghost_mode.py >> ~/ghost_tools/ghost.log 2>&1") | crontab -
+ok "Auto-scan every 2 minutes configured"
+
+# ─── COPY ASSETS ──────────────────────────────────────────
 cp ~/ghost_tools/ghost_dashboard.html /sdcard/Download/ghost_dashboard.html 2>/dev/null
-cp ~/ghost_tools/logo.png /sdcard/Download/logo.png 2>/dev/null && \
-  ok "Dashboard and Logo copied to Downloads" || \
-  info "Dashboard at: ~/ghost_tools/ghost_dashboard.html"
+cp ~/ghost_tools/logo.png /sdcard/Download/aether_logo.png 2>/dev/null
 
 echo ""
-echo -e "${GREEN}  ========================================"
-echo -e "  💀 AETHER GHOST OS INSTALLED SUCCESSFULLY!"
-echo -e "  ========================================${NC}"
+echo -e "${GREEN}  =================================================="
+echo -e "  💀 AETHER GHOST OS v1.1.0 INSTALLED!"
+echo -e "  ==================================================${NC}"
 echo ""
-echo "  Run anytime:  bash ~/ghost.sh"
-echo ""
-echo "  Dashboard:    Choose Option 5 in launcher menu"
-echo "                (Or visit http://localhost:8080/ghost_dashboard.html)"
+echo "  Launch:       bash ~/ghost.sh"
+echo "  Dashboard:    http://localhost:8080/ghost_dashboard.html"
+echo "  PC Edition:   python3 ~/ghost_mode_pc.py"
 echo ""
 echo -e "${YELLOW}  ⚠️  IMPORTANT NOTE ON TERMUX:API FOR PHONE INTEGRATION:${NC}"
 echo "  If commands like 'Test Alarm' or launcher scripts freeze, it means"
@@ -94,11 +159,10 @@ echo "  2. Ensure BOTH your Termux app and Termux:API app are from the same sour
 echo "  3. Open Android App Settings ➔ Termux (and Termux:API) ➔ Grant all permissions"
 echo "     (especially background access, notifications, and logs/SMS if prompted)."
 echo ""
-echo -e "${CYAN}  📱 TO SET A CUSTOM BACKGROUND WALLPAPER IN TERMUX:${NC}"
-echo "  1. Install the \"Termux:Styling\" app from F-Droid or GitHub."
-echo "  2. Open Termux, long-press anywhere on the terminal window."
-echo "  3. Tap \"More...\" ➔ \"Style\" ➔ \"Choose Color/Background\"."
-echo "  4. Select your custom wallpaper image from your phone!"
+echo -e "${CYAN}  📱 FOR AUTO-BOOT TO WORK:${NC}"
+echo "  Install 'Termux:Boot' from F-Droid"
+echo "  Open it once to enable boot permission"
+echo "  Ghost OS will then start automatically on every reboot"
 echo ""
-echo -e "${YELLOW}  ⚠️  For educational and personal security use only.${NC}"
+echo -e "${YELLOW}  ⚠️  For personal security and educational use only.${NC}"
 echo ""

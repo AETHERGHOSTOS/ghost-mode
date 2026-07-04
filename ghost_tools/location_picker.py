@@ -45,15 +45,31 @@ def show_menu():
     print()
 
 def apply_locations(codes):
-    # Read existing torrc
-    lines = []
-    try:
-        with open(TORRC) as f:
-            lines = [l for l in f.readlines()
-                     if "ExitNodes" not in l and "StrictNodes" not in l]
-    except:
-        pass
+    # Determine platform specific torrc path
+    torrc_path = "/etc/tor/torrc" # default fallback
+    termux_path = os.path.expanduser("~/../usr/etc/tor/torrc")
+    
+    if os.path.exists(termux_path) or "com.termux" in termux_path:
+        torrc_path = termux_path
+    elif os.path.exists("/etc/tor/torrc"):
+        torrc_path = "/etc/tor/torrc"
+    elif os.path.exists("/usr/local/etc/tor/torrc"):
+        torrc_path = "/usr/local/etc/tor/torrc"
+    else:
+        # Custom or Windows path: local workspace file torrc
+        torrc_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "torrc")
 
+    # Read existing torrc config lines
+    lines = []
+    if os.path.exists(torrc_path):
+        try:
+            with open(torrc_path, "r", encoding="utf-8") as f:
+                lines = [l for l in f.readlines()
+                         if "ExitNodes" not in l and "StrictNodes" not in l]
+        except Exception as e:
+            print(f"⚠️ Could not read Tor configuration: {e}")
+
+    # Inject country nodes
     if codes:
         country_str = ",".join([f"{{{c}}}" for c in codes])
         lines.append(f"\nExitNodes {country_str}\n")
@@ -62,14 +78,26 @@ def apply_locations(codes):
     else:
         print("\n✅ Random location mode — Tor picks automatically")
 
-    with open(TORRC, "w") as f:
-        f.writelines(lines)
+    # Write changes safely
+    try:
+        os.makedirs(os.path.dirname(torrc_path), exist_ok=True)
+        with open(torrc_path, "w", encoding="utf-8") as f:
+            f.writelines(lines)
+        print(f"✅ Tor configuration file updated: {torrc_path}")
+    except Exception as e:
+        print(f"⚠️ Permission denied: Could not write Tor settings file: {e}")
 
     # Restart Tor
     print("🔄 Restarting Tor...")
-    subprocess.run("pkill tor 2>/dev/null", shell=True)
+    if os.name == "nt":
+        subprocess.run("taskkill /f /im tor.exe 2>nul", shell=True)
+    else:
+        subprocess.run("pkill tor 2>/dev/null", shell=True)
     import time; time.sleep(2)
-    subprocess.Popen(["tor"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        subprocess.Popen(["tor"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as e:
+        print(f"⚠️ Could not start Tor daemon automatically: {e}")
     print("⏳ Waiting 15 seconds for Tor to bootstrap circuits...")
     time.sleep(15)
 

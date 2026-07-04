@@ -426,8 +426,8 @@ select:focus{border-color:var(--accent-color)}
 <!-- Cyber Splash Loading Screen -->
 <div id="splash-overlay">
   <div class="splash-content">
-    <img src="logo.png" class="splash-logo" alt="Aether OS Logo" id="splash-logo-img">
-    <div class="splash-title">💀 AETHER GHOST OS 💀</div>
+    <img src="logo.png" class="splash-logo" alt="Aether OS Logo" id="splash-logo-img" style="border: 2px solid #00ff88; border-radius: 18px; box-shadow: 0 0 20px rgba(0, 255, 136, 0.6); object-fit: contain; width: 90px; height: 90px; margin-bottom: 20px; animation: logo-glow 2s infinite ease-in-out;">
+    <div class="splash-title" style="text-shadow: 0 0 10px #00ff88;">💀 AETHER GHOST OS 💀</div>
     <div class="splash-progress-bg">
       <div id="splash-bar" class="splash-progress-bar"></div>
     </div>
@@ -436,13 +436,12 @@ select:focus{border-color:var(--accent-color)}
   </div>
 </div>
 
-<header style="display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative;">
-  <!-- Theme Switch Toggle Button -->
-  <button id="theme-toggle" class="btn blue" style="width:auto; margin:0; padding:6px 12px; font-size:0.7em; position:absolute; top:4px; right:4px; font-family:'Share Tech Mono', monospace;">🌙 Dark Theme</button>
-  
-  <img src="logo.png" alt="Aether Ghost OS Logo" id="header-logo-img" style="width: 54px; height: 54px; border-radius: 10px; border: 1px solid #1a1a1a; box-shadow: 0 0 12px rgba(0, 255, 136, 0.2);">
-  <h1>💀 AETHER GHOST OS 💀</h1>
-  <p style="font-size:0.7em; letter-spacing:3px; color:#666;">PRIVACY OPERATING SECURITY SUITE</p>
+<header style="display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; margin-bottom: 16px;">
+  <img src="logo.png" alt="Aether Ghost OS Logo" id="header-logo-img" style="width: 76px; height: 76px; border-radius: 16px; border: 2px solid #00ff88; box-shadow: 0 0 15px rgba(0, 255, 136, 0.5); object-fit: contain;">
+  <h1 style="font-family: 'Zen Dots', sans-serif; color: #00ff88; text-shadow: 0 0 8px rgba(0, 255, 136, 0.8), 0 0 15px rgba(0, 255, 136, 0.4); font-size: 1.50rem; letter-spacing: 2px; margin-top: 6px; display: flex; align-items: center; gap: 10px;">
+    💀 AETHER GHOST OS 💀
+  </h1>
+  <p style="font-size:0.65rem; letter-spacing:4px; color:#555; font-family:'Share Tech Mono', monospace;">PRIVACY OPERATING SECURITY SUITE</p>
 </header>
 
 <!-- Blinking Unprotected Alert Banner -->
@@ -503,7 +502,7 @@ select:focus{border-color:var(--accent-color)}
         <option value="adguard">🚫 AdGuard Block (94.140.14.14)</option>
         <option value="rotation">🔄 Auto-Rotate DNS</option>
       </select>
-      <div id="dns-rotation-fields" style="display:none; flex-direction:column; gap:2px;">
+      <div id="dns-rotation-fields" style="display:none; flex-direction:column; gap:4px;">
         <label style="font-size:0.58em; color:#555; letter-spacing:0.5px; text-transform:uppercase;">Rotation Frequency</label>
         <select id="dns-rotation-interval-select" style="width:100%;">
           <option value="1">Every 1 Minute</option>
@@ -512,6 +511,8 @@ select:focus{border-color:var(--accent-color)}
           <option value="30">Every 30 Minutes</option>
           <option value="60">Every 1 Hour</option>
         </select>
+        <label style="font-size:0.58em; color:#555; letter-spacing:0.5px; text-transform:uppercase; margin-top:2px;">Daily Scheduled Time (Optional)</label>
+        <input type="text" id="dns-scheduled-time-input" placeholder="e.g. 02:00" style="width:100%; background:#0f0f0f; color:#fff; border:1px solid #202020; padding:6px; border-radius:6px; font-family:monospace; font-size:0.85em; text-align:center; outline:none;">
       </div>
       <button class="btn blue" onclick="updateDnsSettings()" style="margin:0; padding:6px; font-size:0.75em; letter-spacing:1px;">Apply DNS</button>
     </div>
@@ -802,55 +803,7 @@ select:focus{border-color:var(--accent-color)}
 </div>
 
 <script>
-// Theme Switcher Logic
-let currentTheme = localStorage.getItem('ghost_theme') || 'dark';
-
-function applyTheme(theme) {
-  const root = document.documentElement;
-  const headerLogo = document.getElementById('header-logo-img');
-  const splashLogo = document.getElementById('splash-logo-img');
-  const btn = document.getElementById('theme-toggle');
-  
-  if (theme === 'light') {
-    root.style.setProperty('--bg-color', '#f5f7fa');
-    root.style.setProperty('--card-bg', '#ffffff');
-    root.style.setProperty('--text-color', '#1a1a2e');
-    root.style.setProperty('--border-color', '#e2e8f0');
-    root.style.setProperty('--accent-color', '#0099ff');
-    root.style.setProperty('--glow-color', 'rgba(0, 153, 255, 0.2)');
-    document.body.style.background = '#f5f7fa';
-    document.body.style.color = '#1a1a2e';
-    
-    // Change logos to light theme path
-    if (headerLogo) headerLogo.src = 'assets/logo_light.png';
-    if (splashLogo) splashLogo.src = 'assets/logo_light.png';
-    
-    btn.textContent = '🌞 Light Theme';
-    btn.className = 'btn blue';
-  } else {
-    // Dark mode default
-    root.style.setProperty('--bg-color', '#050505');
-    root.style.setProperty('--card-bg', '#0a0a0a');
-    root.style.setProperty('--text-color', '#d0d0d0');
-    root.style.setProperty('--border-color', '#121212');
-    root.style.setProperty('--accent-color', '#00ff88');
-    root.style.setProperty('--glow-color', 'rgba(0, 255, 136, 0.2)');
-    document.body.style.background = '#050505';
-    document.body.style.color = '#d0d0d0';
-    
-    if (headerLogo) headerLogo.src = 'assets/logo_dark.png';
-    if (splashLogo) splashLogo.src = 'assets/logo_dark.png';
-    
-    btn.textContent = '🌙 Dark Theme';
-    btn.className = 'btn blue';
-  }
-  localStorage.setItem('ghost_theme', theme);
-  currentTheme = theme;
-}
-
-document.getElementById('theme-toggle').addEventListener('click', () => {
-  applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
-});
+// System theme permanently locked to Dark Neon Green Cyber mode
 
 // Copy credentials helper
 function copyVal(val, name) {
@@ -880,6 +833,7 @@ function addLog(msg,cls=''){
   logBox.scrollTop=logBox.scrollHeight;
 }
 
+// Log view controls
 function toggleLog(e) {
   const logBox = document.getElementById('log');
   const btn = e.target;
@@ -1131,10 +1085,16 @@ async function checkLocation(){
           locEl.textContent = 'DNS Encrypted';
           locEl.style.color = '#ffaa00';
         } else {
-          torIpEl.textContent = 'Connecting...';
+          torIpEl.textContent = status.ip || 'Connecting...';
           torIpEl.style.color = '#ffaa00';
-          locEl.textContent = 'Establishing tunnel...';
+          locEl.textContent = status.location || 'Establishing tunnel...';
           locEl.style.color = '#ffaa00';
+          
+          if (status.location && (status.location.includes("Disconnected") || status.location.includes("Leaking") || status.location.includes("Offline"))) {
+            setShieldStatus('⚠️ SECURE TUNNEL DOWN', 'alert');
+          } else {
+            setShieldStatus('CONNECTING...', 'warn');
+          }
         }
       }
       
@@ -1251,6 +1211,7 @@ async function loadDnsConfig() {
       const data = await res.json();
       document.getElementById('dns-provider-select').value = data.dns_provider || 'cloudflare';
       document.getElementById('dns-rotation-interval-select').value = data.dns_rotation_interval || 5;
+      document.getElementById('dns-scheduled-time-input').value = data.dns_scheduled_time || '';
       toggleDnsRotFields();
     }
   } catch(e) {}
@@ -1259,6 +1220,7 @@ async function loadDnsConfig() {
 async function updateDnsSettings() {
   const provider = document.getElementById('dns-provider-select').value;
   const interval = document.getElementById('dns-rotation-interval-select').value;
+  const scheduled = document.getElementById('dns-scheduled-time-input').value.trim();
   
   addLog(`⚙️ Requests DNS configuration update: ${provider.toUpperCase()}...`, 'info');
   try {
@@ -1267,7 +1229,8 @@ async function updateDnsSettings() {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         dns_provider: provider,
-        dns_rotation_interval: interval
+        dns_rotation_interval: interval,
+        dns_scheduled_time: scheduled
       })
     });
     if (res.ok) {
@@ -1278,6 +1241,68 @@ async function updateDnsSettings() {
     }
   } catch(e) {
     addLog('❌ Server is offline.', 'alert');
+  }
+}
+
+async function loadScanReport() {
+  try {
+    const res = await fetch('/api/report?t=' + Date.now());
+    if (res.ok) {
+      const r = await res.json();
+      
+      document.getElementById('conn-type').textContent = r.connection_type || "Unknown";
+      document.getElementById('ssid-val').textContent = r.ssid || "N/A";
+      document.getElementById('badge-temp').textContent = `🌡️ ${r.battery_temp}°C`;
+      
+      if (r.connection_type.includes("Wi-Fi") && (r.ssid.toLowerCase().includes("free") || r.ssid.toLowerCase().includes("public"))) {
+        document.getElementById('ssid-safety').textContent = "⚠️ UNSECURED PUBLIC";
+        document.getElementById('ssid-safety').className = "alert";
+        document.getElementById('badge-ssid').className = "badge alert";
+        document.getElementById('badge-ssid').textContent = "⚠️ Insecure SSID";
+      } else {
+        document.getElementById('ssid-safety').textContent = "SECURED / PRIVATE";
+        document.getElementById('ssid-safety').className = "ok";
+        document.getElementById('badge-ssid').className = "badge ok";
+        document.getElementById('badge-ssid').textContent = "✅ SSID Verified";
+      }
+      
+      const threats = r.threats_today || 0;
+      document.getElementById('threat-count').textContent = threats;
+      document.getElementById('threat-count').className = 'big-num ' + (threats ? 'alert' : 'ok');
+      
+      const badgeClasses = threats ? 'alert' : 'ok';
+      const prefix = threats ? '⚠️' : '✅';
+      document.getElementById('badge-network').className = `badge ${badgeClasses}`;
+      document.getElementById('badge-network').textContent = `${prefix} Network Active`;
+      document.getElementById('badge-ports').className = `badge ${badgeClasses}`;
+      document.getElementById('badge-ports').textContent = `${prefix} Ports Clean`;
+      document.getElementById('badge-miccam').className = `badge ${badgeClasses}`;
+      document.getElementById('badge-miccam').textContent = `${prefix} Cam/Mic Sealed`;
+      document.getElementById('badge-arp').className = `badge ${badgeClasses}`;
+      document.getElementById('badge-arp').textContent = `${prefix} ARP Integrity`;
+      document.getElementById('badge-dnsleak').className = `badge ${badgeClasses}`;
+      document.getElementById('badge-dnsleak').textContent = `${prefix} No DNS Leaks`;
+      document.getElementById('badge-dnspoison').className = `badge ${badgeClasses}`;
+      document.getElementById('badge-dnspoison').textContent = `${prefix} Route Verified`;
+      document.getElementById('badge-process').className = `badge ${badgeClasses}`;
+      document.getElementById('badge-process').textContent = `${prefix} Process Clean`;
+      document.getElementById('badge-blocker').className = "badge ok";
+      document.getElementById('badge-blocker').textContent = "✅ Tracker Blocked";
+      
+      if (r.battery_temp >= 42.0) {
+        document.getElementById('badge-temp').className = "badge alert";
+      } else {
+        document.getElementById('badge-temp').className = "badge ok";
+      }
+      
+      if (r.status === "CLEAN") {
+        setShieldStatus('ALL CLEAR 👻', 'ok');
+      } else {
+        setShieldStatus('⚠️ THREATS DETECTED', 'alert');
+      }
+    }
+  } catch(e) {
+    addLog('❌ Simulated check fallback. Started offline.','warn');
   }
 }
 
@@ -1296,67 +1321,7 @@ async function runScan(){
   }
 
   setTimeout(async () => {
-    try {
-      const res = await fetch('/api/report?t=' + Date.now());
-      if (res.ok) {
-        const r = await res.json();
-        
-        document.getElementById('conn-type').textContent = r.connection_type || "Unknown";
-        document.getElementById('ssid-val').textContent = r.ssid || "N/A";
-        document.getElementById('badge-temp').textContent = `🌡️ ${r.battery_temp}°C`;
-        
-        if (r.connection_type.includes("Wi-Fi") && (r.ssid.toLowerCase().includes("free") || r.ssid.toLowerCase().includes("public"))) {
-          document.getElementById('ssid-safety').textContent = "⚠️ UNSECURED PUBLIC";
-          document.getElementById('ssid-safety').className = "alert";
-          document.getElementById('badge-ssid').className = "badge alert";
-          document.getElementById('badge-ssid').textContent = "⚠️ Insecure SSID";
-        } else {
-          document.getElementById('ssid-safety').textContent = "SECURED / PRIVATE";
-          document.getElementById('ssid-safety').className = "ok";
-          document.getElementById('badge-ssid').className = "badge ok";
-          document.getElementById('badge-ssid').textContent = "✅ SSID Verified";
-        }
-        
-        const threats = r.threats_today || 0;
-        document.getElementById('threat-count').textContent = threats;
-        document.getElementById('threat-count').className = 'big-num ' + (threats ? 'alert' : 'ok');
-        
-        const badgeClasses = threats ? 'alert' : 'ok';
-        const prefix = threats ? '⚠️' : '✅';
-        document.getElementById('badge-network').className = `badge ${badgeClasses}`;
-        document.getElementById('badge-network').textContent = `${prefix} Network Active`;
-        document.getElementById('badge-ports').className = `badge ${badgeClasses}`;
-        document.getElementById('badge-ports').textContent = `${prefix} Ports Clean`;
-        document.getElementById('badge-miccam').className = `badge ${badgeClasses}`;
-        document.getElementById('badge-miccam').textContent = `${prefix} Cam/Mic Sealed`;
-        document.getElementById('badge-arp').className = `badge ${badgeClasses}`;
-        document.getElementById('badge-arp').textContent = `${prefix} ARP Integrity`;
-        document.getElementById('badge-dnsleak').className = `badge ${badgeClasses}`;
-        document.getElementById('badge-dnsleak').textContent = `${prefix} No DNS Leaks`;
-        document.getElementById('badge-dnspoison').className = `badge ${badgeClasses}`;
-        document.getElementById('badge-dnspoison').textContent = `${prefix} Route Verified`;
-        document.getElementById('badge-process').className = `badge ${badgeClasses}`;
-        document.getElementById('badge-process').textContent = `${prefix} Process Clean`;
-        document.getElementById('badge-blocker').className = "badge ok";
-        document.getElementById('badge-blocker').textContent = "✅ Tracker Blocked";
-        
-        if (r.battery_temp >= 42.0) {
-          document.getElementById('badge-temp').className = "badge alert";
-        } else {
-          document.getElementById('badge-temp').className = "badge ok";
-        }
-        
-        if (r.status === "CLEAN") {
-          setShieldStatus('ALL CLEAR 👻', 'ok');
-          pushSystemNotification("Shield Scan Completed 👻", "All systems clean. You are invisible.");
-        } else {
-          setShieldStatus('⚠️ THREATS DETECTED', 'alert');
-          pushSystemNotification("SECURITY ALERT", "Threats found! Open your console terminal.");
-        }
-      }
-    } catch(e) {
-      addLog('❌ Simulated check fallback. Started offline.','warn');
-    }
+    await loadScanReport();
     await loadSystemLogs();
     await checkLocation();
   }, 1000);
@@ -1447,7 +1412,8 @@ function startTimer(interval) {
 
   timerTickId = setInterval(() => {
     timeToNextScan--;
-    if (timeToNextScan < 0) {
+    if (timeToNextScan <= 0) {
+      runScan();
       timeToNextScan = scanInterval;
     }
     document.getElementById('timer-countdown').textContent = formatCountdown(timeToNextScan);
@@ -1669,9 +1635,7 @@ window.onload=async()=>{
   await loadSystemLogs();
   await loadTelegramConfig();
   await loadDnsConfig();
-  
-  // Theme Toggle Restoration
-  applyTheme(currentTheme);
+  await loadScanReport();
 };
 </script>
 

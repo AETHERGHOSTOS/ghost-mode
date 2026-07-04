@@ -18,13 +18,17 @@ if sys.platform == "win32":
 
 # --- Auto Dependency Installer ---
 def install_dependencies():
-    required = ['psutil', 'requests']
+    libs = {
+        'psutil': 'psutil',
+        'requests': 'requests',
+        'socks': 'pysocks'
+    }
     missing = []
-    for lib in required:
+    for imp_name, pip_name in libs.items():
         try:
-            __import__(lib)
+            __import__(imp_name)
         except ImportError:
-            missing.append(lib)
+            missing.append(pip_name)
     if missing:
         print(f"💀 Aether Ghost OS: Missing dependencies {missing}. Installing automatically...")
         try:
