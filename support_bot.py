@@ -227,7 +227,7 @@ class AetherSupportBot:
                         cfg = json.load(f)
                     engine = cfg.get("anonymity_engine", "none")
                     if engine != "none":
-                        engine_str = f"*[ GHOST ACTIVE ] ➔ You are a ghost!* 👻 ({engine.upper()} active)"
+                        engine_str = f"*💀 [ GHOST ACTIVE ] ➔ You are a ghost!* 👻 ({engine.upper()} active)"
                 except:
                     pass
             self.send_message(self.admin_id, f"ℹ️ *Aether Bot Status*\n• Support Mode: {status_str}\n• Anonymity Shield: {engine_str}\n• Clients Logged: {len(self.data['clients'])}")

@@ -1100,7 +1100,7 @@ async function checkLocation(){
           torIpEl.style.color = 'var(--accent-color)';
           locEl.textContent = status.location || 'Secured';
           locEl.style.color = 'var(--accent-color)';
-          setShieldStatus('[ GHOST ACTIVE ] ➔ You are a ghost! 👻', 'ok');
+          setShieldStatus('💀 [ GHOST ACTIVE ] ➔ You are a ghost! 👻', 'ok');
         } else if (status.engine === "doh") {
           torIpEl.textContent = 'N/A (DNS only)';
           torIpEl.style.color = '#ffaa00';
@@ -1321,7 +1321,7 @@ async function loadScanReport() {
       }
       
       if (r.status === "CLEAN") {
-        setShieldStatus('[ GHOST ACTIVE ] ➔ You are a ghost! 👻', 'ok');
+        setShieldStatus('💀 [ GHOST ACTIVE ] ➔ You are a ghost! 👻', 'ok');
       } else {
         setShieldStatus('⚠️ THREATS DETECTED', 'alert');
       }
