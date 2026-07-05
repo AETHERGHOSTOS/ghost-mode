@@ -432,7 +432,11 @@ select:focus{border-color:var(--accent-color)}
     <img src="logo.png" class="splash-logo" alt="Aether OS Logo" id="splash-logo-img"
       onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/logo.png';"
       style="border: 2px solid #00ff88; border-radius: 20px; box-shadow: 0 0 30px rgba(0,255,136,0.8), 0 0 60px rgba(0,255,136,0.3); object-fit: contain; width: 100px; height: 100px; margin-bottom: 18px; animation: logo-glow 2s infinite ease-in-out;">
-    <div class="splash-title" style="text-shadow: 0 0 15px #00ff88; font-size:1.3rem; letter-spacing:5px;">💀 AETHER GHOST OS 💀</div>
+    <div class="splash-title" style="text-shadow: 0 0 15px #00ff88; font-size:1.3rem; letter-spacing:5px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <img src="aether_emoji.png" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/aether_emoji.png';" style="width: 1.2em; height: 1.2em; object-fit: contain; filter: drop-shadow(0 0 8px #00ff88);">
+      AETHER GHOST OS
+      <img src="aether_emoji.png" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/aether_emoji.png';" style="width: 1.2em; height: 1.2em; object-fit: contain; filter: drop-shadow(0 0 8px #00ff88);">
+    </div>
     <div style="font-family:'Share Tech Mono',monospace; font-size:0.6rem; color:#00aa55; letter-spacing:3px; margin-bottom:14px;">PRIVACY OPERATING SECURITY SUITE</div>
     <div class="splash-progress-bg">
       <div id="splash-bar" class="splash-progress-bar"></div>
@@ -443,11 +447,13 @@ select:focus{border-color:var(--accent-color)}
 </div>
 
 <header style="display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; margin-bottom: 16px;">
-  <img src="logo.png" alt="Aether Ghost OS Logo" id="header-logo-img" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/logo.png';" style="width: 76px; height: 76px; border-radius: 16px; border: 2px solid #00ff88; box-shadow: 0 0 15px rgba(0, 255, 136, 0.5); object-fit: contain;">
-  <h1 style="font-family: 'Zen Dots', sans-serif; color: #00ff88; text-shadow: 0 0 8px rgba(0, 255, 136, 0.8), 0 0 15px rgba(0, 255, 136, 0.4); font-size: 1.50rem; letter-spacing: 2px; margin-top: 6px; display: flex; align-items: center; gap: 10px;">
-    💀 AETHER GHOST OS 💀
+  <img src="logo.png" alt="Aether Ghost OS Logo" id="header-logo-img" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/logo.png';" style="width: 80px; height: 80px; border-radius: 16px; border: 2px solid #00ff88; box-shadow: 0 0 15px rgba(0, 255, 136, 0.5); object-fit: contain; margin-bottom: 4px;">
+  <h1 style="font-family: 'Zen Dots', sans-serif; color: #00ff88; text-shadow: 0 0 8px rgba(0, 255, 136, 0.8), 0 0 15px rgba(0, 255, 136, 0.4); font-size: 1.50rem; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;">
+    <img src="aether_emoji.png" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/aether_emoji.png';" style="width: 1.2em; height: 1.2em; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.8));">
+    AETHER GHOST OS
+    <img src="aether_emoji.png" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/aether_emoji.png';" style="width: 1.2em; height: 1.2em; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.8));">
   </h1>
-  <p style="font-size:0.65rem; letter-spacing:4px; color:#555; font-family:'Share Tech Mono', monospace;">PRIVACY OPERATING SECURITY SUITE</p>
+  <p style="font-size:0.65rem; letter-spacing:4px; color:#555; font-family:'Share Tech Mono', monospace; margin-top: 4px;">PRIVACY OPERATING SECURITY SUITE</p>
 </header>
 
 <!-- Blinking Unprotected Alert Banner -->
@@ -1104,7 +1110,6 @@ async function checkLocation(){
           torIpEl.style.color = 'var(--accent-color)';
           locEl.textContent = status.location || 'Secured';
           locEl.style.color = 'var(--accent-color)';
-          setShieldStatus('💀 [ GHOST ACTIVE ] ➔ You are a ghost! 👻', 'ok');
         } else if (status.engine === "doh") {
           torIpEl.textContent = 'N/A (DNS only)';
           torIpEl.style.color = '#ffaa00';
@@ -1115,11 +1120,6 @@ async function checkLocation(){
           torIpEl.style.color = '#ffaa00';
           locEl.textContent = status.location || 'Establishing tunnel...';
           locEl.style.color = '#ffaa00';
-          
-          if (status.location && (status.location.includes("Disconnected") || status.location.includes("Leaking") || status.location.includes("Offline"))) {
-            setShieldStatus('⚠️ SECURE TUNNEL DOWN', 'alert');
-          } else {
-            setShieldStatus('CONNECTING...', 'warn');
           }
         }
       }
@@ -1325,7 +1325,7 @@ async function loadScanReport() {
       }
       
       if (r.status === "CLEAN") {
-        setShieldStatus('💀 [ GHOST ACTIVE ] ➔ You are a ghost! 👻', 'ok');
+        setShieldStatus('ALL CLEAR 👻', 'ok');
       } else {
         setShieldStatus('⚠️ THREATS DETECTED', 'alert');
       }
@@ -1664,8 +1664,17 @@ async function testTelegramBot() {
       body: JSON.stringify({ token, chat_id })
     });
     if (res.ok) {
-      showToast("✅ Test message sent! Check Telegram.");
-      addLog("Telegram test alert sent successfully.");
+      showToast("✅ Test message sent! Settings auto-saved!");
+      addLog("Telegram test alert sent. Configuration auto-saved.");
+      
+      // Auto-save settings
+      const payload = { enabled: true, token, chat_id };
+      fetch('/api/telegram_config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      document.getElementById('telegram-enabled').checked = true;
       toggleTelegramFields(false);
     } else {
       showToast("❌ Test failed. Check token/chat ID.", true);

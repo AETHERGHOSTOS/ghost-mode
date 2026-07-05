@@ -68,8 +68,7 @@ def check_network():
     log("😈 Checking outbound connections...")
     conns = run("ss -tn 2>/dev/null | grep ESTAB")
     if conns:
-        log(f"💀 Active connections detected:\n{conns[:400]}")
-        save_threat(f"Suspicious connections: {conns[:200]}")
+        log(f"🤫 Active connections detected:\n{conns[:400]}")
     else:
         log("🤫 Network clean — nobody watching")
 
@@ -121,7 +120,8 @@ def check_mic_camera():
     # Supplemental check: search active processes (fallback)
     procs = run(
         "ps aux 2>/dev/null | grep -iE 'record|camera|audio|mic' "
-        "| grep -v grep | grep -v termux | grep -v ghost | grep -v server_daemon"
+        "| grep -v grep | grep -v termux | grep -v ghost | grep -v server_daemon "
+        "| grep -v pulseaudio | grep -v pipewire | grep -v wireplumber | grep -v jackd | grep -v sndiod"
     )
     if procs:
         lines = [l.strip() for l in procs.split("\n") if l.strip()]
@@ -186,6 +186,19 @@ def check_connection_type():
 def check_dns_leak():
     log("👻 Verifying DNS resolver confidentiality...")
     try:
+        # Check if direct connection is already Tor (global routing active)
+        is_global_tor = False
+        tor_check_res = run("curl -s --max-time 6 https://check.torproject.org/api/ip", timeout=8)
+        if tor_check_res and "IsTor" in tor_check_res:
+            try:
+                is_global_tor = json.loads(tor_check_res).get("IsTor", False)
+            except:
+                pass
+        
+        if is_global_tor:
+            log("🤫 DNS queries globally routed through Tor exit node — no leak possible")
+            return
+
         res = run("curl -s --max-time 6 http://ip-api.com/json/", timeout=8)
         if res and "query" in res:
             data = json.loads(res)
@@ -368,30 +381,61 @@ def check_tor():
         log("💀 Tor not running — select Tor engine and activate")
         return
 
+    # Check direct connection using Tor check API
+    direct_is_tor = False
     real = ""
-    for url in ["https://icanhazip.com", "https://api.ipify.org"]:
-        r = run(f"curl -s --max-time 4 {url}")
-        if r and not r.startswith("curl:") and "<html" not in r.lower():
-            real = r.strip()
-            break
+    res_direct = run("curl -s --max-time 5 https://check.torproject.org/api/ip", timeout=6)
+    if res_direct and "IsTor" in res_direct:
+        try:
+            data = json.loads(res_direct)
+            direct_is_tor = data.get("IsTor", False)
+            real = data.get("IP", "")
+        except:
+            pass
 
-    anon = ""
-    for url in ["https://icanhazip.com", "https://api.ipify.org"]:
-        for attempt in range(2):
-            r = run(f"curl -s --max-time 8 --socks5-hostname 127.0.0.1:9050 {url}", timeout=10)
+    if not real:
+        for url in ["https://icanhazip.com", "https://api.ipify.org"]:
+            r = run(f"curl -s --max-time 4 {url}")
             if r and not r.startswith("curl:") and "<html" not in r.lower():
-                anon = r.strip()
+                real = r.strip()
                 break
-            time.sleep(2)
-        if anon:
-            break
 
-    if anon and real and anon != real:
+    # Check SOCKS connection using Tor check API
+    anon_is_tor = False
+    anon = ""
+    res_anon = run("curl -s --max-time 8 --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip", timeout=10)
+    if res_anon and "IsTor" in res_anon:
+        try:
+            data = json.loads(res_anon)
+            anon_is_tor = data.get("IsTor", False)
+            anon = data.get("IP", "")
+        except:
+            pass
+
+    if not anon:
+        for url in ["https://icanhazip.com", "https://api.ipify.org"]:
+            for attempt in range(2):
+                r = run(f"curl -s --max-time 8 --socks5-hostname 127.0.0.1:9050 {url}", timeout=10)
+                if r and not r.startswith("curl:") and "<html" not in r.lower():
+                    anon = r.strip()
+                    break
+                time.sleep(2)
+            if anon:
+                break
+
+    if (direct_is_tor or anon_is_tor) and anon:
         log(f"💀  \033[1;31m[ GHOST ACTIVE ]\033[0m ➔ \033[1;32mYou are a ghost!\033[0m 👻 — Anonymous IP: {anon}")
-        log(f"🤫 Real IP {real} is hidden from Termux curl requests")
+        if direct_is_tor:
+            log("🤫 Connection globally wrapped in Tor tunnel — absolute protection active")
+        else:
+            log(f"🤫 Real IP {real} is hidden from Termux SOCKS requests")
         log(f"ℹ️  NOTE: Browser traffic uses real IP unless proxied separately")
-    elif anon == real:
-        log("⚠️  Tor running but IP not masked yet — wait 10s and retry")
+    elif anon and real and anon != real:
+        log(f"💀  \033[1;31m[ GHOST ACTIVE ]\033[0m ➔ \033[1;32mYou are a ghost!\033[0m 👻 — Anonymous IP: {anon}")
+        log(f"🤫 Real IP {real} is hidden from Termux SOCKS requests")
+        log(f"ℹ️  NOTE: Browser traffic uses real IP unless proxied separately")
+    elif anon == real and anon:
+        log("⚠️  Tor running but SOCKS IP matches direct IP path. Verify routing.")
     else:
         log("⚠️  Tor proxy loading circuits — wait 15 seconds and rescan")
 
