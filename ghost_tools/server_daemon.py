@@ -450,10 +450,14 @@ def get_sentry_dashboard_layout():
     engine = cfg.get("anonymity_engine", "tor")
     is_rot = cfg.get("dns_provider") == "rotation"
     dns_mode = "Auto-Rotation" if is_rot else cfg.get("dns_provider", "cloudflare").upper()
-    
-    is_healthy, ip, loc, real_ip = verify_connection_health(engine)
+
+    # Use the cached connection status instead of a live blocking API call
+    is_healthy = CONNECTION_STATUS.get("active", False)
+    ip = CONNECTION_STATUS.get("ip", "Checking...")
+    loc = CONNECTION_STATUS.get("location", "Unknown")
     status_icon = "🟢" if is_healthy else "🔴"
-    
+    ghost_line = "💀 *[ GHOST ACTIVE ] ➔ You are a ghost!* 👻" if is_healthy else "⚠️ *Anonymity tunnel down*"
+
     t_path = os.path.join(LOG_DIR, "threats.json")
     threats_count = 0
     if os.path.exists(t_path):
@@ -462,10 +466,11 @@ def get_sentry_dashboard_layout():
                 threats_count = len(json.load(f))
         except:
             pass
-            
+
     msg = (
         f"💀 *AETHER GHOST OS SENTRY MENU*\n"
         f"-----------------------------\n"
+        f"{ghost_line}\n"
         f"Anonymity Engine: *{engine.upper()}*\n"
         f"Status: {status_icon} *{'Protected' if is_healthy else 'Exposed'}*\n"
         f"Spoofed IP: `{ip}`\n"
@@ -474,7 +479,7 @@ def get_sentry_dashboard_layout():
         f"Active Threat Alerts: *{threats_count} alerts*\n\n"
         f"Use buttons below to control the phone remotely:"
     )
-    
+
     kb = {
         "inline_keyboard": [
             [
@@ -494,11 +499,11 @@ def get_sentry_dashboard_layout():
 
 def handle_sentry_callback(token, chat_id, query):
     query_id = query.get("id")
-    sender_id = str(query.get("from", {}).get("id"))
+    sender_id = str(query.get("from", {}).get("id", ""))
     data = query.get("data", "")
     message = query.get("message", {})
     message_id = message.get("message_id")
-    
+
     if sender_id != str(chat_id):
         return
 
@@ -509,7 +514,7 @@ def handle_sentry_callback(token, chat_id, query):
     if data == "menu_main":
         msg, kb = get_sentry_dashboard_layout()
         edit_telegram_message(token, chat_id, message_id, msg, kb)
-        
+
     elif data == "menu_engine":
         msg = "🔄 *Select Anonymity Engine*\n\nChoose an engine circuit below to route your internet traffic:"
         kb = {
@@ -627,7 +632,7 @@ def handle_sentry_callback(token, chat_id, query):
 def run_telegram_bot_poller():
     last_update_id = 0
     config_path = os.path.join(LOG_DIR, "telegram_config.json")
-    
+
     while True:
         try:
             if not os.path.exists(config_path):
@@ -638,50 +643,56 @@ def run_telegram_bot_poller():
             if not cfg.get("enabled", False):
                 time.sleep(10)
                 continue
-            token = cfg.get("token")
-            chat_id = cfg.get("chat_id")
+            token = cfg.get("token", "").strip()
+            chat_id = str(cfg.get("chat_id", "")).strip()
             if not token or not chat_id:
                 time.sleep(10)
                 continue
-            
+
             # Get updates
             url = f"https://api.telegram.org/bot{token}/getUpdates?offset={last_update_id + 1}&timeout=5"
             req = urllib.request.Request(url)
-            with urllib.request.urlopen(req, timeout=10) as response:
+            with urllib.request.urlopen(req, timeout=12) as response:
                 res_data = json.loads(response.read().decode('utf-8'))
-            
+
             if res_data.get("ok") and res_data.get("result"):
                 for update in res_data.get("result"):
-                    last_update_id = update.get("update_id")
-                    
+                    last_update_id = update.get("update_id", last_update_id)
+
                     # 1. Parse Callback Button clicks
                     callback_query = update.get("callback_query")
                     if callback_query:
                         handle_sentry_callback(token, chat_id, callback_query)
                         continue
-                        
+
                     # 2. Parse Standard Messages
                     message = update.get("message")
                     if not message:
                         continue
                     sender_chat = message.get("chat", {})
-                    sender_id = str(sender_chat.get("id"))
-                    
-                    if sender_id != str(chat_id):
-                        continue
-                        
+                    sender_id = str(sender_chat.get("id", ""))
                     text = message.get("text", "").strip()
                     if not text:
                         continue
-                        
+
+                    # Allow anyone to /start — ignore others for security
+                    if text.startswith("/start") and sender_id != chat_id:
+                        send_telegram_alert("⚠️ Unauthorized access attempt blocked.")
+                        continue
+                    elif sender_id != chat_id:
+                        continue
+
                     if text.startswith("/start") or text.startswith("/menu") or text.startswith("/status"):
                         msg, kb = get_sentry_dashboard_layout()
                         send_telegram_alert(msg, kb)
                     elif text.startswith("/scan"):
-                        send_telegram_alert("🔄 *Security scan triggered...* please wait.")
-                        run_security_scan()
-                        msg, kb = get_sentry_dashboard_layout()
-                        send_telegram_alert("✅ *Scan Completed!*\n\n" + msg, kb)
+                        send_telegram_alert("🔄 *Security scan triggered...* Running in background, I will notify you when done.")
+                        # Run scan in background thread so the bot stays responsive
+                        def _do_scan():
+                            run_security_scan()
+                            msg, kb = get_sentry_dashboard_layout()
+                            send_telegram_alert("✅ *Scan Completed!*\n\n" + msg, kb)
+                        threading.Thread(target=_do_scan, daemon=True).start()
                     elif text.startswith("/panic"):
                         send_telegram_alert("🚨 *PANIC COMMAND RECEIVED! De-authenticating...*")
                         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -703,29 +714,29 @@ def run_telegram_bot_poller():
                             "click here", "urgent", "update password", "banking support", "invest", "profit",
                             "cash prize", "sent you money", "reference number", "cashback"
                         ]
-                        
+
                         has_scam_keyword = any(kw in text.lower() for kw in scam_keywords)
                         reports = []
-                        
+
                         for url in urls:
                             domain = url.split("://")[-1].split("/")[0].lower()
                             suspicious_tlds = [".xyz", ".top", ".club", ".info", ".bid", ".icu", ".click", ".gq", ".cf", ".tk", ".ml", ".ga"]
                             is_suspicious_tld = any(domain.endswith(tld) for tld in suspicious_tlds)
-                            
+
                             is_lookalike = False
                             matched_brand = ""
                             for brand in ["safaricom", "paypal", "google", "facebook", "netflix", "binance", "blockchain"]:
                                 if brand in domain and domain != f"{brand}.com" and not domain.endswith(f".{brand}.com") and not domain.endswith(f"safaricom.co.ke"):
                                     is_lookalike = True
                                     matched_brand = brand
-                            
+
                             if is_lookalike:
                                 reports.append(f"❌ `{domain}` — *Lookalike domain!* (Spoofing {matched_brand})")
                             elif is_suspicious_tld:
                                 reports.append(f"⚠️ `{domain}` — Uses a high-risk TLD ({domain.split('.')[-1]}).")
                             else:
                                 reports.append(f"ℹ️ `{domain}` — Extracted for analysis.")
-                        
+
                         risk_level = "🟢 LOW RISK"
                         risk_color = "🟢"
                         if reports or has_scam_keyword:
@@ -734,7 +745,7 @@ def run_telegram_bot_poller():
                         if any("❌" in r for r in reports) or (has_scam_keyword and len(urls) > 0):
                             risk_level = "🔴 HIGH RISK (PHISHING/SCAM)"
                             risk_color = "🔴"
-                            
+
                         msg = [
                             f"🤖 *Scam Detection Report*",
                             f"-----------------------------",
@@ -746,17 +757,21 @@ def run_telegram_bot_poller():
                             msg.extend(reports)
                         else:
                             msg.append("\nNo links found in message.")
-                            
+
                         if risk_color == "🔴":
                             msg.append("\n❗ *Warning:* Do NOT click any links or reply to the sender of this message.")
                         elif risk_color == "🟡":
                             msg.append("\n⚠️ *Caution:* Verify the sender before taking any action.")
                         else:
                             msg.append("\n✅ *Note:* No obvious scam indicators found, but always remain vigilant.")
-                            
+
                         send_telegram_alert("\n".join(msg))
+
         except Exception as poller_err:
-            pass
+            # Log errors so they are visible in ghost.log — never silently swallow
+            err_str = str(poller_err)
+            if "timed out" not in err_str.lower() and "read operation" not in err_str.lower():
+                log_message(f"⚠️ Sentry bot poller error: {err_str[:120]}")
         time.sleep(2.5)
 
 # --- Switch Engine Command Execution ---
