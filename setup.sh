@@ -82,8 +82,15 @@ download() {
     local_file="./assets/$name"
   fi
   
+  # Resolve absolute paths to prevent copy-to-self errors
+  local abs_local=""
   if [ -n "$local_file" ]; then
-    cp "$local_file" "$dest" 2>/dev/null && ok "$name (local)" || warn "$name copy failed"
+    abs_local=$(realpath "$local_file" 2>/dev/null)
+  fi
+  local abs_dest=$(realpath "$dest" 2>/dev/null)
+  
+  if [ -n "$abs_local" ] && [ "$abs_local" != "$abs_dest" ]; then
+    cp "$abs_local" "$abs_dest" 2>/dev/null && ok "$name (local)" || warn "$name copy failed"
   else
     curl -sL "$url" -o "$dest" 2>/dev/null && ok "$name" || warn "$name download failed"
   fi
@@ -100,6 +107,9 @@ download "$BASE/assets/logo.png"                  ~/ghost_tools/logo.png        
 
 # PC Edition (optional)
 download "$BASE/ghost_mode_pc.py" ~/ghost_mode_pc.py "ghost_mode_pc.py (PC Edition)"
+
+# Support Bot (optional)
+download "$BASE/support_bot.py" ~/support_bot.py "support_bot.py"
 
 chmod +x ~/ghost.sh
 
