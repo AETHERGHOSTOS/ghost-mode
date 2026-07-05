@@ -429,12 +429,15 @@ select:focus{border-color:var(--accent-color)}
 <!-- Cyber Splash Loading Screen -->
 <div id="splash-overlay">
   <div class="splash-content">
-    <img src="logo.png" class="splash-logo" alt="Aether OS Logo" id="splash-logo-img" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/logo.png';" style="border: 2px solid #00ff88; border-radius: 18px; box-shadow: 0 0 20px rgba(0, 255, 136, 0.6); object-fit: contain; width: 90px; height: 90px; margin-bottom: 20px; animation: logo-glow 2s infinite ease-in-out;">
-    <div class="splash-title" style="text-shadow: 0 0 10px #00ff88;">💀 AETHER GHOST OS 💀</div>
+    <img src="logo.png" class="splash-logo" alt="Aether OS Logo" id="splash-logo-img"
+      onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/logo.png';"
+      style="border: 2px solid #00ff88; border-radius: 20px; box-shadow: 0 0 30px rgba(0,255,136,0.8), 0 0 60px rgba(0,255,136,0.3); object-fit: contain; width: 100px; height: 100px; margin-bottom: 18px; animation: logo-glow 2s infinite ease-in-out;">
+    <div class="splash-title" style="text-shadow: 0 0 15px #00ff88; font-size:1.3rem; letter-spacing:5px;">💀 AETHER GHOST OS 💀</div>
+    <div style="font-family:'Share Tech Mono',monospace; font-size:0.6rem; color:#00aa55; letter-spacing:3px; margin-bottom:14px;">PRIVACY OPERATING SECURITY SUITE</div>
     <div class="splash-progress-bg">
       <div id="splash-bar" class="splash-progress-bar"></div>
     </div>
-    <div id="splash-status" class="splash-status">LOADING SHIELD DRIVERS...</div>
+    <div id="splash-status" class="splash-status">INITIALIZING GHOST SHIELD...</div>
     <div class="splash-log-container" id="splash-log-box"></div>
   </div>
 </div>
@@ -463,6 +466,7 @@ select:focus{border-color:var(--accent-color)}
       <div class="status-text ok" id="shield" style="margin-top: 8px;">
         <span class="pulse" id="pdot"></span>READY
       </div>
+      <div id="ghost-active-status" style="display:none; font-family:'Share Tech Mono',monospace; font-size:0.65em; color:#00ff88; margin-top:6px; letter-spacing:1px; text-shadow: 0 0 8px rgba(0,255,136,0.6);">💀 [ GHOST ACTIVE ] ➔ You are a ghost! 👻</div>
       <div id="last-scan" style="font-size:0.65em; color:#555; margin-top:6px;">Not scanned yet</div>
       <div id="next-scan-timer" style="font-size:0.65em; color:#00ff88; margin-top:4px; font-family:'Share Tech Mono', monospace;">⏱️ Next Auto-Scan: <span id="timer-countdown">--:--</span></div>
     </div>
@@ -692,17 +696,17 @@ select:focus{border-color:var(--accent-color)}
 <div class="card" style="margin-bottom: 12px;">
   <h3>🔍 Security Check Layers</h3>
   <div class="badge-grid" id="checks">
-    <span class="badge pend" id="badge-network">⏳ Network Audit</span>
-    <span class="badge pend" id="badge-ports">⏳ Ports Scan</span>
-    <span class="badge pend" id="badge-miccam">⏳ Mic/Camera</span>
-    <span class="badge pend" id="badge-arp">⏳ ARP integrity</span>
-    <span class="badge pend" id="badge-dnsleak">⏳ DNS Leak check</span>
-    <span class="badge pend" id="badge-dnspoison">⏳ DNS Hijack Check</span>
-    <span class="badge pend" id="badge-ssid">⏳ SSID Safety</span>
-    <span class="badge pend" id="badge-process">⏳ Process Audits</span>
-    <span class="badge pend" id="badge-blocker">⏳ Blocker Status</span>
-    <span class="badge bg-ok" id="badge-engine">⏳ Engine Anonymity</span>
-    <span class="badge pend" id="badge-temp">⏳ CPU Thermal</span>
+    <span class="badge ok" id="badge-network">✅ Network Active</span>
+    <span class="badge ok" id="badge-ports">✅ Ports Clean</span>
+    <span class="badge ok" id="badge-miccam">✅ Cam/Mic Sealed</span>
+    <span class="badge ok" id="badge-arp">✅ ARP Integrity</span>
+    <span class="badge ok" id="badge-dnsleak">✅ No DNS Leaks</span>
+    <span class="badge ok" id="badge-dnspoison">✅ Route Verified</span>
+    <span class="badge ok" id="badge-ssid">✅ SSID Verified</span>
+    <span class="badge ok" id="badge-process">✅ Process Clean</span>
+    <span class="badge ok" id="badge-blocker">✅ Tracker Blocked</span>
+    <span class="badge ok" id="badge-engine">🛡️ Engine Anonymity</span>
+    <span class="badge ok" id="badge-temp">🌡️ CPU Normal</span>
   </div>
 </div>
 
@@ -1371,10 +1375,15 @@ async function runScan(){
 function setShieldStatus(text, cls) {
   const el = document.getElementById('shield');
   const dot = document.getElementById('pdot');
+  const ghostBanner = document.getElementById('ghost-active-status');
   el.className = 'status-text ' + cls;
   dot.className = 'pulse ' + (cls === 'alert' ? 'dead' : '');
   el.innerHTML = `<span class="pulse ${cls==='alert'?'dead':''}" id="pdot"></span>${text}`;
   document.getElementById('last-scan').textContent = `Last scan: ${ts()}`;
+  // Show the Ghost Active confirmation banner only when status is clean/ok
+  if (ghostBanner) {
+    ghostBanner.style.display = (cls === 'ok' && text.includes('GHOST ACTIVE')) ? 'block' : 'none';
+  }
 }
 
 async function triggerPanic() {

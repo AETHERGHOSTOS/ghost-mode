@@ -288,7 +288,7 @@ class AetherSupportBot:
         elif cmd == "/about" or clean_text == "🛡️ About Aether":
             self.send_message(chat_id, RESPONSES["about"], reply_markup=VISITOR_KEYBOARD)
             return
-        elif cmd == "💬 Talk to Developer":
+        elif clean_text == "💬 Talk to Developer":
             self.send_message(chat_id, RESPONSES["talk_to_developer"], reply_markup=VISITOR_KEYBOARD)
             return
         elif cmd == "/donate" or clean_text == "💸 Donate / Support":

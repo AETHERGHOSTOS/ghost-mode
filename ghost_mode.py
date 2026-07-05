@@ -244,12 +244,25 @@ def check_background_processes():
         "| grep -v location_picker | grep -v render_logo | grep -v ghost_mode_pc"
     )
 
+    # Known-safe Termux background processes — whitelist these to prevent false positives
+    SAFE_PROCESSES = [
+        "ssh-agent",   # Termux SSH credential agent — always running, totally normal
+        "runsv",       # Termux service supervisor — manages background daemons
+        "sshd",        # Termux SSH daemon — started by Termux:API or auto-boot
+        "supervise",   # Part of Termux runit service manager
+        "runsvdir",    # Termux runit directory supervisor
+        "/bin/login",  # Termux session login shell
+    ]
+
     found = []
     if procs:
         lines = [l.strip() for l in procs.split("\n") if l.strip()]
+        # Filter out known-safe Termux background processes
+        lines = [l for l in lines if not any(safe in l for safe in SAFE_PROCESSES)]
         found.extend(lines)
     if py_procs:
         lines = [l.strip() for l in py_procs.split("\n") if l.strip()]
+        lines = [l for l in lines if not any(safe in l for safe in SAFE_PROCESSES)]
         found.extend(lines)
 
     if found:
@@ -257,7 +270,7 @@ def check_background_processes():
         log(f"⚠️  {msg}")
         save_threat(msg)
     else:
-        log("🤫 Process tree verified clean")
+        log("🤫 Process tree verified clean — 💀 [ GHOST ACTIVE ] ➔ You are a ghost! 👻")
 
 # ── MODULE 9: HOSTS / TRACKER BLOCKER ─────────────────────────────
 
