@@ -108,9 +108,6 @@ download "$BASE/assets/logo.png"                  ~/ghost_tools/logo.png        
 # PC Edition (optional)
 download "$BASE/ghost_mode_pc.py" ~/ghost_mode_pc.py "ghost_mode_pc.py (PC Edition)"
 
-# Support Bot (optional)
-download "$BASE/support_bot.py" ~/support_bot.py "support_bot.py"
-
 chmod +x ~/ghost.sh
 
 # ─── STEP 6: AUTO-BOOT SETUP ──────────────────────────────
