@@ -177,6 +177,28 @@ Ghost Mode detects threats and alerts you. It hides your real IP from attackers.
 
 ---
 
+## 🛠️ Troubleshooting & Common Issues
+
+### 1. Bot Stops Responding & Dashboard Disconnects in Background
+* **Symptom:** When you leave Termux to go to WhatsApp, the dashboard shows `Scan server disconnected / Local API Offline` and your Telegram bot stops responding to `/start` or `/status` commands.
+* **Cause:** Android's aggressive battery manager freezes or kills background apps (like Termux) when they are not in the foreground.
+* **Solution:**
+  1. **Hold a Wake Lock:** Open Termux and run `termux-wake-lock`. This tells Android to keep the CPU awake.
+  2. **Disable Battery Optimization:** Go to your Android phone's **Settings ➔ Apps ➔ Termux ➔ Battery (or App Battery Usage)** and set it to **Unrestricted** (or disable "Optimize battery usage").
+  3. **Use Option 11 to Exit:** If you need to exit the `ghost.sh` launcher menu to type other commands in Termux, **do not select Option 9 (Stop Everything)**. Instead, select **Option 11 (Exit Menu - Keep Services Running)**. This keeps the background dashboard daemon and Tor tunnels online.
+
+### 2. Telegram Bot Fails to Send Alerts
+* **Symptom:** Sentry alerts or tests do not appear in your Telegram chat.
+* **Solution:**
+  1. **Send Passcode:** Search for your bot in Telegram and start the chat by sending `/start YOUR_ADMIN_PASSCODE` (the passcode is set in `bot_config.json`, default is `CHANGE_ME_NOW`). Telegram blocks bots from sending messages to users unless the user initiates the chat first.
+  2. **Verify Credentials:** Verify that your Token and Chat ID are correctly pasted on the dashboard and saved.
+
+### 3. Too Many Server Offline Log Lines
+* **Symptom:** When Termux goes to sleep, your dashboard logs are flooded with repeating warning lines.
+* **Solution:** We have integrated an offline consolidated logger. The dashboard will now log exactly one warning when Termux goes offline, and one recovery message when it reconnects.
+
+---
+
 ## ⚠️ Disclaimer
 
 Aether Ghost OS is built for **personal security, privacy, and education only**.
