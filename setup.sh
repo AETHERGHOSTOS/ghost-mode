@@ -90,7 +90,12 @@ download() {
   local abs_dest=$(realpath "$dest" 2>/dev/null)
   
   if [ -n "$abs_local" ] && [ "$abs_local" != "$abs_dest" ]; then
-    cp "$abs_local" "$abs_dest" 2>/dev/null && ok "$name (local)" || warn "$name copy failed"
+    if cp "$abs_local" "$abs_dest" 2>/dev/null; then
+      ok "$name (local)"
+    else
+      # If local copy fails (e.g. process lock or write permissions), fallback to curl download
+      curl -sL "$url" -o "$dest" 2>/dev/null && ok "$name (download fallback)" || warn "$name download failed"
+    fi
   else
     curl -sL "$url" -o "$dest" 2>/dev/null && ok "$name" || warn "$name download failed"
   fi
@@ -103,7 +108,7 @@ download "$BASE/ghost_tools/ghost_dashboard.html" ~/ghost_tools/ghost_dashboard.
 download "$BASE/ghost_tools/server_daemon.py"     ~/ghost_tools/server_daemon.py          "server_daemon.py"
 download "$BASE/ghost_tools/render_logo.py"       ~/ghost_tools/render_logo.py            "render_logo.py"
 download "$BASE/assets/aether_emoji.png"          ~/ghost_tools/aether_emoji.png          "aether_emoji.png"
-download "$BASE/assets/logo.png"                  ~/ghost_tools/logo.png                  "logo.png"
+download "$BASE/assets/LOGO.png"                  ~/ghost_tools/logo.png                  "logo.png"
 
 # PC Edition (optional)
 download "$BASE/ghost_mode_pc.py" ~/ghost_mode_pc.py "ghost_mode_pc.py (PC Edition)"
