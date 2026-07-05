@@ -136,6 +136,11 @@ crond
 # Start dashboard server
 python3 ~/ghost_tools/server_daemon.py > /dev/null 2>&1 &
 
+# Start Support Bot if present on this device
+if [ -f "$HOME/support_bot.py" ]; then
+  python3 ~/support_bot.py > /dev/null 2>&1 &
+fi
+
 # Run initial scan after 20 seconds
 sleep 20
 python3 ~/ghost_mode.py >> ~/ghost_tools/ghost.log 2>&1
@@ -143,10 +148,11 @@ BOOT_EOF
 chmod +x ~/.termux/boot/aether_autostart.sh
 ok "Auto-boot configured (requires Termux:Boot app from F-Droid)"
 
-# ─── SETUP CRON (AUTO-SCAN) ───────────────────────────────
+# ─── SETUP CRON (AUTO-SCAN & KEEP-ALIVE) ──────────────────
 crond 2>/dev/null
-(crontab -l 2>/dev/null | grep -v ghost_mode; \
- echo "*/2 * * * * python3 ~/ghost_mode.py >> ~/ghost_tools/ghost.log 2>&1") | crontab -
+(crontab -l 2>/dev/null | grep -v -E "ghost_mode|support_bot"; \
+ echo "*/2 * * * * python3 ~/ghost_mode.py >> ~/ghost_tools/ghost.log 2>&1"; \
+ echo "*/5 * * * * [ -f ~/support_bot.py ] && (pgrep -f support_bot.py >/dev/null || python3 ~/support_bot.py >/dev/null 2>&1 &)") | crontab -
 ok "Auto-scan every 2 minutes configured"
 
 # ─── COPY ASSETS ──────────────────────────────────────────
