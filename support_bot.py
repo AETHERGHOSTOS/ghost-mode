@@ -136,7 +136,8 @@ class AetherSupportBot:
             if self.admin_id:
                 print(f"[*] Registered Admin ID: {self.admin_id}")
             else:
-                print(f"[!] Warning: No Admin registered. Send '/start {self.passcode}' to the bot to claim control.")
+                print(f"[!] Warning: No Admin registered. Send '/start <ADMIN_PASSCODE>' to the bot to claim control.")
+                print(f"[!] Check bot_config.json to find or change your passcode.")
 
     def load_json(self, filepath, default):
         if not os.path.exists(filepath):
