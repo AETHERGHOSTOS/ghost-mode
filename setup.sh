@@ -34,8 +34,30 @@ ok "Packages updated"
 
 # ─── STEP 2: INSTALL TOOLS ────────────────────────────────
 echo -e "${CYAN}[2/6] Installing tools...${NC}"
-pkg install -y python nmap net-tools curl tor cronie python-pillow termux-api > /dev/null 2>&1
-ok "Installed: python, nmap, curl, tor, cronie, pillow, termux-api"
+pkg install -y python nmap net-tools curl tor cronie > /dev/null 2>&1
+ok "Installed core tools: python, nmap, curl, tor, cronie"
+
+# Optional package install: termux-api
+echo ""
+echo "  📱 Optional Termux API Integration:"
+read -p "  Would you like to install 'termux-api' (required for SMS and Wi-Fi checks)? (y/n) [y]: " install_api
+if [[ "$install_api" != "n" && "$install_api" != "N" ]]; then
+  pkg install -y termux-api > /dev/null 2>&1
+  ok "Installed termux-api package"
+else
+  warn "Skipped termux-api package (SMS/Wi-Fi scans disabled)"
+fi
+
+# Optional package install: python-pillow
+echo ""
+echo "  🎨 Optional Graphical Terminal Logo:"
+read -p "  Would you like to install 'python-pillow' (for color graphical terminal logo)? (y/n) [y]: " install_pillow
+if [[ "$install_pillow" != "n" && "$install_pillow" != "N" ]]; then
+  pkg install -y python-pillow > /dev/null 2>&1
+  ok "Installed python-pillow package"
+else
+  ok "Skipped python-pillow package (will use fallback ASCII logo)"
+fi
 
 # ─── STEP 3: PYTHON SETUP ─────────────────────────────────
 echo -e "${CYAN}[3/6] Setting up Python...${NC}"
