@@ -231,13 +231,33 @@ def check_tor():
                 'http': f'socks5h://127.0.0.1:{working_port}',
                 'https': f'socks5h://127.0.0.1:{working_port}'
             }
-            real_ip = requests.get("https://ifconfig.me", timeout=5).text.strip()
-            anon_ip = requests.get("https://ifconfig.me", proxies=proxies, timeout=8).text.strip()
             
-            if real_ip != anon_ip:
+            real_ip = ""
+            for url in ["https://icanhazip.com", "https://api.ipify.org"]:
+                try:
+                    r = requests.get(url, timeout=4)
+                    if r.status_code == 200 and r.text.strip() and "<html" not in r.text.lower():
+                        real_ip = r.text.strip()
+                        break
+                except:
+                    pass
+
+            anon_ip = ""
+            for url in ["https://icanhazip.com", "https://api.ipify.org"]:
+                try:
+                    r = requests.get(url, proxies=proxies, timeout=6)
+                    if r.status_code == 200 and r.text.strip() and "<html" not in r.text.lower():
+                        anon_ip = r.text.strip()
+                        break
+                except:
+                    pass
+            
+            if anon_ip and real_ip and real_ip != anon_ip:
                 log(f"{GREEN}💀😈 GHOST ACTIVE — Anonymous IP: {anon_ip} (Real IP {real_ip} hidden){NC}")
+            elif anon_ip:
+                log(f"{GREEN}💀😈 GHOST ACTIVE — Anonymous IP: {anon_ip}{NC}")
             else:
-                log(f"{YELLOW}⚠️ Tor is running but traffic is not proxied (IP matches real IP).{NC}")
+                log(f"{YELLOW}⚠️ Tor ports active, but proxy IP check timed out.{NC}")
         except Exception as e:
             log(f"{YELLOW}⚠️ Tor ports active, but proxy check failed: {e}{NC}")
     else:
