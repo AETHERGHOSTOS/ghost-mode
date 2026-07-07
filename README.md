@@ -97,93 +97,129 @@ curl -sL https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/setup.s
 
 ### 🪟 Option 2: Windows (10/11)
 
-#### Method A: Native Python (easiest & simplest)
-1. **Install Python:** Download and install Python 3 from the official **[Python Website](https://www.python.org/downloads/)**. *Make sure to check the box: **"Add Python to PATH"** during setup.*
-2. **Download & Run:**
-   * Clone or download this project folder.
-   * Open PowerShell or Command Prompt inside the folder and run:
-     ```powershell
-     python ghost_mode_pc.py
-     ```
-   *(The script will automatically detect and install any missing library dependencies like `psutil` and `requests`.)*
+#### 🔰 Method A: Download ZIP (Easiest for Beginners — No Git Required)
+1. **Install Python:** Download and install Python 3 from [python.org/downloads](https://www.python.org/downloads/). *Check the box **"Add Python to PATH"** before clicking install.*
+2. **Download & Extract:**
+   * Click this link to download the project: **[Direct ZIP Download Link](https://github.com/AETHERGHOSTOS/ghost-mode/archive/refs/heads/main.zip)**
+   * Extract the ZIP folder to your Desktop.
+3. **Run:**
+   * Double-click **`run_scanner.bat`** to run the scanner.
+   * Double-click **`run_dashboard.bat`** to run the local server and open the web dashboard.
 
-#### Method B: Windows Subsystem for Linux (WSL)
-1. Open PowerShell as Administrator and install WSL:
+#### 💻 Method B: Clone via PowerShell & Git (Advanced)
+1. Open PowerShell and clone the project:
    ```powershell
-   wsl --install
+   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
+   cd ghost-mode
+   python ghost_mode_pc.py
    ```
-2. Open your new Linux Terminal (e.g., Ubuntu) and follow the **Option 3: Linux** instructions below.
+
+#### 🐧 Method C: Windows Subsystem for Linux (WSL)
+1. Open PowerShell as Administrator and run: `wsl --install`
+2. Reboot your computer, search for "Ubuntu" in your Start Menu, and follow the Linux setup guide below.
 
 ---
 
 ### 🐧 Option 3: Linux (Ubuntu, Debian, Arch)
 
-1. Open your terminal and install the required security dependencies:
-   * **Ubuntu/Debian**:
-     ```bash
-     sudo apt update && sudo apt install -y python3 python3-pip nmap tor curl
-     ```
-   * **Arch Linux**:
-     ```bash
-     sudo pacman -Syy python python-pip nmap tor curl
-     ```
-2. Clone this repository and configure permissions:
+#### 🔰 Method A: Download ZIP (Easiest — No Git Required)
+1. Open terminal and run this single command line to download and unzip:
    ```bash
-   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
-   cd ghost-mode
-   pip install requests --break-system-packages
-   chmod +x ghost.sh
+   curl -L https://github.com/AETHERGHOSTOS/ghost-mode/archive/refs/heads/main.zip -o ghost-mode.zip && unzip ghost-mode.zip && cd ghost-mode-main
    ```
+2. Install dependencies:
+   * **Ubuntu/Debian**: `sudo apt update && sudo apt install -y python3 python3-pip nmap tor curl`
+   * **Arch Linux**: `sudo pacman -Syy python python-pip nmap tor curl`
+3. Run the PC security scanner:
+   ```bash
+   python3 ghost_mode_pc.py
+   ```
+
+#### 💻 Method B: Clone via Git (Advanced)
+```bash
+git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
+cd ghost-mode
+pip install requests --break-system-packages
+chmod +x ghost.sh
+python3 ghost_mode_pc.py
+```
 
 ---
 
 ### 🦜 Option 4: Parrot Security OS & Kali Linux
 
-Since Parrot OS and Kali Linux are built specifically for security, they come with dependencies like Python, Tor, and Nmap pre-installed out of the box!
-1. Open your terminal and clone the suite:
+#### 🔰 Method A: Download ZIP (Easiest — No Git Required)
+1. Open terminal and run:
    ```bash
-   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
-   cd ghost-mode
-   pip install requests --break-system-packages 2>/dev/null
-   chmod +x ghost.sh
+   curl -L https://github.com/AETHERGHOSTOS/ghost-mode/archive/refs/heads/main.zip -o ghost-mode.zip && unzip ghost-mode.zip && cd ghost-mode-main
    ```
-2. Run the suite:
+2. Run the PC scanner:
    ```bash
    python3 ghost_mode_pc.py
    ```
+
+#### 💻 Method B: Clone via Git (Advanced)
+```bash
+git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
+cd ghost-mode
+chmod +x ghost.sh
+python3 ghost_mode_pc.py
+```
 
 ---
 
 ### 🍏 Option 5: macOS
 
-1. Open Terminal and install dependencies using **[Homebrew](https://brew.sh/)**:
+#### 🔰 Method A: Download ZIP (Easiest — No Git Required)
+1. Open terminal and run:
+   ```bash
+   curl -L https://github.com/AETHERGHOSTOS/ghost-mode/archive/refs/heads/main.zip -o ghost-mode.zip && unzip ghost-mode.zip && cd ghost-mode-main
+   ```
+2. Install dependencies using **[Homebrew](https://brew.sh/)**:
    ```bash
    brew install python tor nmap curl
    ```
-2. Clone this repository and configure:
+3. Run the PC scanner:
    ```bash
-   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
-   cd ghost-mode
-   pip install requests
-   chmod +x ghost.sh
+   python3 ghost_mode_pc.py
    ```
+
+#### 💻 Method B: Clone via Git (Advanced)
+```bash
+git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
+cd ghost-mode
+brew install python tor nmap curl
+pip install requests
+chmod +x ghost.sh
+python3 ghost_mode_pc.py
+```
 
 ---
 
 ### 🍓 Option 6: Raspberry Pi OS
 
-Perfect for setting up a dedicated security monitor in your house:
-1. Open the Raspberry Pi terminal and install tools:
+#### 🔰 Method A: Download ZIP (Easiest — No Git Required)
+1. Open terminal and run:
+   ```bash
+   curl -L https://github.com/AETHERGHOSTOS/ghost-mode/archive/refs/heads/main.zip -o ghost-mode.zip && unzip ghost-mode.zip && cd ghost-mode-main
+   ```
+2. Install dependencies:
    ```bash
    sudo apt update && sudo apt install -y python3 python3-pip nmap tor curl
    ```
-2. Clone and run in background mode:
+3. Run:
    ```bash
-   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
-   cd ghost-mode
-   pip install requests --break-system-packages
    python3 ghost_mode_pc.py
    ```
+
+#### 💻 Method B: Clone via Git (Advanced)
+```bash
+git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
+cd ghost-mode
+sudo apt update && sudo apt install -y python3 python3-pip nmap tor curl
+pip install requests --break-system-packages
+python3 ghost_mode_pc.py
+```
 
 ---
 
