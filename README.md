@@ -177,6 +177,28 @@ Ghost Mode detects threats and alerts you. It hides your real IP from attackers.
 
 ---
 
+## 🛠️ Troubleshooting & Common Issues
+
+### 1. Bot Stops Responding & Dashboard Disconnects in Background
+* **Symptom:** When you leave Termux to go to WhatsApp, the dashboard shows `Scan server disconnected / Local API Offline` and your Telegram bot stops responding to `/start` or `/status` commands.
+* **Cause:** Android's aggressive battery manager freezes or kills background apps (like Termux) when they are not in the foreground.
+* **Solution:**
+  1. **Hold a Wake Lock:** Open Termux and run `termux-wake-lock`. This tells Android to keep the CPU awake.
+  2. **Disable Battery Optimization:** Go to your Android phone's **Settings ➔ Apps ➔ Termux ➔ Battery (or App Battery Usage)** and set it to **Unrestricted** (or disable "Optimize battery usage").
+  3. **Use Option 11 to Exit:** If you need to exit the `ghost.sh` launcher menu to type other commands in Termux, **do not select Option 9 (Stop Everything)**. Instead, select **Option 11 (Exit Menu - Keep Services Running)**. This keeps the background dashboard daemon and Tor tunnels online.
+
+### 2. Telegram Bot Fails to Send Alerts
+* **Symptom:** Sentry alerts or tests do not appear in your Telegram chat.
+* **Solution:**
+  1. **Send Passcode:** Search for your bot in Telegram and start the chat by sending `/start YOUR_ADMIN_PASSCODE` (the passcode is set in `bot_config.json`, default is `CHANGE_ME_NOW`). Telegram blocks bots from sending messages to users unless the user initiates the chat first.
+  2. **Verify Credentials:** Verify that your Token and Chat ID are correctly pasted on the dashboard and saved.
+
+### 3. Too Many Server Offline Log Lines
+* **Symptom:** When Termux goes to sleep, your dashboard logs are flooded with repeating warning lines.
+* **Solution:** We have integrated an offline consolidated logger. The dashboard will now log exactly one warning when Termux goes offline, and one recovery message when it reconnects.
+
+---
+
 ## ⚠️ Disclaimer
 
 Aether Ghost OS is built for **personal security, privacy, and education only**.
@@ -316,6 +338,42 @@ Aether Ghost OS is built and maintained independently. If this tool keeps you sa
 | Telegram Bot | [@AetherGhostOSbot](https://t.me/AetherGhostOSbot) |
 | Telegram Group | [AetherOperatorOSCommand](https://t.me/AetherOperatorOSCommand) |
 | Email | AETHERGHOSTOS@proton.me |
+
+---
+
+## 💻 Windows 10 PC Setup
+
+Aether Ghost OS also runs on Windows 10 as a PC security scanner and web dashboard.
+
+### Option A: Download ZIP (No Git required)
+1. **Install Python 3:** Download from [python.org/downloads](https://www.python.org/downloads/) — ⚠️ Check **"Add Python to PATH"** before installing.
+2. **Download the project:** Click the green **Code** button on this page → **Download ZIP** → Extract to your Desktop.
+3. **Run the Scanner:** Open the extracted folder and double-click **`run_scanner.bat`** — this auto-installs dependencies and runs a full threat scan.
+4. **Open the Dashboard:** Double-click **`run_dashboard.bat`** — this starts the local server and opens the graphical dashboard in your browser at `http://localhost:8080/ghost_dashboard.html`.
+
+### Option B: Clone via PowerShell + Git
+```powershell
+# 1. Install Git from https://git-scm.com/download/win first, then:
+
+# 2. Clone the repository
+git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
+
+# 3. Go into the folder
+cd ghost-mode
+
+# 4. Run the security scanner
+python ghost_mode_pc.py
+
+# 5. Start the dashboard server
+python ghost_tools/server_daemon.py
+```
+Then open your browser to: **`http://localhost:8080/ghost_dashboard.html`**
+
+### 🔄 Future Updates (PowerShell)
+```powershell
+cd ghost-mode
+git pull
+```
 
 ---
 
