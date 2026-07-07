@@ -562,6 +562,95 @@ def panic_self_destruct():
 
 # ── REPORT SAVE ───────────────────────────────────────────────────
 
+def check_virus_guard():
+    log(f"{CYAN}Virus Guard: Auditing active memory and background processes...{NC}")
+    found_threats = []
+    
+    # Standard whitelisted system services and support bot
+    safe_whitelists = ["support_bot.py", "unattended-upgrades", "networkd-dispatcher", "cloud-init", "systemd", "server_daemon.py", "ghost_mode.py"]
+    
+    try:
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                name = (proc.info['name'] or "").lower()
+                cmdline = " ".join(proc.info['cmdline'] or []).lower()
+                
+                # Filter out standard whitelisted services
+                if any(sw in name or sw in cmdline for sw in safe_whitelists):
+                    continue
+                
+                # Flag reverse shells, suspicious socket connections
+                is_netcat = any(kw in name or kw in cmdline for kw in ["nc ", "nc -", "netcat", "ncat"])
+                
+                if is_netcat:
+                    detail = f"Active Backdoor Process detected: PID {proc.info['pid']} ({proc.info['name']})"
+                    found_threats.append(detail)
+                    log(f"{RED}💀 VIRUS GUARD THREAT: {detail}{NC}")
+                    save_threat(detail)
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                continue
+    except Exception as e:
+        log(f"⚠️ Virus Guard process scan failed: {e}")
+        
+    if not found_threats:
+        log(f"{GREEN}🤫 Virus Guard verified clean — no active runtime anomalies{NC}")
+
+def check_malware_guard():
+    # Detect if we are on Android (Termux)
+    is_android = os.path.exists("/data/data/com.termux/files/usr/bin/sh")
+    
+    if is_android:
+        log(f"{CYAN}Malware Guard: Auditing installed packages for mobile spyware...{NC}")
+        # List of known stalkerware / spy app package IDs
+        spyware_signatures = [
+            "com.android.parent", "com.mspy", "com.flexispy", "com.cerberus", 
+            "org.jared.parental", "com.spyera", "com.truthspy", "com.kidshield",
+            "com.android.system.service", "com.android.core.service"
+        ]
+        found = 0
+        try:
+            p = subprocess.run("pm list packages -f", shell=True, capture_output=True, text=True)
+            if p.returncode == 0 and p.stdout:
+                packages = p.stdout.split("\n")
+                for pkg in packages:
+                    if not pkg.strip():
+                        continue
+                    pkg_id = pkg.split("=")[-1].strip()
+                    if any(sig in pkg_id for sig in spyware_signatures):
+                        detail = f"Suspicious Spyware Package installed: {pkg_id}"
+                        log(f"{RED}💀 MALWARE GUARD THREAT: {detail}{NC}")
+                        save_threat(detail)
+                        found += 1
+            if found == 0:
+                log(f"{GREEN}🤫 Android package audit completed: 0 spyware threats found{NC}")
+        except Exception as e:
+            log(f"⚠️ Malware Guard Android audit failed: {e}")
+    else:
+        # Standard Linux ClamAV
+        log(f"{CYAN}Malware Guard: Auditing files using ClamAV...{NC}")
+        clam_installed = subprocess.run("which clamscan", shell=True, capture_output=True).returncode == 0
+        if not clam_installed:
+            log(f"{YELLOW}⚠️ ClamAV (clamscan) not installed. File scan skipped. Run: sudo apt install clamav{NC}")
+            return
+            
+        try:
+            scan_dir = os.path.expanduser("~/Downloads")
+            if not os.path.exists(scan_dir):
+                scan_dir = "/tmp"
+                
+            log(f"🕵️ Scanning directory: {scan_dir}")
+            p = subprocess.run(f"clamscan -r --infected --no-summary {scan_dir} 2>/dev/null", shell=True, capture_output=True, text=True)
+            if p.stdout.strip():
+                infected_files = [line.strip() for line in p.stdout.split("\n") if line.strip()]
+                for f in infected_files[:5]:
+                    detail = f"Infected File Detected: {f}"
+                    log(f"{RED}💀 MALWARE GUARD THREAT: {detail}{NC}")
+                    save_threat(detail)
+            else:
+                log(f"{GREEN}🤫 ClamAV file scan completed: 0 infected files found{NC}")
+        except Exception as e:
+            log(f"⚠️ ClamAV scan failed: {e}")
+
 def save_report():
     temp = 0.0
     try:
@@ -629,6 +718,9 @@ def main():
             change_dns()
             return
 
+    global ACTIVE_THREATS
+    ACTIVE_THREATS = []
+
     print()
     print(f"💀😈🤫  A E T H E R   G H O S T   O S  v{VERSION}  🤫😈💀")
     print("=" * 55)
@@ -653,6 +745,10 @@ def main():
     check_spyware_temp()
     print()
     check_tor()
+    print()
+    check_virus_guard()
+    print()
+    check_malware_guard()
     print()
     save_report()
     print("=" * 55)

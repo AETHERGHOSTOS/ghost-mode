@@ -268,6 +268,86 @@ def check_tor():
     else:
         log(f"{RED}💀 Tor is not running. Launch Tor Browser or start the Tor service.{NC}")
 
+def check_virus_guard():
+    log(f"{CYAN}Virus Guard: Auditing active memory and background processes...{NC}")
+    found_threats = []
+    
+    try:
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                name = (proc.info['name'] or "").lower()
+                cmdline = " ".join(proc.info['cmdline'] or []).lower()
+                
+                # Check for netcat / raw socket shell signatures
+                is_netcat = any(kw in name or kw in cmdline for kw in ["nc.exe", "netcat", "ncat"])
+                
+                if is_netcat:
+                    detail = f"Active Backdoor Process detected: PID {proc.info['pid']} ({proc.info['name']})"
+                    found_threats.append(detail)
+                    log(f"{RED}💀 VIRUS GUARD THREAT: {detail}{NC}")
+                    save_threat(detail)
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                continue
+    except Exception as e:
+        log(f"⚠️ Virus Guard process scan failed: {e}")
+        
+    if not found_threats:
+        log(f"{GREEN}🤫 Virus Guard verified clean — no active runtime anomalies{NC}")
+
+def check_malware_guard():
+    if sys.platform == "win32":
+        log(f"{CYAN}Malware Guard: Querying Windows Defender active threat logs...{NC}")
+        try:
+            ps_cmd = 'Get-MpThreat | Select-Object ThreatName, SeverityID, ActiveStatus | ConvertTo-Json'
+            res = subprocess.run(["powershell", "-Command", ps_cmd], capture_output=True, text=True)
+            if res.returncode == 0 and res.stdout.strip():
+                try:
+                    data = json.loads(res.stdout.strip())
+                    threats = data if isinstance(data, list) else [data]
+                    found = 0
+                    for t in threats:
+                        if t.get("ActiveStatus") == 1 or t.get("ActiveStatus") == "Active":
+                            detail = f"Active Malware Alert: {t.get('ThreatName')} (Severity {t.get('SeverityID')})"
+                            log(f"{RED}💀 MALWARE GUARD THREAT: {detail}{NC}")
+                            save_threat(detail)
+                            found += 1
+                    if found == 0:
+                        log(f"{GREEN}🤫 Windows Defender reports 0 active malware infections{NC}")
+                except:
+                    lines = [l.strip() for l in res.stdout.split("\n") if l.strip()]
+                    if lines:
+                        detail = f"Active Windows Defender Threat Detected: {lines[0]}"
+                        log(f"{RED}💀 MALWARE GUARD THREAT: {detail}{NC}")
+                        save_threat(detail)
+            else:
+                log(f"{GREEN}🤫 Windows Defender reports 0 active malware infections{NC}")
+        except Exception as e:
+            log(f"⚠️ Malware Guard: Could not query Windows Defender: {e}")
+    else:
+        log(f"{CYAN}Malware Guard: Auditing files using ClamAV...{NC}")
+        clam_installed = subprocess.run("which clamscan", shell=True, capture_output=True).returncode == 0
+        if not clam_installed:
+            log(f"{YELLOW}⚠️ ClamAV (clamscan) not installed. File scan skipped. Run: sudo apt install clamav{NC}")
+            return
+            
+        try:
+            scan_dir = os.path.expanduser("~/Downloads")
+            if not os.path.exists(scan_dir):
+                scan_dir = BASE_DIR
+                
+            log(f"🕵️ Scanning directory: {scan_dir}")
+            p = subprocess.run(f"clamscan -r --infected --no-summary {scan_dir} 2>/dev/null", shell=True, capture_output=True, text=True)
+            if p.stdout.strip():
+                infected_files = [line.strip() for line in p.stdout.split("\n") if line.strip()]
+                for f in infected_files[:5]:
+                    detail = f"Infected File Detected: {f}"
+                    log(f"{RED}💀 MALWARE GUARD THREAT: {detail}{NC}")
+                    save_threat(detail)
+            else:
+                log(f"{GREEN}🤫 ClamAV file scan completed: 0 infected files found{NC}")
+        except Exception as e:
+            log(f"⚠️ ClamAV scan failed: {e}")
+
 def save_report():
     report_file = os.path.join(TOOLS_DIR, "report.json")
     report = {
@@ -320,6 +400,9 @@ def run_http_server():
             pass
 
 def main():
+    global ACTIVE_THREATS
+    ACTIVE_THREATS = []
+    
     print()
     print(f"{RED}💀😈🤫  A E T H E R   G H O S T   O S  [PC EDITION]  🤫😈💀{NC}")
     print("=" * 55)
@@ -339,6 +422,10 @@ def main():
     check_arp()
     print()
     check_tor()
+    print()
+    check_virus_guard()
+    print()
+    check_malware_guard()
     print()
     
     save_report()
