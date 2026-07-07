@@ -265,6 +265,42 @@ python ghost_mode_pc.py
 ```
 This starts the real-time background monitor, checks active webcam/microphone status, logs local scanning activities, and boots up the browser dashboard integration.
 
+## 🔄 Checking for Updates & Upgrading
+
+To keep your security modules and vulnerability signatures up to date, it is recommended to check for updates periodically.
+
+### 🔍 1. How to Check Your Current Version Status
+*   **Via the Dashboard UI:** Look at the bottom-right version badge in your local web dashboard (e.g. `v1.2.0`) and compare it with the latest release badge on your **[GitHub Releases Page](https://github.com/AETHERGHOSTOS/ghost-mode/releases)**.
+*   **Via Git (CLI check):** Open your terminal inside the project directory and run:
+    ```bash
+    git fetch && git status
+    ```
+    If updates are available, git will display:  
+    `Your branch is behind 'origin/main' by X commits, and can be fast-forwarded.`
+
+---
+
+### 📥 2. How to Apply Updates
+
+#### 📱 On Mobile Devices (Android / Termux)
+If you installed Aether via Git, run these commands in Termux to fetch and apply the latest patches:
+```bash
+cd ~/ghost-mode
+git pull
+```
+
+#### 🖥️ On Desktop PCs (Windows, WSL, Linux, macOS)
+1.  **Stop active background processes:** Close your running console window or force kill the active socket port:
+    ```bash
+    kill -9 $(lsof -t -i:8080) 2>/dev/null || fuser -k 8080/tcp 2>/dev/null
+    ```
+2.  **Pull changes:** Navigate to the folder and pull:
+    ```bash
+    cd ~/ghost-mode
+    git pull
+    ```
+3.  **For ZIP installations (Manual):** Simply redownload the latest release ZIP from the download link and extract it, replacing the old files on your Desktop.
+
 ---
 
 ## 🧹 Step-by-Step Clean Reset & Reinstallation Guide
