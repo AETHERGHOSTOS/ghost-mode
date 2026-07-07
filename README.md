@@ -580,6 +580,44 @@ If your Telegram Sentry Bot is completely silent and does not respond to `/statu
     2.  **Restart the daemon:** Run `pkill -f ghost_mode_pc.py && python3 ghost_mode_pc.py` in your terminal.
     3.  **Check logs:** Review `~/ghost_tools/ghost.log` or `ghost_tools/ghost.log`.
 
+### 💻 PC & Windows WSL Troubleshooting
+
+If you are running Aether Ghost OS on a PC (Windows, Windows Subsystem for Linux (WSL), or Linux Desktop), you might encounter standard setup edge-cases. Use this guide to resolve them:
+
+#### 1. Command Paste skips steps (Ubuntu WSL)
+* **Issue:** Pasting all clone, dependency, and launch commands at once inside WSL skips steps because the first `sudo` command pauses to ask for a password.
+* **Fix:** Always copy and paste the installation commands **one line at a time**, waiting for each process to finish before pasting the next.
+
+#### 2. Externally Managed Environment Error (PEP 668)
+* **Issue:** When running on Debian/Ubuntu WSL, `pip install` fails with `error: externally-managed-environment`.
+* **Fix:** Tell python to override standard packages rule by appending `--break-system-packages`:
+  ```bash
+  pip install psutil pysocks --break-system-packages
+  ```
+  *(Note: The Aether auto-installer has been patched to handle this dynamically on all Linux/macOS systems).*
+
+#### 3. ModuleNotFoundError immediately after installing dependencies
+* **Issue:** You run the scanner, it installs `psutil` or `pysocks` successfully, but then exits with `ModuleNotFoundError: No module named 'psutil'`.
+* **Fix:** Python’s running interpreter caches the import path list. Simply **run the scanner command again** (`python3 ghost_mode_pc.py`), and the fresh process will detect and load the packages perfectly.
+
+#### 4. Dashboard buttons return 404/501 errors
+* **Issue:** Clicking buttons in the browser returns `404 File Not Found` or `501 Unsupported Method`.
+* **Fix:** This means the old static file server is still running on port `8080` from a previous session, blocking the new API server from starting. Kill the old server process to free the port:
+  ```bash
+  kill -9 $(lsof -t -i:8080) 2>/dev/null || fuser -k 8080/tcp 2>/dev/null
+  ```
+  Then restart `python3 ghost_mode_pc.py`.
+
+#### 5. Dashboard does not show "Dismiss Alerts" or status badges
+* **Issue:** You pulled the latest updates, but the web dashboard still does not show the new buttons or features.
+* **Fix:** Your browser has cached the old HTML page. Force the browser to discard cached files and load the fresh updates by performing a **Hard Refresh**:
+  * **Windows / Linux PC:** Press **`Ctrl + F5`** (or `Ctrl + Shift + R`).
+  * **Android / iOS Mobile:** Clear browser history/site data, or reload in Incognito/Private mode.
+
+#### 6. False positive "External background session detected" alerts
+* **Issue:** The security shield detects standard background system tasks (like Ubuntu's `unattended-upgrades`) or your own Telegram Sentry Bot (`support_bot.py`) and lists them as active threats.
+* **Fix:** Update your repository using `git pull`. We have whitelisted standard Linux system daemons and the Sentry Bot, and updated the dashboard modal to display dynamic **`🟢 RESOLVED / SAFE`** and **`🔴 STILL ACTIVE`** badges!
+
 ---
 
 ## ☕ Support & Donate
