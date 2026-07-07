@@ -46,7 +46,13 @@ def run(cmd, timeout=5):
     except:
         return ""
 
+ACTIVE_THREATS = []
+
 def save_threat(detail):
+    global ACTIVE_THREATS
+    if detail not in ACTIVE_THREATS:
+        ACTIVE_THREATS.append(detail)
+        
     threats = []
     p = os.path.join(LOG_DIR, "threats.json")
     if os.path.exists(p):
@@ -588,6 +594,7 @@ def save_report():
         "ssid": ssid,
         "battery_temp": round(temp, 1),
         "threats_today": 0,
+        "active_threats": ACTIVE_THREATS,
         "version": VERSION
     }
 

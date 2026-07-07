@@ -1277,6 +1277,7 @@ async function loadScanReport() {
     const res = await fetch('/api/report?t=' + Date.now());
     if (res.ok) {
       const r = await res.json();
+      window.activeThreatsList = r.active_threats || [];
       
       document.getElementById('conn-type').textContent = r.connection_type || "Unknown";
       document.getElementById('ssid-val').textContent = r.ssid || "N/A";
@@ -1771,9 +1772,18 @@ async function openThreatModal() {
           const timeStr = new Date(t.time).toLocaleString('en-GB');
           const guide = getRemediationGuide(t.detail);
           
+          // Determine if this threat is currently active or resolved
+          const isActive = window.activeThreatsList && window.activeThreatsList.includes(t.detail);
+          const statusBadge = isActive 
+            ? '<span style="color:#ff3355; background:#ff335515; border:1px solid #ff335530; padding:2px 6px; border-radius:4px; font-size:0.75em; font-family:\'Share Tech Mono\', monospace; font-weight:bold; margin-left:8px;">🔴 STILL ACTIVE</span>'
+            : '<span style="color:#00ff88; background:#00ff8815; border:1px solid #00ff8830; padding:2px 6px; border-radius:4px; font-size:0.75em; font-family:\'Share Tech Mono\', monospace; font-weight:bold; margin-left:8px;">🟢 RESOLVED / SAFE</span>';
+          
           div.innerHTML = `
-            <div style="font-family:'Share Tech Mono', monospace; font-size:0.78em; color:#666;">[${timeStr}]</div>
-            <div style="color:#ff3355; font-weight:bold; margin-top:2px;">⚠️ ${t.detail}</div>
+            <div style="font-family:'Share Tech Mono', monospace; font-size:0.78em; color:#666; display:flex; justify-content:space-between; align-items:center;">
+              <span>[${timeStr}]</span>
+              ${statusBadge}
+            </div>
+            <div style="color:#ff3355; font-weight:bold; margin-top:4px;">⚠️ ${t.detail}</div>
             ${guide}
           `;
           body.appendChild(div);

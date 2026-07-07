@@ -66,7 +66,12 @@ def log(msg):
     with open(os.path.join(TOOLS_DIR, "ghost.log"), "a", encoding="utf-8") as f:
         f.write(line + "\n")
 
+ACTIVE_THREATS = []
+
 def save_threat(detail):
+    global ACTIVE_THREATS
+    if detail not in ACTIVE_THREATS:
+        ACTIVE_THREATS.append(detail)
     threats = []
     threats_file = os.path.join(TOOLS_DIR, "threats.json")
     if os.path.exists(threats_file):
@@ -267,7 +272,8 @@ def save_report():
     report_file = os.path.join(TOOLS_DIR, "report.json")
     report = {
         "last_scan": datetime.now().isoformat(),
-        "status": "CLEAN"
+        "status": "CLEAN",
+        "active_threats": ACTIVE_THREATS
     }
     threats_file = os.path.join(TOOLS_DIR, "threats.json")
     if os.path.exists(threats_file):
