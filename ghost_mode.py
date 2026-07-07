@@ -244,55 +244,61 @@ def check_dns_poisoning():
 # ── MODULE 8: BACKGROUND PROCESSES ────────────────────────────────
 
 def check_background_processes():
-    log("👻 Auditing process tree for stealth sessions...")
-    # Explicitly exclude own ghost OS processes from detection
-    procs = run(
-        "ps aux 2>/dev/null | grep -iE 'ssh|nc -|netcat' "
-        "| grep -v grep | grep -v ghost | grep -v server_daemon | grep -v aether"
+    log("🕵️ Checking background terminal processes...")
+    
+    # Get processes containing network shells (ssh, nc, netcat)
+    shell_procs = run(
+        "ps aux 2>/dev/null | grep -iE 'ssh|nc -|netcat' | grep -v grep"
     )
-    # Also check Python processes but exclude our own tools
+    
+    # Get all Python processes
     py_procs = run(
-        "ps aux 2>/dev/null | grep python "
-        "| grep -v grep | grep -v ghost_mode | grep -v server_daemon "
-        "| grep -v location_picker | grep -v render_logo | grep -v ghost_mode_pc "
-        "| grep -v support_bot"
+        "ps aux 2>/dev/null | grep python | grep -v grep"
     )
-
-    # Known-safe Termux & Linux background processes — whitelist these to prevent false positives
-    SAFE_PROCESSES = [
-        "ssh-agent",   # Termux SSH credential agent — always running, totally normal
-        "runsv",       # Termux service supervisor — manages background daemons
-        "sshd",        # Termux SSH daemon — started by Termux:API or auto-boot
-        "supervise",   # Part of Termux runit service manager
-        "runsvdir",    # Termux runit directory supervisor
-        "/bin/login",  # Termux session login shell
-        # Standard Linux/Ubuntu background system processes
-        "unattended-upgrades",
-        "unattended-upgrade-shutdown",
-        "networkd-dispatcher",
-        "apport",
-        "cloud-init",
-        "update-notifier",
-        "gdm-session-worker",
-        "packagekitd",
-        "systemd",
+    
+    # Define our own tools that are 100% safe
+    OWN_TOOLS = [
+        "ghost_mode", "ghost_mode_pc", "server_daemon", 
+        "location_picker", "render_logo", "support_bot", "aether"
     ]
-
-    found = []
-    if procs:
-        lines = [l.strip() for l in procs.split("\n") if l.strip()]
-        # Filter out known-safe Termux background processes
-        lines = [l for l in lines if not any(safe in l for safe in SAFE_PROCESSES)]
-        found.extend(lines)
+    
+    # Known-safe system/daemon background processes
+    SAFE_SYSTEM = [
+        "ssh-agent", "runsv", "sshd", "supervise", "runsvdir", "/bin/login",
+        "unattended-upgrades", "unattended-upgrade-shutdown", "networkd-dispatcher",
+        "apport", "cloud-init", "update-notifier", "gdm-session-worker", 
+        "packagekitd", "systemd"
+    ]
+    
+    all_lines = []
+    if shell_procs:
+        all_lines.extend([l.strip() for l in shell_procs.split("\n") if l.strip()])
     if py_procs:
-        lines = [l.strip() for l in py_procs.split("\n") if l.strip()]
-        lines = [l for l in lines if not any(safe in l for safe in SAFE_PROCESSES)]
-        found.extend(lines)
-
-    if found:
-        msg = f"External background session detected: {found[0][:80]}"
-        log(f"⚠️  {msg}")
-        save_threat(msg)
+        all_lines.extend([l.strip() for l in py_procs.split("\n") if l.strip()])
+        
+    # Remove duplicates
+    all_lines = list(set(all_lines))
+    
+    threats = []
+    for line in all_lines:
+        # Check if it's one of our own tools first
+        if any(tool in line for tool in OWN_TOOLS):
+            log(f"🤫 Safe background tool active: {line[:75]}")
+            continue
+            
+        # Check if it's a whitelisted system process
+        if any(safe in line for safe in SAFE_SYSTEM):
+            log(f"🤫 Safe system process active: {line[:75]}")
+            continue
+            
+        # If it doesn't match any of the above, it's a threat!
+        threats.append(line)
+        
+    if threats:
+        for threat in threats:
+            msg = f"External background session detected: {threat[:80]}"
+            log(f"💀 THREAT: {msg}")
+            save_threat(msg)
     else:
         log("🤫 Process tree verified clean — 💀 [ GHOST ACTIVE ] ➔ You are a ghost! 👻")
 
