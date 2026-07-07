@@ -823,7 +823,7 @@ let isBackendOffline = false;
 function logBackendOffline() {
   if (!isBackendOffline) {
     isBackendOffline = true;
-    addLog('❌ Local API Server is offline. Check Termux status.','alert');
+    addLog('❌ Local API Server is offline. Check local terminal/system status.','alert');
     showToast('⚠️ Scan server disconnected. Check local terminal.', true);
   }
 }
@@ -1340,7 +1340,7 @@ async function runScan(){
   if (scanInterval > 0) {
     timeToNextScan = scanInterval;
   }
-  addLog('💀 Triggering active security shield audit in Termux...','ok');
+  addLog('💀 Triggering active security shield audit...','ok');
   setShieldStatus('SCANNING...','warn');
 
   try {

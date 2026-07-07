@@ -269,22 +269,29 @@ def save_report():
 
 # --- Start local HTTP Server ---
 def run_http_server():
-    import http.server
-    import socketserver
-    
-    PORT = 8080
-    class Handler(http.server.SimpleHTTPRequestHandler):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, directory=TOOLS_DIR, **kwargs)
-
-    socketserver.TCPServer.allow_reuse_address = True
-    try:
-        with socketserver.TCPServer(("", PORT), Handler) as httpd:
-            log(f"{GREEN}Dashboard server started locally at http://localhost:{PORT}/ghost_dashboard.html{NC}")
-            httpd.serve_forever()
-    except Exception as e:
-        # Server already running or port occupied
-        pass
+    daemon_path = os.path.join(TOOLS_DIR, "server_daemon.py")
+    if os.path.exists(daemon_path):
+        try:
+            # Launch the full API daemon server in the background
+            subprocess.Popen([sys.executable, daemon_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            log(f"{GREEN}Dashboard server daemon initiated locally at http://localhost:8080/ghost_dashboard.html{NC}")
+        except Exception as e:
+            log(f"⚠️ Failed to start daemon server: {e}")
+    else:
+        # Fallback to simple static server if daemon is missing
+        import http.server
+        import socketserver
+        PORT = 8080
+        class Handler(http.server.SimpleHTTPRequestHandler):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, directory=TOOLS_DIR, **kwargs)
+        socketserver.TCPServer.allow_reuse_address = True
+        try:
+            with socketserver.TCPServer(("", PORT), Handler) as httpd:
+                log(f"{GREEN}Dashboard server started locally (fallback file server) at http://localhost:{PORT}/ghost_dashboard.html{NC}")
+                httpd.serve_forever()
+        except:
+            pass
 
 def main():
     print()
