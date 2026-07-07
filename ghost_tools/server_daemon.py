@@ -876,6 +876,12 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
+        super().end_headers()
+
     def translate_path(self, path):
         filename = path.split('?')[0].split('#')[0]
         if filename.startswith('/'):
