@@ -257,7 +257,7 @@ def check_background_processes():
         "| grep -v location_picker | grep -v render_logo | grep -v ghost_mode_pc"
     )
 
-    # Known-safe Termux background processes — whitelist these to prevent false positives
+    # Known-safe Termux & Linux background processes — whitelist these to prevent false positives
     SAFE_PROCESSES = [
         "ssh-agent",   # Termux SSH credential agent — always running, totally normal
         "runsv",       # Termux service supervisor — manages background daemons
@@ -265,6 +265,16 @@ def check_background_processes():
         "supervise",   # Part of Termux runit service manager
         "runsvdir",    # Termux runit directory supervisor
         "/bin/login",  # Termux session login shell
+        # Standard Linux/Ubuntu background system processes
+        "unattended-upgrades",
+        "unattended-upgrade-shutdown",
+        "networkd-dispatcher",
+        "apport",
+        "cloud-init",
+        "update-notifier",
+        "gdm-session-worker",
+        "packagekitd",
+        "systemd",
     ]
 
     found = []
