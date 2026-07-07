@@ -1709,7 +1709,10 @@ window.onload=async()=>{
     <div id="threat-modal-body" style="overflow-y:auto; flex-grow:1; margin:12px 0; font-family:'Space Grotesk', sans-serif; font-size:0.85em; line-height:1.6; max-height:55vh; padding-right:8px;">
       <div class="log-line muted">No threats recorded today.</div>
     </div>
-    <button class="btn red" onclick="closeThreatModal()" style="margin:0; padding:10px; font-family:'Share Tech Mono', monospace; font-size:0.9em; letter-spacing:1px;">CLOSE</button>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <button class="btn blue" onclick="clearThreatHistory()" style="margin:0; padding:10px; font-family:'Share Tech Mono', monospace; font-size:0.9em; letter-spacing:1px;">DISMISS ALERTS</button>
+      <button class="btn red" onclick="closeThreatModal()" style="margin:0; padding:10px; font-family:'Share Tech Mono', monospace; font-size:0.9em; letter-spacing:1px;">CLOSE</button>
+    </div>
   </div>
 </div>
 
@@ -1783,6 +1786,23 @@ async function openThreatModal() {
     }
   } catch (e) {
     body.innerHTML = '<div class="log-line alert">Threat database offline.</div>';
+  }
+}
+
+async function clearThreatHistory() {
+  if (confirm("Are you sure you want to dismiss all alerts and clear the threat log history?")) {
+    try {
+      const res = await fetch('/api/clear_threats', { method: 'POST' });
+      if (res.ok) {
+        closeThreatModal();
+        showToast("✅ Alert logs cleared.");
+        await loadScanReport();
+      } else {
+        showToast("❌ Failed to clear alert logs.", true);
+      }
+    } catch(e) {
+      showToast("❌ API offline.", true);
+    }
   }
 }
 

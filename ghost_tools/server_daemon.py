@@ -1004,6 +1004,26 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             except Exception as e:
                 self.send_json_response({"status": "error", "message": str(e)}, 500)
 
+        elif url_path == '/api/clear_threats':
+            threat_path = os.path.join(LOG_DIR, "threats.json")
+            if os.path.exists(threat_path):
+                try:
+                    os.remove(threat_path)
+                except:
+                    pass
+            report_path = os.path.join(LOG_DIR, "report.json")
+            if os.path.exists(report_path):
+                try:
+                    with open(report_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    data["threats_today"] = 0
+                    data["status"] = "CLEAN"
+                    with open(report_path, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2)
+                except:
+                    pass
+            self.send_json_response({"status": "ok"})
+
         elif url_path == '/api/telegram_test':
             token = body.get("token")
             chat_id = body.get("chat_id")
