@@ -32,10 +32,13 @@ def install_dependencies():
     if missing:
         print(f"💀 Aether Ghost OS: Missing dependencies {missing}. Installing automatically...")
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install"] + missing, check=True)
+            cmd = [sys.executable, "-m", "pip", "install"] + missing
+            if sys.platform != "win32":
+                cmd.append("--break-system-packages")
+            subprocess.run(cmd, check=True)
             print("✅ Dependencies installed successfully.\n")
         except Exception as e:
-            print(f"❌ Failed to install dependencies. Please run: pip install {' '.join(missing)}")
+            print(f"❌ Failed to install dependencies. Please run: pip install {' '.join(missing)} --break-system-packages")
             sys.exit(1)
 
 install_dependencies()
