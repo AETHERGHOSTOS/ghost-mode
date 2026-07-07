@@ -254,7 +254,8 @@ def check_background_processes():
     py_procs = run(
         "ps aux 2>/dev/null | grep python "
         "| grep -v grep | grep -v ghost_mode | grep -v server_daemon "
-        "| grep -v location_picker | grep -v render_logo | grep -v ghost_mode_pc"
+        "| grep -v location_picker | grep -v render_logo | grep -v ghost_mode_pc "
+        "| grep -v support_bot"
     )
 
     # Known-safe Termux & Linux background processes — whitelist these to prevent false positives
