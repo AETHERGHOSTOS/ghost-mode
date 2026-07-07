@@ -58,6 +58,8 @@ Ghost Mode is built to operate across a wide variety of hardware architectures a
 | :--- | :--- | :--- | :--- |
 | **Android (6.0+)** | 🟢 **Full (Recommended)** | Runs via **Termux** environment (No root required) | On-the-go mobile defense |
 | **GrapheneOS / Pixel** | 🟢 **Full (Recommended)** | Runs via **Termux** (Supports sandboxed user profiles) | Hardened stealth operational device |
+| **CalyxOS / DivestOS** | 🟢 **Full (Recommended)** | Runs via **Termux** (Pre-installed microG or sandboxed services) | Privacy-focused operational setups |
+| **LineageOS** | 🟢 **Full** | Runs via **Termux** (Supports custom ROM system services) | Deloaded open-source mobile setups |
 | **Windows 10 / 11** | 🟢 **Full** | Native Python engine (`ghost_mode_pc.py`) | Desktop workstation monitoring |
 | **Windows WSL** | 🟢 **Full** | Runs in Windows Subsystem for Linux (WSL Ubuntu/Debian) | Developer environments |
 | **Linux (Ubuntu/Debian)** | 🟢 **Full** | Native terminal daemon | General Linux security & servers |
@@ -70,7 +72,7 @@ Ghost Mode is built to operate across a wide variety of hardware architectures a
 
 ## ⚡ Installation & Quick Start
 
-### 🤖 Option 1: Android, Google Pixel & GrapheneOS
+### 🤖 Option 1: Android (GrapheneOS, CalyxOS, DivestOS, LineageOS)
 
 #### Step 1: Install Termux on your phone
 > [!WARNING]
@@ -83,9 +85,9 @@ Ghost Mode is built to operate across a wide variety of hardware architectures a
   3. Install the downloaded APK file manually on your phone.
 
 > [!NOTE]
-> **For GrapheneOS / Secure Android Profiles:** 
+> **For Hardened ROMs & Custom OS Profiles (GrapheneOS, CalyxOS, DivestOS, LineageOS):** 
 > * You can install Termux in your primary profile or inside a dedicated secondary **"Secure / Guest Profile"** to keep your security suite completely isolated.
-> * Ensure you grant Termux **Network** permission in your GrapheneOS settings so it can download tool packages and rotate IPs via Tor.
+> * Ensure you grant Termux **Network** permission in your settings so it can download tool packages and route IPs via Tor.
 
 #### Step 2: Install Ghost Mode
 Open Termux and run the universal setup installer:
