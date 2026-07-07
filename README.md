@@ -1,14 +1,16 @@
-# 💀 Aether Ghost OS
+# 💀 Ghost Mode
 
 > *Go invisible. Stay protected. Any Android. No root.*
 
-Aether Ghost OS is a unified, sovereign privacy ecosystem designed to secure all your personal devices and networks. It runs locally and sandbox-isolated inside user-space, focusing on complete privacy and absolute digital sovereignty without requiring root access or sending your data to any cloud servers.
+Ghost Mode is a unified, sovereign privacy ecosystem designed to secure all your personal devices and networks. It runs locally and sandbox-isolated inside user-space, focusing on complete privacy and absolute digital sovereignty without requiring root access or sending your data to any cloud servers.
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-aetherghost.os-orange?style=flat-square&logo=buy-me-a-coffee)](https://buymeacoffee.com/aetherghost.os) [![Bitcoin](https://img.shields.io/badge/Crypto-Accepted-yellow?style=flat-square&logo=bitcoin)](https://github.com/AETHERGHOSTOS/ghost-mode#-support--donate)
 
 ---
 
-## 🤔 Why Aether Ghost OS?
+## 🤔 Why Ghost Mode?
 
-Most security tools are built for experts on laptops. Aether Ghost OS is different — it's built for **anyone** who wants to protect themselves on their phone. One command installs everything. One menu controls everything.
+Most security suites are either too complex (built only for enterprise networks or expert laptops) or too restricted (like basic mobile VPNs). Ghost Mode is different — it is a cross-platform, user-space defensive shield that secures both your mobile devices (via Termux on Android) and your computer workstations (via native Python engines on Windows, Linux, and macOS). It is built for anyone who wants sovereign protection across all their hardware, without needing complex setups or administrative root access.
 
 ---
 
@@ -20,6 +22,19 @@ Most security tools are built for experts on laptops. Aether Ghost OS is differe
 
 ---
 
+## 📊 Global OS Compatibility Matrix
+
+| Feature / Module | Android (Termux) | Windows PC | Linux (Ubuntu/Debian) | macOS |
+| :--- | :---: | :---: | :---: | :---: |
+| **🎙️ Privacy Sentry (Mic/Cam Monitor)** | ✅ Yes (Logcat Audit) | ✅ Yes (Win32 API) | ✅ Yes (lsof/procfs) | ✅ Yes (AVFoundation) |
+| **🛡️ Deception Sentry (SSH Honeypot)** | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) |
+| **🌐 Sovereign Tor Routing** | ✅ Yes (Tor daemon) | ✅ Yes (Tor service) | ✅ Yes (Tor daemon) | ✅ Yes (Tor daemon) |
+| **💬 Scam Sentry (SMS/Clipboard)** | ✅ Yes (SMS / Copy) | ✅ Yes (Clipboard scan) | ✅ Yes (Clipboard scan) | ✅ Yes (Clipboard scan) |
+| **🔄 Failover Daemon** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| **🖥️ Web Dashboard Console** | ✅ Yes (Port 8080) | ✅ Yes (Port 8080) | ✅ Yes (Port 8080) | ✅ Yes (Port 8080) |
+| **⏰ Automated Sentry Alerts** | ✅ Yes (Telegram Sentry) | ✅ Yes (Telegram Sentry) | ✅ Yes (Telegram Sentry) | ✅ Yes (Telegram Sentry) |
+
+---
 
 ## 💀 Core Modules
 
@@ -35,37 +50,162 @@ Most security tools are built for experts on laptops. Aether Ghost OS is differe
 
 ---
 
-## 📱 Requirements
+## 🌍 Global OS Compatibility Matrix
 
-- Any Android phone (Android 6+)
-- [Termux](https://f-droid.org/packages/com.termux/) installed from F-Droid
-- Internet connection for setup
-- **No root required**
+Ghost Mode is built to operate across a wide variety of hardware architectures and operating systems:
+
+| Operating System | Support Level | How it Runs | Best Use Case |
+| :--- | :--- | :--- | :--- |
+| **Android (6.0+)** | 🟢 **Full (Recommended)** | Runs via **Termux** environment (No root required) | On-the-go mobile defense |
+| **GrapheneOS / Pixel** | 🟢 **Full (Recommended)** | Runs via **Termux** (Supports sandboxed user profiles) | Hardened stealth operational device |
+| **Windows 10 / 11** | 🟢 **Full** | Native Python engine (`ghost_mode_pc.py`) | Desktop workstation monitoring |
+| **Windows WSL** | 🟢 **Full** | Runs in Windows Subsystem for Linux (WSL Ubuntu/Debian) | Developer environments |
+| **Linux (Ubuntu/Debian)** | 🟢 **Full** | Native terminal daemon | General Linux security & servers |
+| **Parrot Security OS / Kali**| 🟢 **Full** | Native terminal (Pre-installed security dependencies) | Advanced security environments |
+| **macOS (Intel & M-Series)** | 🟢 **Full** | Native terminal via Homebrew | Apple developer workstations |
+| **Raspberry Pi OS** | 🟢 **Full** | Native lightweight background daemon | Physical hardware security node |
+| **iPhone / iOS** | 🔴 **Unsupported** | Blocked by iOS App Sandbox restrictions | None (Unless jailbroken) |
 
 ---
 
-## ⚡ Quick Install
+## ⚡ Installation & Quick Start
 
-Open Termux and paste this one command:
+### 🤖 Option 1: Android, Google Pixel & GrapheneOS
 
+#### Step 1: Install Termux on your phone
+> [!WARNING]
+> Do **NOT** install Termux from the Google Play Store (it is outdated and package installations will fail).
+
+* **If F-Droid is working:** Download the [Termux app directly on F-Droid](https://f-droid.org/packages/com.termux/).
+* **If F-Droid is down or failing to download:**
+  1. Go to the official **[Termux GitHub Releases](https://github.com/termux/termux-app/releases)**.
+  2. Scroll down to the latest assets and download the `.apk` file (labeled `universal` or `arm64-v8a`).
+  3. Install the downloaded APK file manually on your phone.
+
+> [!NOTE]
+> **For GrapheneOS / Secure Android Profiles:** 
+> * You can install Termux in your primary profile or inside a dedicated secondary **"Secure / Guest Profile"** to keep your security suite completely isolated.
+> * Ensure you grant Termux **Network** permission in your GrapheneOS settings so it can download tool packages and rotate IPs via Tor.
+
+#### Step 2: Install Ghost Mode
+Open Termux and run the universal setup installer:
 ```bash
 curl -sL https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/setup.sh | bash
 ```
 
-That's it. Everything installs automatically.
+---
+
+### 🪟 Option 2: Windows (10/11)
+
+#### Method A: Native Python (easiest & simplest)
+1. **Install Python:** Download and install Python 3 from the official **[Python Website](https://www.python.org/downloads/)**. *Make sure to check the box: **"Add Python to PATH"** during setup.*
+2. **Download & Run:**
+   * Clone or download this project folder.
+   * Open PowerShell or Command Prompt inside the folder and run:
+     ```powershell
+     python ghost_mode_pc.py
+     ```
+   *(The script will automatically detect and install any missing library dependencies like `psutil` and `requests`.)*
+
+#### Method B: Windows Subsystem for Linux (WSL)
+1. Open PowerShell as Administrator and install WSL:
+   ```powershell
+   wsl --install
+   ```
+2. Open your new Linux Terminal (e.g., Ubuntu) and follow the **Option 3: Linux** instructions below.
+
+---
+
+### 🐧 Option 3: Linux (Ubuntu, Debian, Arch)
+
+1. Open your terminal and install the required security dependencies:
+   * **Ubuntu/Debian**:
+     ```bash
+     sudo apt update && sudo apt install -y python3 python3-pip nmap tor curl
+     ```
+   * **Arch Linux**:
+     ```bash
+     sudo pacman -Syy python python-pip nmap tor curl
+     ```
+2. Clone this repository and configure permissions:
+   ```bash
+   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
+   cd ghost-mode
+   pip install requests --break-system-packages
+   chmod +x ghost.sh
+   ```
+
+---
+
+### 🦜 Option 4: Parrot Security OS & Kali Linux
+
+Since Parrot OS and Kali Linux are built specifically for security, they come with dependencies like Python, Tor, and Nmap pre-installed out of the box!
+1. Open your terminal and clone the suite:
+   ```bash
+   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
+   cd ghost-mode
+   pip install requests --break-system-packages 2>/dev/null
+   chmod +x ghost.sh
+   ```
+2. Run the suite:
+   ```bash
+   python3 ghost_mode_pc.py
+   ```
+
+---
+
+### 🍏 Option 5: macOS
+
+1. Open Terminal and install dependencies using **[Homebrew](https://brew.sh/)**:
+   ```bash
+   brew install python tor nmap curl
+   ```
+2. Clone this repository and configure:
+   ```bash
+   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
+   cd ghost-mode
+   pip install requests
+   chmod +x ghost.sh
+   ```
+
+---
+
+### 🍓 Option 6: Raspberry Pi OS
+
+Perfect for setting up a dedicated security monitor in your house:
+1. Open the Raspberry Pi terminal and install tools:
+   ```bash
+   sudo apt update && sudo apt install -y python3 python3-pip nmap tor curl
+   ```
+2. Clone and run in background mode:
+   ```bash
+   git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
+   cd ghost-mode
+   pip install requests --break-system-packages
+   python3 ghost_mode_pc.py
+   ```
+
+---
+
+### 🍎 Option 7: iPhone / iOS (Why it is Unsupported)
+
+Due to Apple's strict security model:
+* **App Sandboxing:** iOS blocks apps from accessing active system background processes, querying system logs, or monitoring hardware microphone/webcam usage registry entries.
+* **Network Restrictions:** Raw TCP/UDP socket creation and network scanning (like Nmap port scans or ARP spoof detection) are heavily blocked.
+* **Workaround:** If you have a **jailbroken** device, you can install a terminal emulator (such as NewTerm) and run the Python engine via custom Cydia/Sileo packages, but this is experimental and not officially supported.
 
 ---
 
 ## 🚀 Usage
 
-After install, run:
+Launch the operational suite depending on your device type:
 
+### 📱 On Mobile (Android / Termux)
+Run the launcher script:
 ```bash
 bash ~/ghost.sh
 ```
-
-You'll see this menu:
-
+This opens the terminal dashboard:
 ```
   💀😈🤫  G H O S T   M O D E  🤫😈💀
   ========================================
@@ -80,47 +220,120 @@ You'll see this menu:
   [7] ⏹️  Stop Everything
 ```
 
+### 🖥️ On Desktop (Windows, macOS, Linux, Parrot, Raspberry Pi)
+Run the dedicated PC security engine directly:
+```bash
+python ghost_mode_pc.py
+```
+This starts the real-time background monitor, checks active webcam/microphone status, logs local scanning activities, and boots up the browser dashboard integration.
+
 ---
 
-## 🧹 Cleanup, Updating & Reinstallation
+## 🧹 Step-by-Step Clean Reset & Reinstallation Guide
 
-If you already have a version of Aether Ghost OS running and want to perform a clean update, stop background processes, or completely remove the project, run the following commands in your Termux or Linux terminal.
+If your installation is frozen, buggy, has permission errors, or you simply want to wipe everything clean and start completely fresh, follow these step-by-step instructions for your specific platform.
 
-### ⏹️ Step 1: Kill All Active Background Services
-Running background components (like the web dashboard daemon or Tor circuits) can lock files and block package updates. Terminate them safely:
-```bash
-# Terminate the background web server daemon
-pkill -f server_daemon.py
+### 📱 Path A: For Mobile Devices (Android / Termux)
 
-# Terminate active security scanner processes
-pkill -f ghost_mode.py
+#### 🛑 Phase 1: Wiping & Deleting Clean
+1. **Kill background processes:**
+   Open Termux and terminate the active server, scanner daemon, Tor, and cron schedulers:
+   ```bash
+   pkill -f server_daemon.py
+   pkill -f ghost_mode.py
+   pkill tor
+   pkill cron
+   ```
+2. **Wipe project directories:**
+   Delete all configurations, executable scripts, dashboard templates, and logs:
+   ```bash
+   rm -rf ~/ghost-mode ~/aether-ghost-os ~/ghost_tools
+   rm -f ~/ghost.sh ~/ghost_mode.py ~/setup.sh
+   ```
+3. **Hard Reset (Optional):**
+   If packages are totally broken, go to Android Settings ➔ Apps ➔ Termux ➔ Storage ➔ **Clear Storage / Data** to factory reset Termux.
 
-# Stop background Tor proxy routing
-pkill tor
+#### 📥 Phase 2: Fresh Installation & Launch
+1. Ensure Termux is installed from F-Droid (not Google Play).
+2. Set up storage access: `termux-setup-storage` and accept the popup.
+3. Download and run the installer (replace `AETHERGHOSTOS` with your real GitHub handle):
+   ```bash
+   curl -sL https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
+   ```
+4. Grant Mic/Cam auditing permission: Connect to a PC with USB debugging on, and run:
+   ```bash
+   adb shell pm grant com.termux android.permission.READ_LOGS
+   ```
 
-# Stop background cron schedulers
-pkill cron
-```
+---
 
-### 🗑️ Step 2: Remove Old Project Files & Folders
-Delete the old source folders, dashboard configs, and logs:
-```bash
-# Delete main project source folder
-rm -rf ~/aether-ghost-os
+### 🖥️ Path B: For PC & Desktop Systems (Windows, Linux, macOS)
 
-# Delete dashboard web files and log registries
-rm -rf ~/ghost_tools
+#### 🛑 Phase 1: Wiping & Deleting Clean
+*   **On Windows:**
+    1. Close any running command windows showing `ghost_mode_pc.py` or the Python daemon.
+    2. Open PowerShell and force-close any locking processes: `Stop-Process -Name "python" -Force`
+    3. Delete the repository folders and local tool config:
+       ```powershell
+       Remove-Item -Path "$HOME\ghost-mode", "$HOME\aether-ghost-os", "$HOME\.ghost_tools" -Recurse -Force -ErrorAction SilentlyContinue
+       ```
+*   **On Linux / macOS:**
+    1. Open your terminal and kill running daemons: `pkill -f ghost_mode_pc.py`
+    2. Wipe the folders: `rm -rf ~/ghost-mode ~/aether-ghost-os ~/.ghost_tools`
 
-# Delete executable scripts in your home directory
-rm -f ~/ghost.sh ~/ghost_mode.py ~/setup.sh
-```
+#### 📥 Phase 2: Fresh Installation & Launch
+1. Make sure Python 3 is installed on your computer.
+2. Clone or download your repository from GitHub.
+3. Open a Command Prompt or Terminal inside the repository folder and install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Run the security engine:
+   ```bash
+   python ghost_mode_pc.py
+   ```
 
-### 🔄 Step 3: Run a Fresh Installation
-After stopping old daemons and clearing directories, boot up the new version using the setup script:
-```bash
-curl -sL https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/setup.sh -o setup.sh && chmod +x setup.sh && ./setup.sh
-```
-*(Replace `AETHERGHOSTOS` with your real GitHub username).*
+---
+
+## 🔄 Reboot & Power-Off Recovery Guide
+
+If your device or machine loses power, shuts down, or restarts, follow these quick steps to get Aether Ghost OS back up and running.
+
+### 📱 On Android (Termux)
+1. Reopen the **Termux** app on your phone.
+2. Launch the launcher menu:
+   ```bash
+   bash ~/ghost.sh
+   ```
+3. Run Option `[5] 🖥️ Open Dashboard` to start the web console daemon, then select Option `[1] 💀 Run Security Scan` to restart background threat scanning.
+4. **💡 Automation Tip:** You can install the **Termux:Boot** addon app from F-Droid and add `bash ~/ghost.sh --boot` to your `~/.termux/boot/` script to start Aether automatically whenever your phone boots up!
+
+### 🖥️ On Desktop PC (Windows, Linux, macOS)
+1. Open your terminal, command prompt, or PowerShell.
+2. Navigate to your project folder:
+   ```bash
+   cd ~/ghost-mode
+   ```
+3. Launch the engine:
+   ```bash
+   python ghost_mode_pc.py
+   ```
+4. **💡 Automation Tip:** On Windows, you can add a shortcut of `ghost_mode_pc.py` to your Startup folder (`shell:startup`) to launch Aether automatically on login. On Linux, you can configure a systemd service file.
+
+---
+
+## 💬 Automated Scam Scanning Add-on
+
+Aether Ghost OS can be upgraded to scan incoming messages and clipboard text automatically in the background, rather than requiring you to copy-paste them manually.
+
+### 📱 Android Background Scan (Requires Termux:API)
+If you install the **Termux:API** companion app from F-Droid and run the setup script, the Sentry gains these features:
+*   **Automated SMS Audits:** Direct access to incoming SMS databases. Any incoming SMS text will be automatically parsed by the Sentry bot, sending you a Telegram notification warning if a phishing link or scam message is detected.
+*   **Phone Notifications:** Native Android popup notifications on your lock screen when network threats are detected.
+
+### 🖥️ PC Background Scan (Requires Clipboard Access)
+On desktop platforms, Aether runs clipboard loop hooks:
+*   **Instant Clipboard Audit:** Whenever you copy any text or URL to your clipboard, Aether automatically inspects the domain for spoofing (e.g. `paypa1.com`) or high-risk TLDs, instantly showing a tray notification bubble if it is unsafe!
 
 ---
 
@@ -144,7 +357,7 @@ Pick one or multiple countries. Your traffic rotates through them automatically.
 ## 📁 Project Structure
 
 ```
-aether-ghost-os/
+ghost-mode/
 ├── ghost_mode.py          # Main security scanner
 ├── ghost.sh               # Launcher menu
 ├── setup.sh               # Universal installer
@@ -167,7 +380,7 @@ Core scanning (network, mic/camera, ARP, ports) works fully offline. Tor anonymi
 Ghost Mode is lightweight. The scan runs in under 5 seconds every 2 minutes and uses minimal resources.
 
 **Can websites detect Tor?**
-Some sites (Netflix, banking apps) block known Tor IPs. For regular browsing and anonymity, Tor works well. Pair with Surfshark VPN for better results.
+Some sites (streaming services, banking apps) block known Tor exit nodes. For regular browsing and anonymity, Tor works well. You can pair it with a commercial VPN or custom proxies for layered protection. Note: We are currently developing our own sovereign VPN/proxy routing network (Aether Tunnel) to bypass Tor blocks natively!
 
 **Does my location change automatically?**
 Yes — every time you restart Tor or start a new session, you get a different IP. You can also manually pick a location using option 3.
@@ -177,31 +390,9 @@ Ghost Mode detects threats and alerts you. It hides your real IP from attackers.
 
 ---
 
-## 🛠️ Troubleshooting & Common Issues
-
-### 1. Bot Stops Responding & Dashboard Disconnects in Background
-* **Symptom:** When you leave Termux to go to WhatsApp, the dashboard shows `Scan server disconnected / Local API Offline` and your Telegram bot stops responding to `/start` or `/status` commands.
-* **Cause:** Android's aggressive battery manager freezes or kills background apps (like Termux) when they are not in the foreground.
-* **Solution:**
-  1. **Hold a Wake Lock:** Open Termux and run `termux-wake-lock`. This tells Android to keep the CPU awake.
-  2. **Disable Battery Optimization:** Go to your Android phone's **Settings ➔ Apps ➔ Termux ➔ Battery (or App Battery Usage)** and set it to **Unrestricted** (or disable "Optimize battery usage").
-  3. **Use Option 11 to Exit:** If you need to exit the `ghost.sh` launcher menu to type other commands in Termux, **do not select Option 9 (Stop Everything)**. Instead, select **Option 11 (Exit Menu - Keep Services Running)**. This keeps the background dashboard daemon and Tor tunnels online.
-
-### 2. Telegram Bot Fails to Send Alerts
-* **Symptom:** Sentry alerts or tests do not appear in your Telegram chat.
-* **Solution:**
-  1. **Send Passcode:** Search for your bot in Telegram and start the chat by sending `/start YOUR_ADMIN_PASSCODE` (the passcode is set in `bot_config.json`, default is `CHANGE_ME_NOW`). Telegram blocks bots from sending messages to users unless the user initiates the chat first.
-  2. **Verify Credentials:** Verify that your Token and Chat ID are correctly pasted on the dashboard and saved.
-
-### 3. Too Many Server Offline Log Lines
-* **Symptom:** When Termux goes to sleep, your dashboard logs are flooded with repeating warning lines.
-* **Solution:** We have integrated an offline consolidated logger. The dashboard will now log exactly one warning when Termux goes offline, and one recovery message when it reconnects.
-
----
-
 ## ⚠️ Disclaimer
 
-Aether Ghost OS is built for **personal security, privacy, and education only**.
+Ghost Mode is built for **personal security, privacy, and education only**.
 
 - ✅ Protect your own device and network
 - ✅ Learn about cybersecurity
@@ -224,18 +415,16 @@ The developer takes no responsibility for misuse.
 
 ---
 
-## 🌍 Similar Tools (and why Aether Ghost OS is different)
+## 🌍 Similar Tools (and why Ghost Mode is different)
 
 | Tool | Root needed? | Easy setup? | Personal focus? |
 |------|-------------|-------------|-----------------|
 | Kali NetHunter | ✅ Yes | ❌ Complex | ❌ Offensive |
 | cSploit | ✅ Yes | ❌ Complex | ❌ Offensive |
 | Wireshark | ❌ No | ❌ PC only | ⚠️ Partial |
-| **Aether Ghost OS** | ❌ **No** | ✅ **One command** | ✅ **Defensive** |
+| **Ghost Mode** | ❌ **No** | ✅ **One command** | ✅ **Defensive** |
 
-Aether Ghost OS is the only **no-root, one-command, defensive security suite** designed specifically for everyday Android users who want privacy and protection without being security experts.
-
----
+Ghost Mode is the only **no-root, one-command, defensive security suite** designed specifically for everyday Android users who want privacy and protection without being security experts.
 
 ---
 
@@ -299,11 +488,67 @@ bash ~/ghost.sh
 3. Turn on the checkmark, paste your **Token** and **Chat ID**, and click **Save Settings**.
 4. Click **Test Sentry**. You will receive an instant verification message on Telegram!
 
+#### 🔑 Token Recovery & Reset Guide
+
+If you lose your Bot API Token, Chat ID, or want to secure your connection, follow these steps:
+
+*   **To Retrieve Your Bot Token:** Open Telegram, open your chat with **`@BotFather`**, send `/token`, select your bot, and copy it.
+*   **To Revoke & Refresh Bot Token:** If your token is compromised, send `/revoke` to **`@BotFather`**, select your bot, and it will instantly cancel the old one and generate a fresh token. Update the new token in your dashboard settings.
+*   **To Retrieve Your Chat ID:** Open Telegram, search for **`@userinfobot`**, tap Start (or send `/start`), and copy the numerical ID.
+*   **To Clear Credentials & Reset Bot:**
+    *   *Via Dashboard:* Uncheck "Enable Telegram Alerts", delete the Token and Chat ID values, and click **Save Settings**.
+    *   *Via Termux CLI:* Open Termux and run: `rm ~/ghost_tools/telegram_config.json` to delete the settings file directly.
+
+#### 🛠️ Sentry Bot Troubleshooting & Connection Diagnostics
+
+If your Telegram Sentry Bot is completely silent and does not respond to `/status` or `/scan` commands, follow this diagnostic guide based on your operating system:
+
+##### 1. Understanding the Telegram Chat ID
+*   **⚠️ Crucial Concept:** Your **Chat ID is your personal Telegram User ID**. It is **not** unique to a specific bot.
+*   Your personal Chat ID is a single, unique numerical string that represents **your Telegram account**. It is the **exact same number** for Sentry Bot, Support Bot, or any utility bot.
+*   If you enter the wrong Chat ID or use letters (like your `@username`) in the configuration, the bot will **silently ignore all commands** for safety to prevent unauthorized users from hijacking your device console!
+*   **How to get it:** Open Telegram, search for **`@GetIDBot`** or **`@userinfobot`**, tap **Start**, and copy the numerical User ID (e.g. `7636054971`).
+
+##### 2. Diagnostic Steps by Operating System
+
+*   **📱 On Mobile (Android / Termux):**
+    1.  **Check if Sentry Settings saved correctly:**
+        Run `cat ~/ghost_tools/telegram_config.json` in Termux. It should display your token, chat ID, and `"enabled": true`. If the file is missing or disabled, run this command to create it manually:
+        ```bash
+        cat > ~/ghost_tools/telegram_config.json << 'EOF'
+        {
+          "enabled": true,
+          "token": "YOUR_BOT_TOKEN",
+          "chat_id": "YOUR_CHAT_ID"
+        }
+        EOF
+        ```
+    2.  **Inspect connection error logs:**
+        Run `cat ~/ghost_tools/ghost.log` or choose Option `[6] 📋 View Logs` in the launcher menu. Check for lines stating `⚠️ Telegram alert failed: <reason>`. A timeout indicates Tor routing blocks or no internet connection.
+    3.  **Ensure the daemon server is running:**
+        The bot poller only works if Option `[5] 🖥️ Open Dashboard` is actively running. Restart the server daemon:
+        ```bash
+        pkill -f server_daemon.py
+        bash ~/ghost.sh   # select option 5
+        ```
+
+*   **🖥️ On Desktop PC (Windows):**
+    1.  **Locate your local settings file:**
+        Open File Explorer and navigate to `C:\Users\YOUR_USER\.ghost_tools\telegram_config.json` (or look in your project directory). Verify the token and chat ID.
+    2.  **Verify background python processes:**
+        Open PowerShell and check if the PC engine is active: `Get-Process | Where-Object { $_.Name -eq "python" }`.
+    3.  **Check logs:** Open `ghost_tools\ghost.log` inside your project directory to inspect socket timeout errors.
+
+*   **🖥️ On Desktop PC (Linux / macOS):**
+    1.  **Locate settings:** Check `~/.ghost_tools/telegram_config.json` (or your project directory).
+    2.  **Restart the daemon:** Run `pkill -f ghost_mode_pc.py && python3 ghost_mode_pc.py` in your terminal.
+    3.  **Check logs:** Review `~/ghost_tools/ghost.log` or `ghost_tools/ghost.log`.
+
 ---
 
 ## ☕ Support & Donate
 
-Aether Ghost OS is built and maintained independently. If this tool keeps you safe, consider supporting its development:
+Ghost Mode is built and maintained independently. If this tool keeps you safe, consider supporting its development:
 
 ### 🌐 Web Donations
 | Platform | Link |
@@ -323,57 +568,7 @@ Aether Ghost OS is built and maintained independently. If this tool keeps you sa
 | Bitcoin | ETH — Ethereum (ERC20) | `0x09cad574c2c39a88ce931307361682680b795490` |
 | Bitcoin | SEGWIT — BTC (SegWit) | `bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj` |
 
-*Every contribution — no matter how small — keeps Aether Ghost OS active and secure.*
-
----
-
----
-
-## 🔗 Connect
-
-| Channel | Link |
-|---|---|
-| X / Twitter | [@AETHERGHOSTOS](https://x.com/AETHERGHOSTOS) |
-| Discord | [Join Community](https://discord.gg/gNdeFA984) |
-| Telegram Bot | [@AetherGhostOSbot](https://t.me/AetherGhostOSbot) |
-| Telegram Group | [AetherOperatorOSCommand](https://t.me/AetherOperatorOSCommand) |
-| Email | AETHERGHOSTOS@proton.me |
-
----
-
-## 💻 Windows 10 PC Setup
-
-Aether Ghost OS also runs on Windows 10 as a PC security scanner and web dashboard.
-
-### Option A: Download ZIP (No Git required)
-1. **Install Python 3:** Download from [python.org/downloads](https://www.python.org/downloads/) — ⚠️ Check **"Add Python to PATH"** before installing.
-2. **Download the project:** Click the green **Code** button on this page → **Download ZIP** → Extract to your Desktop.
-3. **Run the Scanner:** Open the extracted folder and double-click **`run_scanner.bat`** — this auto-installs dependencies and runs a full threat scan.
-4. **Open the Dashboard:** Double-click **`run_dashboard.bat`** — this starts the local server and opens the graphical dashboard in your browser at `http://localhost:8080/ghost_dashboard.html`.
-
-### Option B: Clone via PowerShell + Git
-```powershell
-# 1. Install Git from https://git-scm.com/download/win first, then:
-
-# 2. Clone the repository
-git clone https://github.com/AETHERGHOSTOS/ghost-mode.git
-
-# 3. Go into the folder
-cd ghost-mode
-
-# 4. Run the security scanner
-python ghost_mode_pc.py
-
-# 5. Start the dashboard server
-python ghost_tools/server_daemon.py
-```
-Then open your browser to: **`http://localhost:8080/ghost_dashboard.html`**
-
-### 🔄 Future Updates (PowerShell)
-```powershell
-cd ghost-mode
-git pull
-```
+*Every contribution — no matter how small — keeps Ghost Mode alive and free for everyone.*
 
 ---
 
