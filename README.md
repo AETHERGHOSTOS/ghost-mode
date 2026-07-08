@@ -251,7 +251,7 @@ This opens the terminal dashboard:
   =============================================
   Privacy Operating Security Suite for Termux
 
-  [1] 💀 Run Security Scan
+  [1] 🛡️ AetherGhost Guard Scans
   [2] 👻 Select Anonymity Engine
   [3] 🌍 Pick Tor Location Node
   [4] 🌐 Check My Connection

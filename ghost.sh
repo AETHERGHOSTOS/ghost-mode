@@ -30,7 +30,7 @@ while true; do
   echo "  ============================================="
   echo "  Privacy Operating Security Suite for Termux"
   echo ""
-  echo -e "  \e[1;32m[1]\e[0m 💀 Run Security Scan"
+  echo -e "  \e[1;32m[1]\e[0m 🛡️ AetherGhost Guard Scans"
   echo -e "  \e[1;32m[2]\e[0m 👻 Select Anonymity Engine"
   echo -e "  \e[1;32m[3]\e[0m 🌍 Pick Tor Location Node"
   echo -e "  \e[1;32m[4]\e[0m 🌐 Check My Connection"
@@ -48,9 +48,29 @@ while true; do
 
   case $c in
     1)
+      echo "  🛡️ AETHERGHOST GUARD SCAN CENTER:"
+      echo "  ---------------------------------"
+      echo "  [1] 🦠 Scan Active Memory (Virus Guard)"
+      echo "  [2] 💾 Scan Storage Files (Malware Guard)"
+      echo "  [3] 💀 Run Full System Security Audit"
+      echo ""
+      read -p "  Select [1-3]: " scan_c
       SCRIPT=$(find "$HOME" ./  -name "ghost_mode.py" 2>/dev/null | head -1)
       if [ -n "$SCRIPT" ]; then
-        python3 "$SCRIPT"
+        case $scan_c in
+          1)
+            python3 "$SCRIPT" --virus
+            ;;
+          2)
+            python3 "$SCRIPT" --malware
+            ;;
+          3)
+            python3 "$SCRIPT"
+            ;;
+          *)
+            echo "Invalid choice."
+            ;;
+        esac
       else
         echo "❌ ghost_mode.py not found."
       fi
