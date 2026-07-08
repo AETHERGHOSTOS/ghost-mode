@@ -177,12 +177,15 @@ def run_security_scan():
                 except:
                     pass
             
-            title = "⚠️ GHOST SECURITY ALERT" if is_threat else "🛡️ Ghost OS Background Scan"
+            title = "🛡️ AETHERGHOST GUARD ALERT" if is_threat else "🛡️ Ghost OS Background Scan"
             trigger_native_notification(title, status_msg)
+            
             if is_threat:
-                send_telegram_alert(f"⚠️ *SECURITY THREAT DETECTED!*\n{status_msg}\nCheck the visual dashboard or send /menu to view threats.")
+                threat_list = rep.get("active_threats", [])
+                threat_details = "\n".join([f"• `{t}`" for t in threat_list])
+                send_telegram_alert(f"🚨 *AETHERGHOST GUARD ALERT*\n⚠️ *Security Threats Detected!*\n\n{threat_details}\n\n*Action:* Open the AetherGhost Guard dashboard to remediate.")
             else:
-                send_telegram_alert(f"🛡️ *Aether Ghost OS: Scan Complete*\nStatus: *💀 [ GHOST ACTIVE ] ➔ You are a ghost!* 👻\nAll Systems Secure (0 threats found). Anonymity layers holding.")
+                send_telegram_alert(f"🛡️ *AetherGhost Guard: Scan Complete*\nStatus: *💀 [ GHOST ACTIVE ] ➔ You are a ghost!* 👻\nAll Systems Secure (0 threats found). Anonymity layers holding.")
         except Exception as e:
             log_message(f"⚠️ Scan failed to run: {e}")
     else:

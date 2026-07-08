@@ -17,7 +17,7 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 def get_ghost_dir():
     log_dir = os.path.expanduser("~/ghost_tools")
