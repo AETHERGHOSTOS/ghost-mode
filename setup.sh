@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # 💀 AETHER GHOST OS — Universal Installer v1.2.0
-# Works on ANY Android phone with Termux
+# Works on ANY Android phone running Termux
 # No root required.
 # ============================================================
 
