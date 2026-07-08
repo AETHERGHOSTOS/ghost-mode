@@ -706,6 +706,86 @@ def save_report():
     except:
         pass
 
+def print_sentry_status():
+    config_path = os.path.join(LOG_DIR, "telegram_config.json")
+    cfg = {"enabled": False, "token": "", "chat_id": ""}
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except:
+            pass
+    
+    sched_path = os.path.join(LOG_DIR, "schedule_config.json")
+    sched = {"scan_mode": "interval", "scan_interval": 120, "auto_update": True}
+    if os.path.exists(sched_path):
+        try:
+            with open(sched_path, "r", encoding="utf-8") as f:
+                sched = json.load(f)
+        except:
+            pass
+
+    print()
+    print("🤖 AETHERGHOST SENTRY BOT REMOTE TERMINAL CONSOLE")
+    print("==================================================")
+    print(f"Status:      {'🟢 ENABLED' if cfg.get('enabled') else '🔴 DISABLED'}")
+    print(f"Token:       {cfg.get('token', 'N/A')}")
+    print(f"Chat ID:     {cfg.get('chat_id', 'N/A')}")
+    print(f"Scheduler:   {sched.get('scan_mode', 'interval').upper()}")
+    print(f"Interval:    {sched.get('scan_interval', 120)}s")
+    print(f"Auto-Update: {'🟢 ENABLED' if sched.get('auto_update', True) else '🔴 DISABLED'}")
+    print("==================================================")
+    print("Use --sentry-toggle to enable/disable or --sentry-setup <token> <chat_id> to configure.")
+
+def setup_sentry(token, chat_id):
+    config_path = os.path.join(LOG_DIR, "telegram_config.json")
+    cfg = {"enabled": True, "token": token, "chat_id": chat_id}
+    try:
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2)
+        print("✅ Sentry credentials updated and enabled.")
+    except Exception as e:
+        print(f"❌ Failed to save sentry credentials: {e}")
+
+def toggle_sentry():
+    config_path = os.path.join(LOG_DIR, "telegram_config.json")
+    cfg = {"enabled": False, "token": "", "chat_id": ""}
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except:
+            pass
+    cfg["enabled"] = not cfg.get("enabled", False)
+    try:
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2)
+        print(f"✅ Sentry Bot toggled to: {'🟢 ENABLED' if cfg['enabled'] else '🔴 DISABLED'}")
+    except Exception as e:
+        print(f"❌ Failed to toggle sentry: {e}")
+
+def check_and_pull_updates_cli():
+    print("🔄 Checking for updates from GitHub...")
+    try:
+        subprocess.run("git fetch", shell=True, capture_output=True, text=True, timeout=15)
+        local_hash = subprocess.run("git rev-parse HEAD", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
+        remote_hash = subprocess.run("git rev-parse @{u}", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
+        
+        if local_hash == remote_hash:
+            print("🟢 System is already up-to-date!")
+            return
+            
+        print("💡 New update detected! Pulling latest code changes...")
+        pull_res = subprocess.run("git pull", shell=True, capture_output=True, text=True, timeout=20)
+        if pull_res.returncode == 0:
+            print("✅ Code successfully updated. Hot-restarting scanner...")
+            time.sleep(1)
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+        else:
+            print(f"❌ Pull failed: {pull_res.stderr.strip()}")
+    except Exception as e:
+        print(f"❌ Error checking updates: {e}")
+
 # ── MAIN ──────────────────────────────────────────────────────────
 
 def main():
@@ -766,5 +846,20 @@ if __name__ == "__main__":
             ACTIVE_THREATS = []
             check_malware_guard()
             save_report()
+            sys.exit(0)
+        elif sys.argv[1] == "--sentry":
+            print_sentry_status()
+            sys.exit(0)
+        elif sys.argv[1] == "--sentry-toggle":
+            toggle_sentry()
+            sys.exit(0)
+        elif sys.argv[1] == "--sentry-setup":
+            if len(sys.argv) > 3:
+                setup_sentry(sys.argv[2], sys.argv[3])
+            else:
+                print("❌ Missing arguments: --sentry-setup <token> <chat_id>")
+            sys.exit(0)
+        elif sys.argv[1] == "--update":
+            check_and_pull_updates_cli()
             sys.exit(0)
     main()

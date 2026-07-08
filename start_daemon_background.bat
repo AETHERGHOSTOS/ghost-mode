@@ -1,0 +1,9 @@
+@echo off
+title AETHER GHOST OS - Background Daemon Loader
+echo Starting local web server in the background...
+start "" pythonw.exe ghost_tools/server_daemon.py
+echo Launching browser to http://localhost:8080/ghost_dashboard.html...
+start "" "http://localhost:8080/ghost_dashboard.html"
+echo Background service initiated successfully. Exiting launcher...
+timeout /t 3
+exit

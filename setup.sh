@@ -1,13 +1,13 @@
 #!/bin/bash
 # ============================================================
-# 💀 AETHER GHOST OS — Universal Installer v1.1.0
+# 💀 AETHER GHOST OS — Universal Installer v1.2.0
 # Works on ANY Android phone with Termux
 # No root required.
 # ============================================================
 
 clear
 echo ""
-echo "  💀😈🤫  AETHER GHOST OS INSTALLER v1.1.0  🤫😈💀"
+echo "  💀😈🤫  AETHER GHOST OS INSTALLER v1.2.0  🤫😈💀"
 echo "  =================================================="
 echo ""
 

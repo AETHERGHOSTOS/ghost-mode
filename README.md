@@ -1,4 +1,4 @@
-# 💀 AetherGhostMode
+# 💀 Ghost Mode (AetherGhost Guard v1.2.0)
 
 > *Active Defense. Anonymity Routing. Memory Whitelisting. Auto-Updates. Any Android & PC. No root.*
 
@@ -99,7 +99,7 @@ curl -sL https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/setup.s
 
 ---
 
-### 🪟 Option 2: Windows PCs (All Versions)
+### 🪟 Option 2: Windows PCs & Workstations (All Versions)
 
 #### 🔰 Method A: Download ZIP (Easiest for Beginners — No Git Required)
 1. **Install Python:** Download and install Python 3 from [python.org/downloads](https://www.python.org/downloads/). *Check the box **"Add Python to PATH"** before clicking install.*
@@ -245,16 +245,13 @@ Run the launcher script:
 ```bash
 bash ~/ghost.sh
 ```
-This opens the interactive terminal management menu:
+This opens the terminal dashboard:
 ```
   👻 A E T H E R   G H O S T   O S  v1.2.0 👻
   =============================================
   Privacy Operating Security Suite for Termux
 
-  [1] 🦠 Run Memory Scan (Virus Guard)
-  [12] 💾 Run Storage Scan (Malware Guard)
-  [13] 🔄 Manage Updates & Scheduler
-  [14] ⚡ Resolve Active Threat Alerts
+  [1] 💀 Run Security Scan
   [2] 👻 Select Anonymity Engine
   [3] 🌍 Pick Tor Location Node
   [4] 🌐 Check My Connection
@@ -267,11 +264,6 @@ This opens the interactive terminal management menu:
   [0] 🔤 Reset Termux Font
   [10] ☕ Support & Donate to Project
 ```
-
-> [!TIP]
-> **🚪 Keeping Services Running in the Background:**
-> *   **On Mobile (Android / Termux):** Selecting option `[11] 🚪 Exit Menu` closes the launcher interface but leaves the background server daemon, secure Tor proxy, and auto-scans running.
-> *   **On Laptops / Workstations (Windows, Linux, macOS):** You can safely close your shell or terminal window without stopping protection. The server daemon runs in the background using `nohup` (on Linux/macOS) or as a decoupled daemon process (on Windows) until you manually trigger a shutdown.
 
 ### 🖥️ On Desktop (Windows, macOS, Linux, Parrot, Raspberry Pi)
 Run the dedicated PC security engine directly:
@@ -381,7 +373,7 @@ This guide applies to Windows 7, 8, 10, 11, and Windows Server:
 
 ### ⚙️ 3. How the Auto-Update Engine Works
 
- You can manage updates automatically:
+Once you have upgraded to **`v1.2.0`**, you can manage updates automatically:
 *   **Auto-Update Enabled (ON):** The background daemon checks for new GitHub updates every hour. If it finds any, it pulls them automatically, sends a Telegram alert, and executes a hot-restart of the daemon silently.
 *   **Auto-Update Disabled (OFF):** The system notifies you of an update via the dashboard or Sentry Bot. You must manually click the **`📥 PULL LATEST`** dashboard button or trigger the manual update inline button inside Telegram Sentry to download and apply changes.
 
@@ -482,7 +474,7 @@ If your device or machine loses power, shuts down, or restarts, follow these qui
 
 ## 💬 Automated Scam Scanning Add-on
 
-Aether Ghost Mode can be upgraded to scan incoming messages and clipboard text automatically in the background, rather than requiring you to copy-paste them manually.
+Aether Ghost OS can be upgraded to scan incoming messages and clipboard text automatically in the background, rather than requiring you to copy-paste them manually.
 
 ### 📱 Android Background Scan (Requires Termux:API)
 If you install the **Termux:API** companion app from F-Droid and run the setup script, the Sentry gains these features:
@@ -592,17 +584,18 @@ Aether Ghost OS includes a companion Telegram Bot system that sends real-time pu
 
 ### 🌟 Bot Capabilities & Scenarios
 
-| Trigger / Action | Bot Response | Risk Assessment / Result |
-|---|---|---|
-| **🚨 Intrusion Detection** | Real-time honeypot alert | `"🚨 Intrusion Alert! Decoy Honeypot port scan detected from IP 192.168.1.15."` |
-| **🛡️ AetherGhost Guard Warning** | Active Memory Alert | `"🛡️ AETHERGHOST GUARD ALERT: 🦠 Memory process backdoor warning - Rogue listening port PID 4820."` |
-| **🛡️ AetherGhost Guard Warning** | Stalkerware Scan Alert | `"🛡️ AETHERGHOST GUARD ALERT: 💾 Storage signature warning - Spyware module com.stalker.spy found."` |
+| **🛡️ Memory Scan** | Triggered scan command or inline button click | `"🛡️ AETHERGHOST GUARD ALERT: Rogue process PID 4102 running unauthorized listening port 4444."` |
+| **🛡️ Storage Scan** | Triggered scan command or inline button click | `"🛡️ AETHERGHOST GUARD ALERT: Infected File detected in download folder: backdoor.exe"` |
+| **⚡ Threat Resolution** | Callback button `⚡ Resolve Threat 1` | `"✅ Threat Remediation Success: Successfully terminated process PID 4102. Running validation scan..."` |
+| **🔄 Auto-Update** | Periodic check trigger or manual override | `"✅ Aether OS Auto-Update: System updated to version v1.2.0 and hot-reloaded successfully!"` |
+| **🚨 Intrusion Detection** | Real-time push notification | `"🚨 Intrusion Alert! Decoy Honeypot port scan detected from IP 192.168.1.15."` |
+| **🚨 Security Threat** | Threat Alert | `"⚠️ Threat Alert! Microphones currently in use by background process: SpywareAgent"` |
 | **🔄 Failover Routing** | Status Alert | `"🔄 Anonymity Pivot: Tor tunnel connection lost. Failover engine WARP connect succeeded."` |
 | **💬 Forwarded Phishing link** | Domain Risk Analysis | **🔴 HIGH RISK:** `"❌ paypa1-verification.xyz — Lookalike domain spoofing PayPal with high-risk TLD etc."` |
 | **💬 Forwarded SMS scam text** | Text Keyword Audit | **🔴 HIGH RISK:** `"Urgency/Fraud Language Detected (lottery winner, reference codes etc )."` |
 | **💬 Forwarded Safe message** | Domain Verification | **🟢 LOW RISK:** `"✅ .com or any other — Recognized domain. No scam indicators detected."` |
 
-### 🕹️ Remote Bot Controls & Commands 
+### 🕹️ Remote Bot Controls & Commands (v1.2.0+)
 
 The Telegram Sentry Bot provides a full-featured remote management console for your security suite. 
 
