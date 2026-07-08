@@ -633,56 +633,89 @@ select:focus{border-color:var(--accent-color)}
 <!-- Automation & Alert Setup with Sound effects -->
 <div class="card" style="margin-bottom:12px">
   <h3>⚙️ Automation & Alert Profiles</h3>
-  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px; align-items:center;">
-    <div>
-      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">SCAN SCHEDULER MODE</label>
-      <select id="scan-mode-select" onchange="toggleScanModeUI(this.value); updateSchedule()" style="width:100%; color:#00ff88;">
-        <option value="interval">⏳ Time Interval</option>
-        <option value="scheduled">⏰ Daily Scheduled</option>
-      </select>
+  
+  <div style="display:grid; grid-template-columns: 1fr; gap:16px; margin-top:10px;">
+    
+    <!-- 1. Security Scan Scheduler -->
+    <div style="background: rgba(0, 255, 136, 0.01); border: 1px solid #141414; padding: 12px; border-radius: 6px;">
+      <h4 style="color:#00ff88; font-size: 0.85em; margin-bottom: 8px; letter-spacing: 0.5px;">🛡️ SECURITY SCAN AUTOMATION</h4>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px; align-items:center;">
+        <div>
+          <label style="font-size:0.65em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">SCAN SCHEDULER MODE</label>
+          <select id="scan-mode-select" onchange="toggleScanModeUI(this.value); updateSchedule()" style="width:100%; color:#00ff88;">
+            <option value="interval">⏳ Time Interval</option>
+            <option value="scheduled">⏰ Daily Scheduled</option>
+          </select>
+        </div>
+        <div id="scan-interval-container">
+          <label style="font-size:0.65em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">SECURITY SCAN INTERVAL</label>
+          <select id="scan-interval-select" onchange="updateSchedule()" style="width:100%;">
+            <option value="0">Manual Only</option>
+            <option value="120">Every 2 Min</option>
+            <option value="600">Every 10 Min</option>
+            <option value="1800">Every 30 Min</option>
+            <option value="3600">Every 1 Hour</option>
+            <option value="43200">Every 12 Hours</option>
+            <option value="86400">Every 24 Hours</option>
+          </select>
+        </div>
+        <div id="scan-time-container" style="display:none;">
+          <label style="font-size:0.65em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">DAILY SCAN TIME</label>
+          <input type="text" id="scan-time-input" placeholder="e.g. 02:00" onchange="updateSchedule()" style="width:100%; text-align:center; font-family:'Share Tech Mono', monospace; font-size:0.95em; background:#000; border:1px solid #1a1a1a; color:#00ff88; padding:5px; border-radius:4px; box-sizing:border-box; height:34px;" />
+        </div>
+      </div>
     </div>
-    <div id="scan-interval-container">
-      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">SECURITY SCAN INTERVAL</label>
-      <select id="scan-interval-select" onchange="updateSchedule()" style="width:100%;">
-        <option value="0">Manual Only</option>
-        <option value="120">Every 2 Min</option>
-        <option value="600">Every 10 Min</option>
-        <option value="1800">Every 30 Min</option>
-        <option value="3600">Every 1 Hour</option>
-        <option value="43200">Every 12 Hours</option>
-        <option value="86400">Every 24 Hours</option>
-      </select>
+    
+    <!-- 2. Location Spoof Scheduler -->
+    <div style="background: rgba(0, 255, 136, 0.01); border: 1px solid #141414; padding: 12px; border-radius: 6px;">
+      <h4 style="color:#00ff88; font-size: 0.85em; margin-bottom: 8px; letter-spacing: 0.5px;">🌍 LOCATION SPOOF ROUTING</h4>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px; align-items:center;">
+        <div>
+          <label style="font-size:0.65em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">LOCATION ROUTING MODE</label>
+          <select id="loc-mode-select" onchange="toggleLocModeUI(this.value); updateSchedule()" style="width:100%; color:#00ff88;">
+            <option value="interval">⏳ Time Interval</option>
+            <option value="scheduled">⏰ Daily Scheduled</option>
+          </select>
+        </div>
+        <div id="loc-interval-container">
+          <label style="font-size:0.65em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">LOCATION CHECK INTERVAL</label>
+          <select id="loc-interval-select" onchange="updateSchedule()" style="width:100%;">
+            <option value="0">Manual Only</option>
+            <option value="120">Every 2 Min</option>
+            <option value="1800">Every 30 Min</option>
+            <option value="3600">Every 1 Hour</option>
+            <option value="7200">Every 2 Hours</option>
+          </select>
+        </div>
+        <div id="loc-time-container" style="display:none;">
+          <label style="font-size:0.65em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">DAILY SPOOF TIME</label>
+          <input type="text" id="loc-time-input" placeholder="e.g. 03:00" onchange="updateSchedule()" style="width:100%; text-align:center; font-family:'Share Tech Mono', monospace; font-size:0.95em; background:#000; border:1px solid #1a1a1a; color:#00ff88; padding:5px; border-radius:4px; box-sizing:border-box; height:34px;" />
+        </div>
+      </div>
     </div>
-    <div id="scan-time-container" style="display:none;">
-      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">DAILY SCAN TIME</label>
-      <input type="text" id="scan-time-input" placeholder="e.g. 02:30" onchange="updateSchedule()" style="width:100%; text-align:center; font-family:'Share Tech Mono', monospace; font-size:0.95em; background:#000; border:1px solid #1a1a1a; color:#00ff88; padding:5px; border-radius:4px; box-sizing:border-box; height:34px;" />
+    
+    <!-- 3. Global System Alert Profiles -->
+    <div style="background: rgba(0, 255, 136, 0.01); border: 1px solid #141414; padding: 12px; border-radius: 6px;">
+      <h4 style="color:#00ff88; font-size: 0.85em; margin-bottom: 8px; letter-spacing: 0.5px;">⚙️ NOTIFICATIONS & ALERTS SYSTEM</h4>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px; align-items:center;">
+        <div>
+          <label style="font-size:0.65em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">NOTIFICATION PROFILE</label>
+          <select id="notif-select" onchange="updateSchedule()" style="width:100%; color:#00ff88;">
+            <option value="sound_vibrate">⚡ Sound & Haptics</option>
+            <option value="silent">🔇 Silent banner</option>
+            <option value="none">🛑 Disabled</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.65em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">AUTO-UPDATE ENGINE</label>
+          <select id="auto-update-select" onchange="updateSchedule()" style="width:100%; color:#00ff88;">
+            <option value="true">🟢 ENABLED (Auto)</option>
+            <option value="false">🔴 DISABLED (Manual)</option>
+          </select>
+        </div>
+      </div>
     </div>
-    <div>
-      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">LOCATION SPOOF</label>
-      <select id="loc-interval-select" onchange="updateSchedule()" style="width:100%;">
-        <option value="0">Manual Only</option>
-        <option value="120">Every 2 Min</option>
-        <option value="1800">Every 30 Min</option>
-        <option value="3600">Every 1 Hr</option>
-        <option value="7200">Every 2 Hr</option>
-      </select>
-      <div style="font-size: 0.58em; color: #444; margin-top: 4px;">*Manual: auto-rotation off.</div>
-    </div>
-    <div>
-      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">NOTIFICATION PROFILE</label>
-      <select id="notif-select" onchange="updateSchedule()" style="width:100%; color:#00ff88;">
-        <option value="sound_vibrate">⚡ Sound & Haptics</option>
-        <option value="silent">🔇 Silent banner</option>
-        <option value="none">🛑 Disabled</option>
-      </select>
-    </div>
-    <div>
-      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">AUTO-UPDATE ENGINE</label>
-      <select id="auto-update-select" onchange="updateSchedule()" style="width:100%; color:#00ff88;">
-        <option value="true">🟢 ENABLED (Auto)</option>
-        <option value="false">🔴 DISABLED (Manual)</option>
-      </select>
-    </div>
+
   </div>
   
   <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid #141414;">
@@ -1626,15 +1659,28 @@ function toggleScanModeUI(mode) {
   }
 }
 
+function toggleLocModeUI(mode) {
+  const intContainer = document.getElementById('loc-interval-container');
+  const timeContainer = document.getElementById('loc-time-container');
+  if (mode === 'interval') {
+    intContainer.style.display = 'block';
+    timeContainer.style.display = 'none';
+  } else {
+    intContainer.style.display = 'none';
+    timeContainer.style.display = 'block';
+  }
+}
+
 async function getSchedule() {
   try {
     const res = await fetch('/api/schedule?t=' + Date.now());
     if (res.ok) {
       const data = await res.json();
+      
+      // 1. Scan Schedule
       const scanMode = data.scan_mode || 'interval';
       document.getElementById('scan-mode-select').value = scanMode;
       toggleScanModeUI(scanMode);
-
       const interval = parseInt(data.scan_interval) || 0;
       const scanSel = document.getElementById('scan-interval-select');
       if (scanSel) {
@@ -1644,7 +1690,14 @@ async function getSchedule() {
         document.getElementById('scan-time-input').value = data.scan_scheduled_time;
       }
       
-      document.getElementById('loc-interval-select').value = data.location_interval || 0;
+      // 2. Location Schedule
+      const locMode = data.location_scan_mode || 'interval';
+      document.getElementById('loc-mode-select').value = locMode;
+      toggleLocModeUI(locMode);
+      document.getElementById('loc-interval-select').value = data.location_scan_interval !== undefined ? data.location_scan_interval : (data.location_interval || 0);
+      if (data.location_scheduled_time) {
+        document.getElementById('loc-time-input').value = data.location_scheduled_time;
+      }
       document.getElementById('notif-select').value = data.notification_profile || 'sound_vibrate';
       if (data.custom_sound_path) {
         document.getElementById('custom-sound-path-input').value = data.custom_sound_path;
@@ -1671,7 +1724,11 @@ async function updateSchedule() {
   const scanMode = document.getElementById('scan-mode-select').value;
   const interval = parseInt(document.getElementById('scan-interval-select').value) || 0;
   const scheduledTime = document.getElementById('scan-time-input').value.trim();
+  
+  const locMode = document.getElementById('loc-mode-select').value;
   const locInterval = parseInt(document.getElementById('loc-interval-select').value) || 0;
+  const locTime = document.getElementById('loc-time-input').value.trim();
+  
   const notif = document.getElementById('notif-select').value;
   const autoUpdate = document.getElementById('auto-update-select').value === 'true';
 
@@ -1689,6 +1746,9 @@ async function updateSchedule() {
         scan_mode: scanMode,
         scan_interval: interval,
         scan_scheduled_time: scheduledTime,
+        location_scan_mode: locMode,
+        location_scan_interval: locInterval,
+        location_scheduled_time: locTime,
         location_interval: locInterval,
         notification_profile: notif,
         auto_update: autoUpdate

@@ -535,6 +535,7 @@ def get_sentry_dashboard_layout():
                 {"text": "⏹️ Stop Services", "callback_data": "confirm_stop_prompt"}
             ],
             [
+                {"text": "⚙️ Scheduler Setup", "callback_data": "menu_scheduler"},
                 {"text": "☕ Support & Donate", "callback_data": "sentry_support"}
             ]
         ]
@@ -705,25 +706,67 @@ def handle_sentry_callback(token, chat_id, query):
         
     elif data == "menu_scheduler":
         msg = (
-            "⚙️ *Configure Security Scheduler Mode*\n\n"
-            "Choose a mode profile for background monitoring scans:"
+            "⚙️ *Aether OS Scheduler Center*\n\n"
+            "Configure independent background schedulers for automated auditing and location routing:"
         )
         kb = {
             "inline_keyboard": [
                 [
-                    {"text": "⏳ Interval (Every 2 Min)", "callback_data": "set_sched_interval_120"},
-                    {"text": "⏳ Interval (Every 10 Min)", "callback_data": "set_sched_interval_600"}
-                ],
-                [
-                    {"text": "⏳ Interval (Every 1 Hour)", "callback_data": "set_sched_interval_3600"},
-                    {"text": "⏳ Interval (Every 24 Hours)", "callback_data": "set_sched_interval_86400"}
-                ],
-                [
-                    {"text": "⏰ Daily Scheduled (02:00)", "callback_data": "set_sched_daily_02:00"},
-                    {"text": "⏰ Daily Scheduled (22:00)", "callback_data": "set_sched_daily_22:00"}
+                    {"text": "🛡️ Security Scan Sched", "callback_data": "sentry_sched_sec"},
+                    {"text": "🌍 Location Spoof Sched", "callback_data": "sentry_sched_loc"}
                 ],
                 [
                     {"text": "↩️ Return to Menu", "callback_data": "menu_main"}
+                ]
+            ]
+        }
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
+    elif data == "sentry_sched_sec":
+        msg = (
+            "🛡️ *Configure Security Threat Scan Schedule*\n\n"
+            "Choose automation frequency profile for memory and storage guard sweeps:"
+        )
+        kb = {
+            "inline_keyboard": [
+                [
+                    {"text": "⏳ Interval (Every 2 Min)", "callback_data": "set_sec_interval_120"},
+                    {"text": "⏳ Interval (Every 10 Min)", "callback_data": "set_sec_interval_600"}
+                ],
+                [
+                    {"text": "⏳ Interval (Every 1 Hour)", "callback_data": "set_sec_interval_3600"},
+                    {"text": "⏰ Daily Scheduled (02:00)", "callback_data": "set_sec_daily_02:00"}
+                ],
+                [
+                    {"text": "⏰ Daily Scheduled (22:00)", "callback_data": "set_sec_daily_22:00"}
+                ],
+                [
+                    {"text": "↩️ Back to Scheduler Menu", "callback_data": "menu_scheduler"}
+                ]
+            ]
+        }
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data == "sentry_sched_loc":
+        msg = (
+            "🌍 *Configure Location Spoof Routing Schedule*\n\n"
+            "Choose automation frequency profile to rotate identity tunnels and verify local IP health:"
+        )
+        kb = {
+            "inline_keyboard": [
+                [
+                    {"text": "⏳ Interval (Every 2 Min)", "callback_data": "set_loc_interval_120"},
+                    {"text": "⏳ Interval (Every 30 Min)", "callback_data": "set_loc_interval_1800"}
+                ],
+                [
+                    {"text": "⏳ Interval (Every 1 Hour)", "callback_data": "set_loc_interval_3600"},
+                    {"text": "⏰ Daily Scheduled (03:00)", "callback_data": "set_loc_daily_03:00"}
+                ],
+                [
+                    {"text": "⏰ Daily Scheduled (23:00)", "callback_data": "set_loc_daily_23:00"}
+                ],
+                [
+                    {"text": "↩️ Back to Scheduler Menu", "callback_data": "menu_scheduler"}
                 ]
             ]
         }
@@ -878,23 +921,44 @@ def handle_sentry_callback(token, chat_id, query):
         kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
         edit_telegram_message(token, chat_id, message_id, msg, kb)
 
-    elif data.startswith("set_sched_interval_"):
-        seconds = int(data.replace("set_sched_interval_", ""))
+    elif data.startswith("set_sec_interval_"):
+        seconds = int(data.replace("set_sec_interval_", ""))
+        cfg["security_scan_mode"] = "interval"
+        cfg["security_scan_interval"] = seconds
         cfg["scan_mode"] = "interval"
         cfg["scan_interval"] = seconds
         save_config(cfg)
-        
-        msg = f"✅ *Scheduler updated to Interval Mode!*\n\nAuditing system every `{seconds}` seconds."
+        msg = f"✅ *Security scan scheduler updated to Interval Mode!*\n\nAuditing system memory/storage every `{seconds}` seconds."
         kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
         edit_telegram_message(token, chat_id, message_id, msg, kb)
 
-    elif data.startswith("set_sched_daily_"):
-        time_val = data.replace("set_sched_daily_", "")
+    elif data.startswith("set_sec_daily_"):
+        time_val = data.replace("set_sec_daily_", "")
+        cfg["security_scan_mode"] = "scheduled"
+        cfg["security_scheduled_time"] = time_val
         cfg["scan_mode"] = "scheduled"
         cfg["scan_scheduled_time"] = time_val
         save_config(cfg)
-        
-        msg = f"✅ *Scheduler updated to Daily Mode!*\n\nSystem will perform threat checks daily at `{time_val}`."
+        msg = f"✅ *Security scan scheduler updated to Daily Mode!*\n\nSystem will perform threat audits daily at `{time_val}`."
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data.startswith("set_loc_interval_"):
+        seconds = int(data.replace("set_loc_interval_", ""))
+        cfg["location_scan_mode"] = "interval"
+        cfg["location_scan_interval"] = seconds
+        cfg["location_interval"] = seconds
+        save_config(cfg)
+        msg = f"✅ *Location Spoof scheduler updated to Interval Mode!*\n\nRotating IPs and checking connectivity every `{seconds}` seconds."
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data.startswith("set_loc_daily_"):
+        time_val = data.replace("set_loc_daily_", "")
+        cfg["location_scan_mode"] = "scheduled"
+        cfg["location_scheduled_time"] = time_val
+        save_config(cfg)
+        msg = f"✅ *Location Spoof scheduler updated to Daily Mode!*\n\nSystem will rotate location tunnel and check IP daily at `{time_val}`."
         kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
         edit_telegram_message(token, chat_id, message_id, msg, kb)
         
@@ -1268,22 +1332,41 @@ def pull_updates_and_restart():
 def run_daemon_loop():
     log_message("🤫 Aether OS background monitor daemon started.")
     last_scan_time = 0
+    last_location_check_time = 0
     last_update_check_time = 0
     last_scheduled_scan_date = ""
+    last_scheduled_location_date = ""
     global last_manual_change_time
     
     while True:
         try:
             cfg = load_config()
             engine = cfg.get("anonymity_engine", "tor")
-            scan_interval = cfg.get("scan_interval", 120)
+            now = time.time()
             
             # 1. Connection check and Auto-Failover
             if engine != "none":
+                run_loc = False
+                location_mode = cfg.get("location_scan_mode", "interval")
+                location_interval = cfg.get("location_scan_interval", 300)
+                location_scheduled_time = cfg.get("location_scheduled_time", "03:00")
+                
+                if location_mode == "interval":
+                    if location_interval > 0 and (now - last_location_check_time >= location_interval):
+                        run_loc = True
+                elif location_mode == "scheduled":
+                    today = datetime.now().strftime("%Y-%m-%d")
+                    now_time_str = datetime.now().strftime("%H:%M")
+                    if today != last_scheduled_location_date and now_time_str == location_scheduled_time:
+                        run_loc = True
+                        last_scheduled_location_date = today
+                
+                # Check immediately if switched within 30s
                 if time.time() - last_manual_change_time < 30:
-                    # Skip check to let newly switched engine bootstrap
-                    pass
-                else:
+                    run_loc = True
+                    
+                if run_loc:
+                    last_location_check_time = now
                     is_healthy, current_ip, loc, real_ip = update_connection_status_cache()
                     if not is_healthy:
                         log_message(f"⚠️ Health check failed for engine '{engine.upper()}'! Starting failover sequence...")
@@ -1318,18 +1401,21 @@ def run_daemon_loop():
                             continue
 
             # 2. Background Threat Scan scheduler
-            now = time.time()
-            scan_mode = cfg.get("scan_mode", "interval")
-            if scan_mode == "interval":
-                if scan_interval > 0 and (now - last_scan_time >= scan_interval):
+            security_mode = cfg.get("security_scan_mode", "interval")
+            if "scan_mode" in cfg and "security_scan_mode" not in cfg:
+                security_mode = cfg["scan_mode"]
+            security_interval = cfg.get("security_scan_interval", cfg.get("scan_interval", 120))
+            security_scheduled_time = cfg.get("security_scheduled_time", cfg.get("scan_scheduled_time", "02:00"))
+            
+            if security_mode == "interval":
+                if security_interval > 0 and (now - last_scan_time >= security_interval):
                     run_security_scan()
                     last_scan_time = now
-            elif scan_mode == "scheduled":
+            elif security_mode == "scheduled":
                 today = datetime.now().strftime("%Y-%m-%d")
                 now_time_str = datetime.now().strftime("%H:%M")
-                scheduled_time = cfg.get("scan_scheduled_time", "02:00")
-                if today != last_scheduled_scan_date and now_time_str == scheduled_time:
-                    log_message(f"⏰ Daily scheduled scan triggered at {scheduled_time}")
+                if today != last_scheduled_scan_date and now_time_str == security_scheduled_time:
+                    log_message(f"⏰ Daily scheduled scan triggered at {security_scheduled_time}")
                     run_security_scan()
                     last_scheduled_scan_date = today
                     last_scan_time = now
@@ -1716,6 +1802,12 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
                 cfg["scan_interval"] = int(body["scan_interval"])
             if "scan_scheduled_time" in body:
                 cfg["scan_scheduled_time"] = body["scan_scheduled_time"]
+            if "location_scan_mode" in body:
+                cfg["location_scan_mode"] = body["location_scan_mode"]
+            if "location_scan_interval" in body:
+                cfg["location_scan_interval"] = int(body["location_scan_interval"])
+            if "location_scheduled_time" in body:
+                cfg["location_scheduled_time"] = body["location_scheduled_time"]
             if "location_interval" in body:
                 cfg["location_interval"] = int(body["location_interval"])
             if "notification_profile" in body:
