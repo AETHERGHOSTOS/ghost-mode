@@ -450,14 +450,18 @@ def main():
         print(f"  {GREEN}[1]{NC} 👻 Select Anonymity Engine")
         print(f"  {GREEN}[2]{NC} 🛡️  AetherGhost Guard Scans")
         print(f"  {GREEN}[3]{NC} 💀 Run Full System Security Audit")
-        print(f"  {GREEN}[4]{NC} 🌐 Check Connection Status")
-        print(f"  {GREEN}[5]{NC} 🖥️  Open Dashboard Browser")
-        print(f"  {GREEN}[6]{NC} 📋 View System Logs")
-        print(f"  {GREEN}[7]{NC} 🤖 Sentry Bot Status & CLI Console")
-        print(f"  {GREEN}[8]{NC} 🚨 PANIC — Self Destruct")
-        print(f"  {GREEN}[9]{NC} ⏹️  Stop Dashboard Server & Exit")
+        print(f"  {GREEN}[4]{NC} 🌍 Pick Tor Location Node")
+        print(f"  {GREEN}[5]{NC} 🌐 Check Connection Status")
+        print(f"  {GREEN}[6]{NC} 🖥️  Open Dashboard Browser")
+        print(f"  {GREEN}[7]{NC} 📋 View System Logs")
+        print(f"  {GREEN}[8]{NC} 🔧 Change DNS Resolver")
+        print(f"  {GREEN}[9]{NC} 🚨 PANIC — Self Destruct")
+        print(f"  {GREEN}[10]{NC} ⏹️  Stop Everything & Exit")
+        print(f"  {GREEN}[12]{NC} 🚪 Exit Menu (Keep Services Running)")
+        print(f"  {GREEN}[0]{NC} 🔤 Reset Console Font")
+        print(f"  {GREEN}[11]{NC} ☕ Support & Donate to Project")
         print("=" * 55)
-        choice = input("Choose [1-9]: ").strip()
+        choice = input("Choose [0-12]: ").strip()
         
         if choice == "1":
             print("\n😈 SELECT ANONYMITY ENGINE:")
@@ -511,6 +515,13 @@ def main():
             run_full_audit_pc()
             
         elif choice == "4":
+            picker_path = os.path.join(TOOLS_DIR, "location_picker.py")
+            if os.path.exists(picker_path):
+                subprocess.run([sys.executable, picker_path])
+            else:
+                print("❌ location_picker.py not found.")
+                
+        elif choice == "5":
             sched_path = os.path.join(TOOLS_DIR, "schedule_config.json")
             eng = "tor"
             if os.path.exists(sched_path):
@@ -526,11 +537,11 @@ def main():
             except Exception as e:
                 print(f"⚠️ Connection check failed: {e}")
                 
-        elif choice == "5":
+        elif choice == "6":
             print("🌐 Opening dashboard: http://localhost:8080/ghost_dashboard.html")
             webbrowser.open("http://localhost:8080/ghost_dashboard.html")
             
-        elif choice == "6":
+        elif choice == "7":
             log_path = os.path.join(TOOLS_DIR, "ghost.log")
             if os.path.exists(log_path):
                 print("\n📋 Last 30 log lines:")
@@ -541,10 +552,14 @@ def main():
             else:
                 print("❌ No logs yet.")
                 
-        elif choice == "7":
-            print_sentry_status()
-            
         elif choice == "8":
+            print("\n🔧 DNS RESOLVER CONFIGURATION:")
+            print("-------------------------------")
+            print("To configure system-wide DNS-over-HTTPS or secure resolvers, please use either:")
+            print("  1. The Aether Ghost OS Web Dashboard (Settings Panel)")
+            print("  2. Your operating system Network Configuration settings")
+            
+        elif choice == "9":
             confirm = input("🚨 Are you sure you want to self-destruct security profiles? (y/n): ").strip().lower()
             if confirm in ("y", "yes"):
                 panic_self_destruct()
@@ -552,9 +567,57 @@ def main():
             else:
                 print("Panic cancelled.")
                 
-        elif choice == "9":
-            print("\nStopping Aether Ghost OS PC server...")
+        elif choice == "10":
+            print("\n⏹️  Stopping Aether Ghost OS PC services...")
+            # Kill server_daemon.py processes via psutil check
+            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                try:
+                    cmd = proc.info.get('cmdline') or []
+                    if any('server_daemon.py' in part for part in cmd):
+                        proc.kill()
+                        print("✅ Dashboard daemon stopped.")
+                except:
+                    pass
+            # Kill local Tor proxy
+            if sys.platform == "win32":
+                subprocess.run("taskkill /F /IM tor.exe 2>nul", shell=True)
+            else:
+                subprocess.run("pkill tor 2>/dev/null", shell=True)
+            print("🤫 services deactivated. Exiting launcher...")
             sys.exit(0)
+            
+        elif choice == "12":
+            print("🚪 Exiting menu. Background Sentry and Anonymity daemon remains ACTIVE.")
+            print("🌐 Dashboard is online: http://localhost:8080/ghost_dashboard.html")
+            print()
+            sys.exit(0)
+            
+        elif choice == "0":
+            if sys.platform == "win32":
+                subprocess.run("cls", shell=True)
+            else:
+                subprocess.run("clear", shell=True)
+            print("✅ Console font configuration loaded.")
+            
+        elif choice == "11":
+            print("==========================================================")
+            print("  ☕ SUPPORT AETHER GHOST OS DEVELOPMENT")
+            print("==========================================================")
+            print("  If this tool keeps you secure, consider supporting us!")
+            print("")
+            print("  🌐 Web Donations:")
+            print("     Buy Me a Coffee: https://buymeacoffee.com/aetherghost.os")
+            print("")
+            print("  🪙 Crypto Addresses:")
+            print("     USDT  | TRX - Tron (TRC20):           TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU")
+            print("     USDC  | SOL - Solana:                 9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui")
+            print("     USDT  | ETH - Ethereum (ERC20):       0x09cad574c2c39a88ce931307361682680b795490")
+            print("     BNB   | BSC - BNB Smart Chain (BEP20): 0x09cad574c2c39a88ce931307361682680b795490")
+            print("     BTC   | BTC - Bitcoin:                15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k")
+            print("     BTC   | SEGWIT - BTC (SegWit):        bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj")
+            print("")
+            print("  Thank you for keeping Aether Ghost OS active and secure!")
+            print("==========================================================")
             
         else:
             print("❌ Invalid choice.")
