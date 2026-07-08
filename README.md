@@ -268,7 +268,7 @@ This starts the real-time background monitor, checks active webcam/microphone st
 
 ## 🔄 Checking for Updates & Upgrading
 
-To keep your security modules and vulnerability signatures up to date, it is recommended to check for updates periodically.
+To keep your security modules, memory scanners, and threat signatures up to date, Aether OS features an **Automated Self-Updater** alongside traditional manual git pulls.
 
 ### 🔍 1. How to Check Your Current Version Status
 *   **Via the Dashboard UI:** Look at the version badge in the local web dashboard header (which should display **`v1.2.0`** or higher) and compare it with the latest release.
@@ -282,44 +282,60 @@ To keep your security modules and vulnerability signatures up to date, it is rec
 
 ---
 
-### 📥 2. How to Apply Updates & Run Again Fully
+### 🚀 2. Upgrade Guide: Moving from Old Versions to v1.2.0
 
-#### 📱 On Mobile Devices (Android / Termux)
-To update your phone and restart all processes:
-1.  **Stop all running background services:**
+To get the new **AetherGhost Guard** scanner modules and **Auto-Update Engine** running, follow these step-by-step instructions to upgrade your existing setup.
+
+#### 📱 Step-by-Step for Phones (Android / Termux)
+Follow these steps to upgrade your phone:
+1.  **Open Termux** on your phone.
+2.  **Stop all running background services** of the old version:
     ```bash
     pkill -f server_daemon.py
     pkill -f ghost_mode.py
     pkill tor
     ```
-2.  **Pull changes and restart:**
+3.  **Navigate to the project folder**:
     ```bash
     cd ~/ghost-mode
+    ```
+4.  **Fetch and pull the latest release files** from GitHub:
+    ```bash
     git pull
+    ```
+5.  **Restart the background daemon**:
+    ```bash
     python ghost_tools/server_daemon.py &
     ```
+    *Open the dashboard in your mobile browser to verify the green `v1.2.0` badge is active in the header!*
 
-#### 🖥️ On Desktop PCs (Windows, WSL, Linux, macOS)
-To update your PC and restart:
-1.  **Stop active background processes:** Close your running console windows or run:
-    *   **Windows (PowerShell)**:
+#### 🖥️ Step-by-Step for Laptops & Computers (Windows 10 / 11)
+Follow these steps to upgrade your friend's laptop or workstation:
+1.  **Stop running background processes**:
+    *   Close any open black console window running the server or scanner scripts.
+    *   Alternatively, open **PowerShell** and run this command to force-close old processes:
         ```powershell
         Stop-Process -Name "python" -Force
         ```
-    *   **Linux / macOS**:
-        ```bash
-        pkill -f server_daemon.py
-        pkill -f ghost_mode_pc.py
+2.  **Navigate to the project folder**:
+    *   If installed via Git, open **PowerShell**, go to your folder, and pull:
+        ```powershell
+        cd C:\Users\Administrator\Downloads\Compressed\ghost-mode\ghost-mode
+        git pull
         ```
-2.  **Pull changes:**
-    ```bash
-    cd ~/ghost-mode
-    git pull
-    ```
-3.  **Run the update fully:**
-    *   Double-click `run_dashboard.bat` (or execute `python ghost_tools/server_daemon.py`).
-    *   Double-click `run_scanner.bat` (or execute `python ghost_mode_pc.py`).
-4.  **For ZIP installations:** Simply download the latest release ZIP from the homepage, extract it, and overwrite your old files.
+    *   If installed via a **ZIP Folder**, simply download the latest ZIP folder from your GitHub repository, extract it, and copy/paste all contents into the old folder, overwriting the old files.
+3.  **Run the update fully**:
+    *   Double-click **`run_dashboard.bat`** (to start the console dashboard server).
+    *   Double-click **`run_scanner.bat`** (to start the PC security scanner).
+    *   *The browser will open showing the updated dashboard with version `v1.2.0` in the header!*
+
+---
+
+### ⚙️ 3. How the Auto-Update Engine Works
+
+Once you have upgraded to **`v1.2.0`**, you can manage updates automatically:
+*   **Auto-Update Enabled (ON):** The background daemon checks for new GitHub updates every hour. If it finds any, it pulls them automatically, sends a Telegram alert, and executes a hot-restart of the daemon silently.
+*   **Auto-Update Disabled (OFF):** The system notifies you of an update via the dashboard or Sentry Bot. You must manually click the **`📥 PULL LATEST`** dashboard button or trigger the manual update inline button inside Telegram Sentry to download and apply changes.
 
 ---
 
