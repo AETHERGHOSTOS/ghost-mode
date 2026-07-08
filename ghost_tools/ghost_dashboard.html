@@ -492,6 +492,26 @@ select:focus{border-color:var(--accent-color)}
   </div>
 </div>
 
+<!-- AetherGhost Guard Shields -->
+<div class="card" style="margin-bottom:12px; border-color: rgba(0, 255, 136, 0.15);">
+  <h3>🛡️ AetherGhost Guard Shields</h3>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:center; margin-top:10px;">
+    
+    <div style="background: rgba(0, 255, 136, 0.02); border: 1px solid #141414; padding: 12px; border-radius: 6px; text-align: center;">
+      <h4 style="color:#00ff88; font-size: 0.9em; margin-bottom: 6px; letter-spacing: 0.5px;">🦠 VIRUS GUARD</h4>
+      <div id="virus-shield-status" style="font-family:'Share Tech Mono', monospace; font-size:0.75em; color:#00ff88; margin-bottom: 10px;">🟢 SHIELD ACTIVE</div>
+      <button class="btn blue" onclick="runVirusScanOnly()" style="margin: 0 auto; width:100%; padding: 6px 12px; font-size: 0.75em; letter-spacing: 0.5px;">🔍 SCAN ACTIVE MEMORY</button>
+    </div>
+    
+    <div style="background: rgba(0, 255, 136, 0.02); border: 1px solid #141414; padding: 12px; border-radius: 6px; text-align: center;">
+      <h4 style="color:#00ff88; font-size: 0.9em; margin-bottom: 6px; letter-spacing: 0.5px;">💾 MALWARE GUARD</h4>
+      <div id="malware-shield-status" style="font-family:'Share Tech Mono', monospace; font-size:0.75em; color:#00ff88; margin-bottom: 10px;">🟢 SHIELD ACTIVE</div>
+      <button class="btn blue" onclick="runMalwareScanOnly()" style="margin: 0 auto; width:100%; padding: 6px 12px; font-size: 0.75em; letter-spacing: 0.5px;">🔍 SCAN STORAGE FILES</button>
+    </div>
+    
+  </div>
+</div>
+
 <!-- Anonymizer & DNS Configuration -->
 <div class="grid3">
   <div class="card">
@@ -604,13 +624,27 @@ select:focus{border-color:var(--accent-color)}
   <h3>⚙️ Automation & Alert Profiles</h3>
   <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px; align-items:center;">
     <div>
-      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">SECURITY SCAN</label>
+      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">SCAN SCHEDULER MODE</label>
+      <select id="scan-mode-select" onchange="toggleScanModeUI(this.value); updateSchedule()" style="width:100%; color:#00ff88;">
+        <option value="interval">⏳ Time Interval</option>
+        <option value="scheduled">⏰ Daily Scheduled</option>
+      </select>
+    </div>
+    <div id="scan-interval-container">
+      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">SECURITY SCAN INTERVAL</label>
       <select id="scan-interval-select" onchange="updateSchedule()" style="width:100%;">
         <option value="0">Manual Only</option>
         <option value="120">Every 2 Min</option>
         <option value="600">Every 10 Min</option>
         <option value="1800">Every 30 Min</option>
+        <option value="3600">Every 1 Hour</option>
+        <option value="43200">Every 12 Hours</option>
+        <option value="86400">Every 24 Hours</option>
       </select>
+    </div>
+    <div id="scan-time-container" style="display:none;">
+      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">DAILY SCAN TIME</label>
+      <input type="text" id="scan-time-input" placeholder="e.g. 02:30" onchange="updateSchedule()" style="width:100%; text-align:center; font-family:'Share Tech Mono', monospace; font-size:0.95em; background:#000; border:1px solid #1a1a1a; color:#00ff88; padding:5px; border-radius:4px; box-sizing:border-box; height:34px;" />
     </div>
     <div>
       <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">LOCATION SPOOF</label>
@@ -1279,6 +1313,32 @@ async function loadScanReport() {
       const r = await res.json();
       window.activeThreatsList = r.active_threats || [];
       
+      const hasVirus = window.activeThreatsList.some(t => t.toLowerCase().includes('backdoor') || t.toLowerCase().includes('process'));
+      const hasMalware = window.activeThreatsList.some(t => t.toLowerCase().includes('malware') || t.toLowerCase().includes('infected') || t.toLowerCase().includes('spyware'));
+      
+      const virusDiv = document.getElementById('virus-shield-status');
+      const malwareDiv = document.getElementById('malware-shield-status');
+      
+      if (virusDiv) {
+        if (hasVirus) {
+          virusDiv.textContent = '🔴 RUNTIME THREATS FOUND';
+          virusDiv.style.color = '#ff3355';
+        } else {
+          virusDiv.textContent = '🟢 SHIELD ACTIVE';
+          virusDiv.style.color = '#00ff88';
+        }
+      }
+      
+      if (malwareDiv) {
+        if (hasMalware) {
+          malwareDiv.textContent = '🔴 INFECTED FILES DETECTED';
+          malwareDiv.style.color = '#ff3355';
+        } else {
+          malwareDiv.textContent = '🟢 SHIELD ACTIVE';
+          malwareDiv.style.color = '#00ff88';
+        }
+      }
+      
       document.getElementById('conn-type').textContent = r.connection_type || "Unknown";
       document.getElementById('ssid-val').textContent = r.ssid || "N/A";
       document.getElementById('badge-temp').textContent = `🌡️ ${r.battery_temp}°C`;
@@ -1480,25 +1540,47 @@ function startPolling(seconds) {
   }, seconds * 1000);
 }
 
+function toggleScanModeUI(mode) {
+  const intContainer = document.getElementById('scan-interval-container');
+  const timeContainer = document.getElementById('scan-time-container');
+  if (mode === 'interval') {
+    intContainer.style.display = 'block';
+    timeContainer.style.display = 'none';
+  } else {
+    intContainer.style.display = 'none';
+    timeContainer.style.display = 'block';
+  }
+}
+
 async function getSchedule() {
   try {
     const res = await fetch('/api/schedule?t=' + Date.now());
     if (res.ok) {
       const data = await res.json();
-      const interval = parseInt(data.scan_interval) || 0;
+      const scanMode = data.scan_mode || 'interval';
+      document.getElementById('scan-mode-select').value = scanMode;
+      toggleScanModeUI(scanMode);
 
+      const interval = parseInt(data.scan_interval) || 0;
       const scanSel = document.getElementById('scan-interval-select');
       if (scanSel) {
-        const opts = [...scanSel.options].map(o => parseInt(o.value));
-        scanSel.value = opts.includes(interval) ? interval : 0;
+        scanSel.value = interval;
       }
+      if (data.scan_scheduled_time) {
+        document.getElementById('scan-time-input').value = data.scan_scheduled_time;
+      }
+      
       document.getElementById('loc-interval-select').value = data.location_interval || 0;
       document.getElementById('notif-select').value = data.notification_profile || 'sound_vibrate';
       if (data.custom_sound_path) {
         document.getElementById('custom-sound-path-input').value = data.custom_sound_path;
       }
 
-      startTimer(interval);
+      if (scanMode === 'interval') {
+        startTimer(interval);
+      } else {
+        startTimer(0);
+      }
       startPolling(6);
     }
   } catch(e) {
@@ -1508,23 +1590,32 @@ async function getSchedule() {
 }
 
 async function updateSchedule() {
+  const scanMode = document.getElementById('scan-mode-select').value;
   const interval = parseInt(document.getElementById('scan-interval-select').value) || 0;
+  const scheduledTime = document.getElementById('scan-time-input').value.trim();
   const locInterval = parseInt(document.getElementById('loc-interval-select').value) || 0;
   const notif = document.getElementById('notif-select').value;
 
-  startTimer(interval);
+  if (scanMode === 'interval') {
+    startTimer(interval);
+  } else {
+    startTimer(0);
+  }
 
   try {
     await fetch('/api/schedule', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
+        scan_mode: scanMode,
         scan_interval: interval,
+        scan_scheduled_time: scheduledTime,
         location_interval: locInterval,
         notification_profile: notif
       })
     });
-    addLog(`⚙️ Schedule updated: scan every ${interval > 0 ? interval+'s' : 'manual only'}`, 'info');
+    const modeDesc = scanMode === 'interval' ? `every ${interval > 0 ? interval+'s' : 'manual only'}` : `daily at ${scheduledTime || '02:00'}`;
+    addLog(`⚙️ Schedule updated: scan mode set to ${modeDesc}`, 'info');
     showToast('⚙️ Schedule saved');
   } catch(e) {
     addLog('❌ Server offline — schedule not saved', 'alert');
@@ -1746,6 +1837,16 @@ function getRemediationGuide(detail) {
       <strong>🔧 How to Fix:</strong> CPU temperature is critical. Stop active sweeps or allow device to cool. Disengage heavy screen visual animations.
     </div>`;
   }
+  if (d.includes("backdoor") || d.includes("virus guard") || d.includes("process")) {
+    return `<div style="background:#ff335512; border:1px solid #ff335525; border-radius:6px; padding:10px; margin-top:6px; color:#ff3355; font-size:0.78em;">
+      <strong>🔧 How to Fix:</strong> Suspected backdoor process active in memory. Open task manager (or run <code>kill -9 &lt;PID&gt;</code>) to terminate the session, and audit active background shells.
+    </div>`;
+  }
+  if (d.includes("spyware") || d.includes("malware guard") || d.includes("infected") || d.includes("package")) {
+    return `<div style="background:#ff335512; border:1px solid #ff335525; border-radius:6px; padding:10px; margin-top:6px; color:#ff3355; font-size:0.78em;">
+      <strong>🔧 How to Fix:</strong> Malicious signature detected in files/storage/packages. Review the file path, delete the installer (.apk / .exe), and run a complete system quarantine sweep.
+    </div>`;
+  }
   return `<div style="background:#111; border:1px solid #222; border-radius:6px; padding:10px; margin-top:6px; color:#aaa; font-size:0.78em;">
     <strong>🔧 How to Fix:</strong> General threat signature. Run a manual active scan and audit background running terminal processes.
   </div>`;
@@ -1813,6 +1914,82 @@ async function clearThreatHistory() {
     } catch(e) {
       showToast("❌ API offline.", true);
     }
+  }
+}
+
+async function runVirusScanOnly() {
+  const btn = event.target;
+  const statusDiv = document.getElementById('virus-shield-status');
+  btn.disabled = true;
+  const oldText = btn.textContent;
+  btn.textContent = '🔄 SCANNING...';
+  statusDiv.textContent = '🟡 SCANNING ACTIVE MEMORY...';
+  statusDiv.style.color = '#ffaa00';
+  addLog('🔍 Virus Guard: Triggered active memory scan...', 'info');
+  try {
+    const res = await fetch('/api/scan/virus', {method: 'POST'});
+    if (res.ok) {
+      const data = await res.json();
+      btn.disabled = false;
+      btn.textContent = oldText;
+      
+      const hasVirus = data.active_threats && data.active_threats.some(t => t.toLowerCase().includes('backdoor') || t.toLowerCase().includes('process'));
+      if (hasVirus) {
+        statusDiv.textContent = '🔴 RUNTIME THREATS FOUND';
+        statusDiv.style.color = '#ff3355';
+        addLog('❌ Virus Guard Scan: Rogue memory processes detected!', 'alert');
+        openThreatModal();
+      } else {
+        statusDiv.textContent = '🟢 SHIELD ACTIVE';
+        statusDiv.style.color = '#00ff88';
+        addLog('✅ Virus Guard Scan: Active memory verified clean.', 'ok');
+        showToast('🟢 Active memory verified clean');
+      }
+      await loadScanReport();
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = oldText;
+    statusDiv.textContent = '🟢 SHIELD ACTIVE';
+    statusDiv.style.color = '#00ff88';
+  }
+}
+
+async function runMalwareScanOnly() {
+  const btn = event.target;
+  const statusDiv = document.getElementById('malware-shield-status');
+  btn.disabled = true;
+  const oldText = btn.textContent;
+  btn.textContent = '🔄 SCANNING...';
+  statusDiv.textContent = '🟡 AUDITING LOCAL FILES...';
+  statusDiv.style.color = '#ffaa00';
+  addLog('🔍 Malware Guard: Triggered local directory check...', 'info');
+  try {
+    const res = await fetch('/api/scan/malware', {method: 'POST'});
+    if (res.ok) {
+      const data = await res.json();
+      btn.disabled = false;
+      btn.textContent = oldText;
+      
+      const hasMalware = data.active_threats && data.active_threats.some(t => t.toLowerCase().includes('malware') || t.toLowerCase().includes('infected') || t.toLowerCase().includes('spyware'));
+      if (hasMalware) {
+        statusDiv.textContent = '🔴 INFECTED FILES DETECTED';
+        statusDiv.style.color = '#ff3355';
+        addLog('❌ Malware Guard Scan: Malicious signatures found in storage!', 'alert');
+        openThreatModal();
+      } else {
+        statusDiv.textContent = '🟢 SHIELD ACTIVE';
+        statusDiv.style.color = '#00ff88';
+        addLog('✅ Malware Guard Scan: All files verified clean.', 'ok');
+        showToast('🟢 Storage files verified clean');
+      }
+      await loadScanReport();
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = oldText;
+    statusDiv.textContent = '🟢 SHIELD ACTIVE';
+    statusDiv.style.color = '#00ff88';
   }
 }
 

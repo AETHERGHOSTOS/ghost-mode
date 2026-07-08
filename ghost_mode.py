@@ -756,4 +756,15 @@ def main():
     print()
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "--virus":
+            ACTIVE_THREATS = []
+            check_virus_guard()
+            save_report()
+            sys.exit(0)
+        elif sys.argv[1] == "--malware":
+            ACTIVE_THREATS = []
+            check_malware_guard()
+            save_report()
+            sys.exit(0)
     main()

@@ -188,6 +188,26 @@ def run_security_scan():
     else:
         log_message(f"⚠️ {script_name} script not found. Skipping active scan.")
 
+def run_specific_scan(scan_type):
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    script_name = "ghost_mode_pc.py" if sys.platform == "win32" else "ghost_mode.py"
+    script_path = os.path.join(base_dir, script_name)
+    if not os.path.exists(script_path):
+        script_path = os.path.expanduser(f"~/{script_name}")
+        
+    if os.path.exists(script_path):
+        try:
+            subprocess.run([sys.executable, script_path, scan_type], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            # Read latest report to return
+            report_file = os.path.join(LOG_DIR, "report.json")
+            if os.path.exists(report_file):
+                with open(report_file) as f:
+                    return json.load(f)
+        except Exception as e:
+            log_message(f"Error running specific scan {scan_type}: {e}")
+    return {"status": "error", "active_threats": []}
+
 # --- Proxy-Safe CLI Curl Helper ---
 def run_curl(url, proxy=None, timeout=6):
     """Runs curl over subprocess to safely support SOCKS5/SOCKS5h without PySocks dependency."""
@@ -1043,6 +1063,90 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
                 except:
                     pass
             self.send_json_response({"status": "ok"})
+
+        elif url_path == '/api/remediate':
+            detail = body.get("detail", "")
+            success = False
+            message = ""
+            
+            if "PID" in detail:
+                import re
+                pids = re.findall(r'PID\s+(\d+)', detail)
+                if pids:
+                    pid = int(pids[0])
+                    try:
+                        if pid == os.getpid():
+                            message = "Cannot kill the running security daemon itself!"
+                        else:
+                            import psutil
+                            proc = psutil.Process(pid)
+                            proc.kill()
+                            success = True
+                            message = f"Successfully terminated rogue process PID {pid}."
+                            log_message(f"💀 AetherGhost Guard Remediate: Terminated process PID {pid}")
+                    except Exception as e:
+                        message = f"Failed to terminate process PID {pid}: {e}"
+                else:
+                    message = "Could not parse PID from threat detail."
+            
+            elif "Infected File" in detail or "/" in detail or "\\" in detail:
+                parts = detail.split("Infected File Detected:")
+                file_path = parts[-1].strip() if len(parts) > 1 else detail.strip()
+                if os.path.exists(file_path):
+                    try:
+                        quarantine_dir = os.path.join(LOG_DIR, "quarantine")
+                        os.makedirs(quarantine_dir, exist_ok=True)
+                        dest = os.path.join(quarantine_dir, os.path.basename(file_path))
+                        
+                        if os.path.exists(dest):
+                            os.remove(dest)
+                            
+                        os.rename(file_path, dest)
+                        success = True
+                        message = f"File successfully moved to quarantine directory: {dest}"
+                        log_message(f"💀 AetherGhost Guard Remediate: Quarantined file to {dest}")
+                    except Exception as e:
+                        try:
+                            os.remove(file_path)
+                            success = True
+                            message = f"File successfully deleted directly: {file_path}"
+                            log_message(f"💀 AetherGhost Guard Remediate: Deleted file {file_path}")
+                        except Exception as de:
+                            message = f"Failed to delete/quarantine file: {de}"
+                else:
+                    message = f"File path not found or already removed: {file_path}"
+            
+            elif "package installed:" in detail.lower() or "package:" in detail.lower():
+                import re
+                matches = re.findall(r'package:\s*(\S+)|installed:\s*(\S+)', detail.lower())
+                pkg_id = ""
+                if matches:
+                    pkg_id = [m for m in matches[0] if m][0]
+                if pkg_id:
+                    try:
+                        p = subprocess.run(f"pm uninstall --user 0 {pkg_id}", shell=True, capture_output=True, text=True)
+                        if p.returncode == 0:
+                            success = True
+                            message = f"Successfully uninstalled package {pkg_id}."
+                            log_message(f"💀 AetherGhost Guard Remediate: Uninstalled spyware package {pkg_id}")
+                        else:
+                            message = f"Android package manager returned error: {p.stderr.strip()}"
+                    except Exception as e:
+                        message = f"Failed to run uninstaller: {e}"
+                else:
+                    message = "Could not parse package ID from threat detail."
+            else:
+                message = "Remediation type not recognized for this threat signature."
+            
+            self.send_json_response({"success": success, "message": message})
+
+        elif url_path == '/api/scan/virus':
+            report_data = run_specific_scan("--virus")
+            self.send_json_response(report_data)
+
+        elif url_path == '/api/scan/malware':
+            report_data = run_specific_scan("--malware")
+            self.send_json_response(report_data)
 
         elif url_path == '/api/telegram_test':
             token = body.get("token")
