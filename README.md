@@ -26,6 +26,7 @@ Most security suites are either too complex (built only for enterprise networks 
 
 | Feature / Module | Android (Termux) | Windows PC | Linux (Ubuntu/Debian) | macOS |
 | :--- | :---: | :---: | :---: | :---: |
+| **🛡️ AetherGhost Guard (Virus/Malware)** | ✅ Yes (Stalkerware audit) | ✅ Yes (Defender / Memory whitelist) | ✅ Yes (ClamAV / Memory whitelist) | ✅ Yes (ClamAV / Memory whitelist) |
 | **🎙️ Privacy Sentry (Mic/Cam Monitor)** | ✅ Yes (Logcat Audit) | ✅ Yes (Win32 API) | ✅ Yes (lsof/procfs) | ✅ Yes (AVFoundation) |
 | **🛡️ Deception Sentry (SSH Honeypot)** | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) |
 | **🌐 Sovereign Tor Routing** | ✅ Yes (Tor daemon) | ✅ Yes (Tor service) | ✅ Yes (Tor daemon) | ✅ Yes (Tor daemon) |
@@ -282,14 +283,13 @@ To keep your security modules, memory scanners, and threat signatures up to date
 
 ---
 
-### 🚀 2. Upgrade Guide: Moving from Old Versions to v1.2.0
+### 🚀 2. Upgrade Guide for Existing Installations
 
-To get the new **AetherGhost Guard** scanner modules and **Auto-Update Engine** running, follow these step-by-step instructions to upgrade your existing setup.
+To apply the latest features, memory scanning engines, and the background Auto-Update engine, follow these step-by-step instructions to upgrade your existing installation.
 
 #### 📱 Step-by-Step for Phones (Android / Termux)
-Follow these steps to upgrade your phone:
 1.  **Open Termux** on your phone.
-2.  **Stop all running background services** of the old version:
+2.  **Stop all running background services** of your current version:
     ```bash
     pkill -f server_daemon.py
     pkill -f ghost_mode.py
@@ -307,17 +307,17 @@ Follow these steps to upgrade your phone:
     ```bash
     python ghost_tools/server_daemon.py &
     ```
-    *Open the dashboard in your mobile browser to verify the green `v1.2.0` badge is active in the header!*
+    *Open the dashboard in your mobile browser to verify the green version badge is active in the header!*
 
-#### 🖥️ Step-by-Step for Laptops & Computers (Windows 10 / 11)
-Follow these steps to upgrade your friend's laptop or workstation:
+#### 🖥️ Step-by-Step for Windows PCs & Workstations (All Versions)
+This guide applies to Windows 7, 8, 10, 11, and Windows Server:
 1.  **Stop running background processes**:
     *   Close any open black console window running the server or scanner scripts.
     *   Alternatively, open **PowerShell** and run this command to force-close old processes:
         ```powershell
         Stop-Process -Name "python" -Force
         ```
-2.  **Navigate to the project folder**:
+2.  **Navigate to your project directory**:
     *   If installed via Git, open **PowerShell**, go to your folder, and pull:
         ```powershell
         cd C:\Users\Administrator\Downloads\Compressed\ghost-mode\ghost-mode
@@ -327,7 +327,42 @@ Follow these steps to upgrade your friend's laptop or workstation:
 3.  **Run the update fully**:
     *   Double-click **`run_dashboard.bat`** (to start the console dashboard server).
     *   Double-click **`run_scanner.bat`** (to start the PC security scanner).
-    *   *The browser will open showing the updated dashboard with version `v1.2.0` in the header!*
+    *   *The browser will open showing the updated dashboard with the latest version badge in the header!*
+
+#### 🍏 Step-by-Step for macOS Computers (Intel & M-Series Silicon)
+1.  **Stop background daemons**:
+    *   Open Terminal and force kill python processes on your ports:
+        ```bash
+        pkill -f server_daemon.py
+        pkill -f ghost_mode_pc.py
+        ```
+2.  **Pull updates**:
+    *   Navigate to your local repository folder and pull:
+        ```bash
+        cd ~/ghost-mode
+        git pull
+        ```
+3.  **Restart the security suite**:
+    *   Start the server daemon: `python3 ghost_tools/server_daemon.py &`
+    *   Start the macOS hardware/memory scanner: `python3 ghost_mode_pc.py &`
+
+#### 🐧 Step-by-Step for Linux Systems (Ubuntu, Debian, Arch, Parrot, Pi)
+1.  **Kill running background services**:
+    ```bash
+    pkill -f server_daemon.py
+    pkill -f ghost_mode_pc.py
+    pkill tor
+    ```
+2.  **Pull updates**:
+    ```bash
+    cd ~/ghost-mode
+    git pull
+    ```
+3.  **Launch the security suite**:
+    ```bash
+    python3 ghost_tools/server_daemon.py &
+    python3 ghost_mode_pc.py &
+    ```
 
 ---
 
@@ -654,21 +689,21 @@ If your Telegram Sentry Bot is completely silent and does not respond to `/statu
     2.  **Restart the daemon:** Run `pkill -f ghost_mode_pc.py && python3 ghost_mode_pc.py` in your terminal.
     3.  **Check logs:** Review `~/ghost_tools/ghost.log` or `ghost_tools/ghost.log`.
 
-### 💻 PC & Windows WSL Troubleshooting
+### 💻 Cross-Platform OS Troubleshooting & Diagnostics (Windows, WSL, Linux, macOS)
 
-If you are running Aether Ghost OS on a PC (Windows, Windows Subsystem for Linux (WSL), or Linux Desktop), you might encounter standard setup edge-cases. Use this guide to resolve them:
+If you are running Aether OS on a PC (Windows, Windows Subsystem for Linux (WSL), Linux, or macOS), you might encounter standard configuration edge-cases. Use this diagnostic guide to resolve them:
 
 #### 1. Command Paste skips steps (Ubuntu WSL)
 * **Issue:** Pasting all clone, dependency, and launch commands at once inside WSL skips steps because the first `sudo` command pauses to ask for a password.
 * **Fix:** Always copy and paste the installation commands **one line at a time**, waiting for each process to finish before pasting the next.
 
 #### 2. Externally Managed Environment Error (PEP 668)
-* **Issue:** When running on Debian/Ubuntu WSL, `pip install` fails with `error: externally-managed-environment`.
-* **Fix:** Tell python to override standard packages rule by appending `--break-system-packages`:
+* **Issue:** When running on Debian/Ubuntu Linux or macOS, `pip install` fails with `error: externally-managed-environment`.
+* **Fix:** Tell python to override the standard package manager system rule by appending `--break-system-packages`:
   ```bash
   pip install psutil pysocks --break-system-packages
   ```
-  *(Note: The Aether auto-installer has been patched to handle this dynamically on all Linux/macOS systems).*
+  *(Note: The Aether auto-installer handles this dynamically on all Linux/macOS systems).*
 
 #### 3. ModuleNotFoundError immediately after installing dependencies
 * **Issue:** You run the scanner, it installs `psutil` or `pysocks` successfully, but then exits with `ModuleNotFoundError: No module named 'psutil'`.
@@ -682,13 +717,30 @@ If you are running Aether Ghost OS on a PC (Windows, Windows Subsystem for Linux
   ```
   Then restart `python3 ghost_mode_pc.py`.
 
-#### 5. Dashboard does not show "Dismiss Alerts" or status badges
+#### 5. Port 8080 already in use by AirPlay Receiver (macOS)
+* **Issue:** On macOS Monterey or newer, starting the dashboard server returns `OSError: [Errno 48] Address already in use`.
+* **Fix:** Apple runs the "AirPlay Receiver" service on port `8080` by default. You can disable it to free the port:
+  1. Open **System Settings** on your Mac.
+  2. Go to **General** ➔ **AirDrop & Handoff** (or **Sharing**).
+  3. Turn **OFF** the toggle for **AirPlay Receiver**.
+  4. Restart your Aether daemon.
+
+#### 6. Permission Denied trying to run script (Linux / macOS)
+* **Issue:** Running `./setup.sh` or `./run_dashboard.sh` fails with `Permission denied`.
+* **Fix:** Give the script executable permissions before running it:
+  ```bash
+  chmod +x setup.sh
+  chmod +x ghost.sh
+  ```
+
+#### 7. Dashboard does not show "Dismiss Alerts" or status badges
 * **Issue:** You pulled the latest updates, but the web dashboard still does not show the new buttons or features.
 * **Fix:** Your browser has cached the old HTML page. Force the browser to discard cached files and load the fresh updates by performing a **Hard Refresh**:
   * **Windows / Linux PC:** Press **`Ctrl + F5`** (or `Ctrl + Shift + R`).
+  * **macOS:** Press **`Cmd + Shift + R`** (Safari: hold `Shift` and click the Reload button).
   * **Android / iOS Mobile:** Clear browser history/site data, or reload in Incognito/Private mode.
 
-#### 6. False positive "External background session detected" alerts
+#### 8. False positive "External background session detected" alerts
 * **Issue:** The security shield detects standard background system tasks (like Ubuntu's `unattended-upgrades`) or your own Telegram Sentry Bot (`support_bot.py`) and lists them as active threats.
 * **Fix:** Update your repository using `git pull`. We have whitelisted standard Linux system daemons and the Sentry Bot, and updated the dashboard modal to display dynamic **`🟢 RESOLVED / SAFE`** and **`🔴 STILL ACTIVE`** badges!
 
