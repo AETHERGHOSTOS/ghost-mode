@@ -1,4 +1,4 @@
-# 💀 Ghost Mode (AetherGhost Guard v1.2.0)
+# 💀 AetherGhostMode
 
 > *Active Defense. Anonymity Routing. Memory Whitelisting. Auto-Updates. Any Android & PC. No root.*
 
@@ -99,7 +99,7 @@ curl -sL https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/setup.s
 
 ---
 
-### 🪟 Option 2: Windows PCs & Workstations (All Versions)
+### 🪟 Option 2: Windows PCs (All Versions)
 
 #### 🔰 Method A: Download ZIP (Easiest for Beginners — No Git Required)
 1. **Install Python:** Download and install Python 3 from [python.org/downloads](https://www.python.org/downloads/). *Check the box **"Add Python to PATH"** before clicking install.*
@@ -368,7 +368,7 @@ This guide applies to Windows 7, 8, 10, 11, and Windows Server:
 
 ### ⚙️ 3. How the Auto-Update Engine Works
 
-Once you have upgraded to **`v1.2.0`**, you can manage updates automatically:
+ You can manage updates automatically:
 *   **Auto-Update Enabled (ON):** The background daemon checks for new GitHub updates every hour. If it finds any, it pulls them automatically, sends a Telegram alert, and executes a hot-restart of the daemon silently.
 *   **Auto-Update Disabled (OFF):** The system notifies you of an update via the dashboard or Sentry Bot. You must manually click the **`📥 PULL LATEST`** dashboard button or trigger the manual update inline button inside Telegram Sentry to download and apply changes.
 
@@ -469,7 +469,7 @@ If your device or machine loses power, shuts down, or restarts, follow these qui
 
 ## 💬 Automated Scam Scanning Add-on
 
-Aether Ghost OS can be upgraded to scan incoming messages and clipboard text automatically in the background, rather than requiring you to copy-paste them manually.
+Aether Ghost Mode can be upgraded to scan incoming messages and clipboard text automatically in the background, rather than requiring you to copy-paste them manually.
 
 ### 📱 Android Background Scan (Requires Termux:API)
 If you install the **Termux:API** companion app from F-Droid and run the setup script, the Sentry gains these features:
@@ -588,7 +588,7 @@ Aether Ghost OS includes a companion Telegram Bot system that sends real-time pu
 | **💬 Forwarded SMS scam text** | Text Keyword Audit | **🔴 HIGH RISK:** `"Urgency/Fraud Language Detected (lottery winner, reference codes etc )."` |
 | **💬 Forwarded Safe message** | Domain Verification | **🟢 LOW RISK:** `"✅ .com or any other — Recognized domain. No scam indicators detected."` |
 
-### 🕹️ Remote Bot Controls & Commands (v1.2.0+)
+### 🕹️ Remote Bot Controls & Commands 
 
 The Telegram Sentry Bot provides a full-featured remote management console for your security suite. 
 
