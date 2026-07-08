@@ -1,7 +1,7 @@
 #!/bin/bash
-# 💀 AETHER GHOST OS LAUNCHER v1.1.0
+# 💀 AETHER GHOST OS LAUNCHER v1.2.0
 
-VERSION="1.1.0"
+VERSION="1.2.0"
 
 # Auto-start background server daemon if not running
 if ! pgrep -f server_daemon.py >/dev/null; then
@@ -30,7 +30,10 @@ while true; do
   echo "  ============================================="
   echo "  Privacy Operating Security Suite for Termux"
   echo ""
-  echo -e "  \e[1;32m[1]\e[0m 💀 Run Security Scan"
+  echo -e "  \e[1;32m[1]\e[0m 🦠 Run Memory Scan (Virus Guard)"
+  echo -e "  \e[1;32m[12]\e[0m 💾 Run Storage Scan (Malware Guard)"
+  echo -e "  \e[1;32m[13]\e[0m 🔄 Manage Updates & Scheduler"
+  echo -e "  \e[1;32m[14]\e[0m ⚡ Resolve Active Threat Alerts"
   echo -e "  \e[1;32m[2]\e[0m 👻 Select Anonymity Engine"
   echo -e "  \e[1;32m[3]\e[0m 🌍 Pick Tor Location Node"
   echo -e "  \e[1;32m[4]\e[0m 🌐 Check My Connection"
@@ -43,17 +46,116 @@ while true; do
   echo -e "  \e[1;32m[0]\e[0m 🔤 Reset Termux Font"
   echo -e "  \e[1;32m[10]\e[0m ☕ Support & Donate to Project"
   echo ""
-  read -p "  Choose [0-11]: " c
+  read -p "  Choose [0-14]: " c
   echo ""
 
   case $c in
     1)
-      SCRIPT=$(find "$HOME" ./  -name "ghost_mode.py" 2>/dev/null | head -1)
+      SCRIPT=$(find "$HOME" ./ -name "ghost_mode.py" 2>/dev/null | head -1)
       if [ -n "$SCRIPT" ]; then
-        python3 "$SCRIPT"
+        python3 "$SCRIPT" --virus
       else
         echo "❌ ghost_mode.py not found."
       fi
+      ;;
+
+    12)
+      SCRIPT=$(find "$HOME" ./ -name "ghost_mode.py" 2>/dev/null | head -1)
+      if [ -n "$SCRIPT" ]; then
+        python3 "$SCRIPT" --malware
+      else
+        echo "❌ ghost_mode.py not found."
+      fi
+      ;;
+
+    13)
+      echo "🔄 MANAGE UPDATES & SCHEDULER:"
+      echo "-------------------------------"
+      CFG="$HOME/ghost_tools/schedule_config.json"
+      AUTO_UPD="true"
+      SCAN_M="interval"
+      if [ -f "$CFG" ]; then
+        AUTO_UPD=$(python3 -c "import json; print(json.load(open('$CFG')).get('auto_update',True))" 2>/dev/null)
+        SCAN_M=$(python3 -c "import json; print(json.load(open('$CFG')).get('scan_mode','interval'))" 2>/dev/null)
+      fi
+      echo "  Current Auto-Update: $AUTO_UPD"
+      echo "  Current Scan Mode:   ${SCAN_M^^}"
+      echo ""
+      echo "  [1] Toggle Auto-Update (ON/OFF)"
+      echo "  [2] Check for updates on GitHub"
+      echo "  [3] Manually Pull latest updates"
+      echo ""
+      read -p "  Select option: " upd_opt
+      case $upd_opt in
+        1)
+          python3 -c "
+import json, os
+p = os.path.expanduser('~/ghost_tools/schedule_config.json')
+c = json.load(open(p)) if os.path.exists(p) else {}
+c['auto_update'] = not c.get('auto_update', True)
+json.dump(c, open(p,'w'), indent=2)
+print('Auto-Update toggled to:', c['auto_update'])
+" 2>/dev/null
+          ;;
+        2)
+          echo "Checking GitHub repository status..."
+          git fetch >/dev/null 2>&1
+          local_hash=$(git rev-parse HEAD 2>/dev/null)
+          remote_hash=$(git rev-parse @{u} 2>/dev/null)
+          if [ "$local_hash" != "$remote_hash" ]; then
+            echo "💡 Update Available! Your local system is behind main branch."
+          else
+            echo "🟢 System is fully up-to-date."
+          fi
+          ;;
+        3)
+          echo "Pulling latest files from GitHub..."
+          git pull
+          echo "✅ Pull complete! Restarting launcher..."
+          sleep 1
+          exec "$0" "$@"
+          ;;
+        *)
+          echo "Invalid selection."
+          ;;
+      esac
+      ;;
+
+    14)
+      echo "⚡ ACTIVE THREAT REMEDIATION:"
+      echo "-------------------------------"
+      python3 -c "
+import json, os, urllib.request
+p = os.path.expanduser('~/ghost_tools/threats.json')
+if not os.path.exists(p):
+    print('No threats recorded today.')
+else:
+    try:
+        with open(p) as f:
+            threats = json.load(f)
+    except:
+        threats = []
+        
+    if not threats:
+        print('No active threats recorded.')
+    else:
+        for idx, t in enumerate(threats):
+            print(f'[{idx}] {t.get(\"detail\", \"\")}')
+        print('')
+        choice = input('Select threat index to resolve: ')
+        try:
+            val = int(choice)
+            if 0 <= val < len(threats):
+                detail = threats[val].get(\"detail\", \"\")
+                req = urllib.request.Request('http://localhost:8080/api/remediate', data=json.dumps({\"detail\": detail}).encode('utf-8'), headers={'Content-Type': 'application/json'})
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    res = json.loads(resp.read().decode('utf-8'))
+                    print('Remediation Result:', res.get(\"message\"))
+            else:
+                print('Invalid index.')
+        except Exception as e:
+            print('Remediation error:', e)
+" 2>/dev/null
       ;;
 
     2)

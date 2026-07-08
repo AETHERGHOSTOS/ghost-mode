@@ -245,20 +245,33 @@ Run the launcher script:
 ```bash
 bash ~/ghost.sh
 ```
-This opens the terminal dashboard:
+This opens the interactive terminal management menu:
 ```
-  💀😈🤫  G H O S T   M O D E  🤫😈💀
-  ========================================
-  Personal Security Suite for Android
+  👻 A E T H E R   G H O S T   O S  v1.2.0 👻
+  =============================================
+  Privacy Operating Security Suite for Termux
 
-  [1] 💀 Run Security Scan
-  [2] 😈 Go Anonymous (Tor)
-  [3] 🌍 Pick My Location
-  [4] 🌐 Check My IP
+  [1] 🦠 Run Memory Scan (Virus Guard)
+  [12] 💾 Run Storage Scan (Malware Guard)
+  [13] 🔄 Manage Updates & Scheduler
+  [14] ⚡ Resolve Active Threat Alerts
+  [2] 👻 Select Anonymity Engine
+  [3] 🌍 Pick Tor Location Node
+  [4] 🌐 Check My Connection
   [5] 🖥️  Open Dashboard
-  [6] 📋 View Logs
-  [7] ⏹️  Stop Everything
+  [6] 📋 View System Logs
+  [7] 🔧 Change DNS Resolver
+  [8] 🚨 PANIC — Self Destruct
+  [9] ⏹️  Stop Everything & Exit
+  [11] 🚪 Exit Menu (Keep Services Running)
+  [0] 🔤 Reset Termux Font
+  [10] ☕ Support & Donate to Project
 ```
+
+> [!TIP]
+> **🚪 Keeping Services Running in the Background:**
+> *   **On Mobile (Android / Termux):** Selecting option `[11] 🚪 Exit Menu` closes the launcher interface but leaves the background server daemon, secure Tor proxy, and auto-scans running.
+> *   **On Laptops / Workstations (Windows, Linux, macOS):** You can safely close your shell or terminal window without stopping protection. The server daemon runs in the background using `nohup` (on Linux/macOS) or as a decoupled daemon process (on Windows) until you manually trigger a shutdown.
 
 ### 🖥️ On Desktop (Windows, macOS, Linux, Parrot, Raspberry Pi)
 Run the dedicated PC security engine directly:
@@ -581,8 +594,9 @@ Aether Ghost OS includes a companion Telegram Bot system that sends real-time pu
 
 | Trigger / Action | Bot Response | Risk Assessment / Result |
 |---|---|---|
-| **🚨 Intrusion Detection** | Real-time push notification | `"🚨 Intrusion Alert! Decoy Honeypot port scan detected from IP 192.168.1.15."` |
-| **🚨 Security Threat** | Threat Alert | `"⚠️ Threat Alert! Microphones currently in use by background process: SpywareAgent"` |
+| **🚨 Intrusion Detection** | Real-time honeypot alert | `"🚨 Intrusion Alert! Decoy Honeypot port scan detected from IP 192.168.1.15."` |
+| **🛡️ AetherGhost Guard Warning** | Active Memory Alert | `"🛡️ AETHERGHOST GUARD ALERT: 🦠 Memory process backdoor warning - Rogue listening port PID 4820."` |
+| **🛡️ AetherGhost Guard Warning** | Stalkerware Scan Alert | `"🛡️ AETHERGHOST GUARD ALERT: 💾 Storage signature warning - Spyware module com.stalker.spy found."` |
 | **🔄 Failover Routing** | Status Alert | `"🔄 Anonymity Pivot: Tor tunnel connection lost. Failover engine WARP connect succeeded."` |
 | **💬 Forwarded Phishing link** | Domain Risk Analysis | **🔴 HIGH RISK:** `"❌ paypa1-verification.xyz — Lookalike domain spoofing PayPal with high-risk TLD etc."` |
 | **💬 Forwarded SMS scam text** | Text Keyword Audit | **🔴 HIGH RISK:** `"Urgency/Fraud Language Detected (lottery winner, reference codes etc )."` |
