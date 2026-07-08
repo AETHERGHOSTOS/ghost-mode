@@ -1,8 +1,8 @@
-# 💀 Ghost Mode
+# 💀 Ghost Mode (AetherGhost Guard v1.2.0)
 
-> *Go invisible. Stay protected. Any Android. No root.*
+> *Active Defense. Anonymity Routing. Memory Whitelisting. Auto-Updates. Any Android & PC. No root.*
 
-Ghost Mode is a unified, sovereign privacy ecosystem designed to secure all your personal devices and networks. It runs locally and sandbox-isolated inside user-space, focusing on complete privacy and absolute digital sovereignty without requiring root access or sending your data to any cloud servers.
+Ghost Mode is a unified, sovereign privacy and security ecosystem designed to secure all your personal devices and networks. It runs locally and sandbox-isolated inside user-space, focusing on active malware/virus scanning, network deception (honeypots), complete anonymity routing, and absolute digital sovereignty without requiring root access or sending your data to any cloud servers.
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-aetherghost.os-orange?style=flat-square&logo=buy-me-a-coffee)](https://buymeacoffee.com/aetherghost.os) [![Bitcoin](https://img.shields.io/badge/Crypto-Accepted-yellow?style=flat-square&logo=bitcoin)](https://github.com/AETHERGHOSTOS/ghost-mode#-support--donate)
 
@@ -10,7 +10,7 @@ Ghost Mode is a unified, sovereign privacy ecosystem designed to secure all your
 
 ## 🤔 Why Ghost Mode?
 
-Most security suites are either too complex (built only for enterprise networks or expert laptops) or too restricted (like basic mobile VPNs). Ghost Mode is different — it is a cross-platform, user-space defensive shield that secures both your mobile devices (via Termux on Android) and your computer workstations (via native Python engines on Windows, Linux, and macOS). It is built for anyone who wants sovereign protection across all their hardware, without needing complex setups or administrative root access.
+Most security suites are either too complex (built only for enterprise networks or expert laptops) or too restricted (like basic mobile VPNs). Ghost Mode is different — it is a cross-platform, user-space defensive shield that secures both your mobile devices (via Termux on Android) and your computer workstations (via native Python engines on Windows, Linux, and macOS) against stalkerware, spyware, rogue active process backdoors, infected files, and unauthorized network scans. It is built for anyone who wants sovereign protection across all their hardware, without needing complex setups or administrative root access.
 
 ---
 
@@ -99,7 +99,7 @@ curl -sL https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/setup.s
 
 ---
 
-### 🪟 Option 2: Windows (10/11)
+### 🪟 Option 2: Windows PCs & Workstations (All Versions)
 
 #### 🔰 Method A: Download ZIP (Easiest for Beginners — No Git Required)
 1. **Install Python:** Download and install Python 3 from [python.org/downloads](https://www.python.org/downloads/). *Check the box **"Add Python to PATH"** before clicking install.*
@@ -588,11 +588,26 @@ Aether Ghost OS includes a companion Telegram Bot system that sends real-time pu
 | **💬 Forwarded SMS scam text** | Text Keyword Audit | **🔴 HIGH RISK:** `"Urgency/Fraud Language Detected (lottery winner, reference codes etc )."` |
 | **💬 Forwarded Safe message** | Domain Verification | **🟢 LOW RISK:** `"✅ .com or any other — Recognized domain. No scam indicators detected."` |
 
-### 🕹️ Remote Bot Commands (Send to your private bot chat)
-* `/menu` — Opens the **Interactive Remote Control Dashboard** containing inline buttons to change anonymity engines, swap DNS servers, toggle DNS auto-rotation, view detailed threat reports, and run manual scans directly from Telegram.
-* `/status` — Fetches current spoofed IP, active engine, anonymity health status, CPU thermalzone temperature, active DNS resolver, and threat counts.
-* `/scan` — Triggers an active hardware/network security shield check instantly and returns the results.
-* `/panic` — Remotely kills all Termux logs, decoys, active daemons, and disconnects all ports.
+### 🕹️ Remote Bot Controls & Commands (v1.2.0+)
+
+The Telegram Sentry Bot provides a full-featured remote management console for your security suite. 
+
+#### 💬 Chat Commands:
+* `/menu` — Opens the **Interactive Remote Control Menu** (described below).
+* `/status` — Fetches current version (`v1.2.0`), anonymity status, spoofed IP/location, active DNS resolver, scheduler profile, and active threat alarms.
+* `/virus` — Remotely triggers an active memory process and open network ports whitelist sweep on-demand.
+* `/malware` — Remotely triggers a storage directory, ClamAV, and mobile package scan on-demand.
+* `/panic` — Remotely terminates all active background daemons, honeypots, and disconnects all ports.
+
+#### 🎛️ Interactive Keyboard Menu (`/menu`):
+When you run `/menu`, you can click inline buttons to perform advanced tasks remotely:
+*   **🦠 Scan Memory & 💾 Scan Storage:** Run targeted Virus Guard or Malware Guard scans instantly.
+*   **⏳ Scheduler Mode:** Swap monitoring modes between **Time Intervals** (every 2 min, 10 min, 1 hr, 24 hr) or **Daily Scheduled Time** (e.g. 02:00, 22:00).
+*   **🔄 Auto-Update Toggle:** Switch between automatic background software updates or manual validation.
+*   **📥 Pull Updates:** Check live GitHub repository branch version status and trigger manual `📥 Pull Latest` with zero-downtime hot-restarting.
+*   **📋 View Threat Logs & ⚡ Resolve Threat:** Lists active threats with inline resolution buttons. Tapping `⚡ Resolve Threat` immediately terminates rogue PIDs, quarantines malicious files, or uninstalls spyware packages on the remote device.
+
+---
 
 ### 📡 Automatic Background Scan Alerts
 The Sentry Bot will automatically send an alert message to your Telegram chat after *every* scheduled background scan completes (runs every 2 minutes):
@@ -689,15 +704,39 @@ If your Telegram Sentry Bot is completely silent and does not respond to `/statu
     2.  **Restart the daemon:** Run `pkill -f ghost_mode_pc.py && python3 ghost_mode_pc.py` in your terminal.
     3.  **Check logs:** Review `~/ghost_tools/ghost.log` or `ghost_tools/ghost.log`.
 
-### 💻 Cross-Platform OS Troubleshooting & Diagnostics (Windows, WSL, Linux, macOS)
+### 💻 Cross-Platform OS Troubleshooting & Diagnostics (Android, Windows, WSL, Linux, macOS)
 
-If you are running Aether OS on a PC (Windows, Windows Subsystem for Linux (WSL), Linux, or macOS), you might encounter standard configuration edge-cases. Use this diagnostic guide to resolve them:
+If you are running Aether OS on a mobile phone (Android/Termux) or a computer (Windows, Windows Subsystem for Linux (WSL), Linux, or macOS), you might encounter standard configuration edge-cases. Use this diagnostic guide to resolve them:
 
-#### 1. Command Paste skips steps (Ubuntu WSL)
+#### 1. Termux package installation network errors (Android)
+* **Issue:** Running `pkg update` or installing python packages inside Termux fails with repository connection timeouts.
+* **Fix:** The default Termux mirror might be offline. Switch the repository mirror:
+  1. In Termux, run: `termux-change-repo`
+  2. Select **Single mirror** ➔ press Enter.
+  3. Select the **Cloudflare** or **Grimler** mirror ➔ press Enter.
+  4. Run `pkg update -y` again.
+
+#### 2. Background processes terminated / killed by system (Android)
+* **Issue:** The Aether daemon silently stops running in the background after some time on Android.
+* **Fix:** Android OS kills background terminal apps to save battery. Prevent this by:
+  1. Open your phone's **Settings** ➔ search for **Battery Optimization**.
+  2. Locate **Termux** and set it to **Don't Optimize / Unrestricted**.
+  3. In Termux, run `termux-wake-lock` to keep background services running indefinitely.
+
+#### 3. Logcat Mic/Cam Auditor permission denied (Android)
+* **Issue:** Privacy Sentry reports it cannot audit camera or microphone events.
+* **Fix:** Termux needs special permission to read system logs:
+  1. Connect your phone to your PC and run this ADB command:
+     ```bash
+     adb shell pm grant com.termux android.permission.READ_LOGS
+     ```
+  2. Alternatively, if running on custom ROMs, ensure developer logcat auditing is enabled.
+
+#### 4. Command Paste skips steps (Ubuntu WSL)
 * **Issue:** Pasting all clone, dependency, and launch commands at once inside WSL skips steps because the first `sudo` command pauses to ask for a password.
 * **Fix:** Always copy and paste the installation commands **one line at a time**, waiting for each process to finish before pasting the next.
 
-#### 2. Externally Managed Environment Error (PEP 668)
+#### 5. Externally Managed Environment Error (PEP 668)
 * **Issue:** When running on Debian/Ubuntu Linux or macOS, `pip install` fails with `error: externally-managed-environment`.
 * **Fix:** Tell python to override the standard package manager system rule by appending `--break-system-packages`:
   ```bash
@@ -705,11 +744,11 @@ If you are running Aether OS on a PC (Windows, Windows Subsystem for Linux (WSL)
   ```
   *(Note: The Aether auto-installer handles this dynamically on all Linux/macOS systems).*
 
-#### 3. ModuleNotFoundError immediately after installing dependencies
+#### 6. ModuleNotFoundError immediately after installing dependencies
 * **Issue:** You run the scanner, it installs `psutil` or `pysocks` successfully, but then exits with `ModuleNotFoundError: No module named 'psutil'`.
 * **Fix:** Python’s running interpreter caches the import path list. Simply **run the scanner command again** (`python3 ghost_mode_pc.py`), and the fresh process will detect and load the packages perfectly.
 
-#### 4. Dashboard buttons return 404/501 errors
+#### 7. Dashboard buttons return 404/501 errors
 * **Issue:** Clicking buttons in the browser returns `404 File Not Found` or `501 Unsupported Method`.
 * **Fix:** This means the old static file server is still running on port `8080` from a previous session, blocking the new API server from starting. Kill the old server process to free the port:
   ```bash
@@ -717,7 +756,7 @@ If you are running Aether OS on a PC (Windows, Windows Subsystem for Linux (WSL)
   ```
   Then restart `python3 ghost_mode_pc.py`.
 
-#### 5. Port 8080 already in use by AirPlay Receiver (macOS)
+#### 8. Port 8080 already in use by AirPlay Receiver (macOS)
 * **Issue:** On macOS Monterey or newer, starting the dashboard server returns `OSError: [Errno 48] Address already in use`.
 * **Fix:** Apple runs the "AirPlay Receiver" service on port `8080` by default. You can disable it to free the port:
   1. Open **System Settings** on your Mac.
@@ -725,7 +764,7 @@ If you are running Aether OS on a PC (Windows, Windows Subsystem for Linux (WSL)
   3. Turn **OFF** the toggle for **AirPlay Receiver**.
   4. Restart your Aether daemon.
 
-#### 6. Permission Denied trying to run script (Linux / macOS)
+#### 9. Permission Denied trying to run script (Linux / macOS)
 * **Issue:** Running `./setup.sh` or `./run_dashboard.sh` fails with `Permission denied`.
 * **Fix:** Give the script executable permissions before running it:
   ```bash
@@ -733,14 +772,14 @@ If you are running Aether OS on a PC (Windows, Windows Subsystem for Linux (WSL)
   chmod +x ghost.sh
   ```
 
-#### 7. Dashboard does not show "Dismiss Alerts" or status badges
+#### 10. Dashboard does not show "Dismiss Alerts" or status badges
 * **Issue:** You pulled the latest updates, but the web dashboard still does not show the new buttons or features.
 * **Fix:** Your browser has cached the old HTML page. Force the browser to discard cached files and load the fresh updates by performing a **Hard Refresh**:
   * **Windows / Linux PC:** Press **`Ctrl + F5`** (or `Ctrl + Shift + R`).
   * **macOS:** Press **`Cmd + Shift + R`** (Safari: hold `Shift` and click the Reload button).
   * **Android / iOS Mobile:** Clear browser history/site data, or reload in Incognito/Private mode.
 
-#### 8. False positive "External background session detected" alerts
+#### 11. False positive "External background session detected" alerts
 * **Issue:** The security shield detects standard background system tasks (like Ubuntu's `unattended-upgrades`) or your own Telegram Sentry Bot (`support_bot.py`) and lists them as active threats.
 * **Fix:** Update your repository using `git pull`. We have whitelisted standard Linux system daemons and the Sentry Bot, and updated the dashboard modal to display dynamic **`🟢 RESOLVED / SAFE`** and **`🔴 STILL ACTIVE`** badges!
 
