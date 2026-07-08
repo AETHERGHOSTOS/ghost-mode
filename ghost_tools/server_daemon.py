@@ -103,7 +103,9 @@ def load_config():
         except:
             pass
     return {
+        "scan_mode": "interval",
         "scan_interval": 120,
+        "scan_scheduled_time": "02:00",
         "location_interval": 0,
         "notification_profile": "sound_vibrate",
         "anonymity_engine": "tor",
@@ -814,6 +816,7 @@ def run_honeypot_listener():
 def run_daemon_loop():
     log_message("🤫 Aether OS background monitor daemon started.")
     last_scan_time = 0
+    last_scheduled_scan_date = ""
     global last_manual_change_time
     
     while True:
@@ -863,9 +866,20 @@ def run_daemon_loop():
 
             # 2. Background Threat Scan scheduler
             now = time.time()
-            if scan_interval > 0 and (now - last_scan_time >= scan_interval):
-                run_security_scan()
-                last_scan_time = now
+            scan_mode = cfg.get("scan_mode", "interval")
+            if scan_mode == "interval":
+                if scan_interval > 0 and (now - last_scan_time >= scan_interval):
+                    run_security_scan()
+                    last_scan_time = now
+            elif scan_mode == "scheduled":
+                today = datetime.now().strftime("%Y-%m-%d")
+                now_time_str = datetime.now().strftime("%H:%M")
+                scheduled_time = cfg.get("scan_scheduled_time", "02:00")
+                if today != last_scheduled_scan_date and now_time_str == scheduled_time:
+                    log_message(f"⏰ Daily scheduled scan triggered at {scheduled_time}")
+                    run_security_scan()
+                    last_scheduled_scan_date = today
+                    last_scan_time = now
         except Exception as daemon_err:
             log_message(f"⚠️ Exception in background daemon cycle: {daemon_err}")
             
@@ -1118,8 +1132,12 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
                 self.send_json_response({"status": "scanning"})
 
         elif url_path == '/api/schedule':
+            if "scan_mode" in body:
+                cfg["scan_mode"] = body["scan_mode"]
             if "scan_interval" in body:
                 cfg["scan_interval"] = int(body["scan_interval"])
+            if "scan_scheduled_time" in body:
+                cfg["scan_scheduled_time"] = body["scan_scheduled_time"]
             if "location_interval" in body:
                 cfg["location_interval"] = int(body["location_interval"])
             if "notification_profile" in body:
