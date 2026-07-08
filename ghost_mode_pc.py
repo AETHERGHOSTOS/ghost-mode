@@ -411,20 +411,11 @@ def panic_self_destruct():
                 pass
     print("🤫 Destruct complete. All local logs and cache wiped clean.")
 
-def main():
+def run_full_audit_pc():
     global ACTIVE_THREATS
     ACTIVE_THREATS = []
-    
-    print()
-    print(f"{RED}💀😈🤫  A E T H E R   G H O S T   O S  [PC EDITION]  🤫😈💀{NC}")
-    print("=" * 55)
-    
-    # Start server thread
-    server_thread = threading.Thread(target=run_http_server, daemon=True)
-    server_thread.start()
-    time.sleep(1) # wait for server to start
-
-    # Run checks
+    print("\n" + "=" * 55)
+    log("💀 Initiating Full System Security Audit...")
     check_network()
     print()
     check_open_ports()
@@ -439,22 +430,136 @@ def main():
     print()
     check_malware_guard()
     print()
-    
     save_report()
-    log(f"{GREEN}💀 Scan complete. Dashboard is live. 😈🤫{NC}")
-    print("=" * 55)
+    log(f"{GREEN}💀 Scan complete. All shield layers verified.{NC}")
+    print("=" * 55 + "\n")
 
-    # Launch dashboard in browser
-    webbrowser.open("http://localhost:8080/ghost_dashboard.html")
+def main():
+    global ACTIVE_THREATS
+    ACTIVE_THREATS = []
     
-    # Keep console active so the web server stays alive
-    print("\nPress Ctrl+C to terminate the scanner and stop the dashboard server.")
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print(f"\n{RED}Stopping Aether Ghost OS PC server...{NC}")
-        sys.exit(0)
+    # Start server thread
+    server_thread = threading.Thread(target=run_http_server, daemon=True)
+    server_thread.start()
+    time.sleep(1) # wait for server to start
+    
+    while True:
+        print()
+        print(f"{RED}💀😈🤫  A E T H E R   G H O S T   O S  [PC EDITION]  🤫😈💀{NC}")
+        print("=" * 55)
+        print(f"  {GREEN}[1]{NC} 👻 Select Anonymity Engine")
+        print(f"  {GREEN}[2]{NC} 🛡️  AetherGhost Guard Scans")
+        print(f"  {GREEN}[3]{NC} 💀 Run Full System Security Audit")
+        print(f"  {GREEN}[4]{NC} 🌐 Check Connection Status")
+        print(f"  {GREEN}[5]{NC} 🖥️  Open Dashboard Browser")
+        print(f"  {GREEN}[6]{NC} 📋 View System Logs")
+        print(f"  {GREEN}[7]{NC} 🤖 Sentry Bot Status & CLI Console")
+        print(f"  {GREEN}[8]{NC} 🚨 PANIC — Self Destruct")
+        print(f"  {GREEN}[9]{NC} ⏹️  Stop Dashboard Server & Exit")
+        print("=" * 55)
+        choice = input("Choose [1-9]: ").strip()
+        
+        if choice == "1":
+            print("\n😈 SELECT ANONYMITY ENGINE:")
+            print("----------------------------")
+            print("[1] 🧅 Tor Proxy Network")
+            print("[2] ⚡ Cloudflare WARP VPN")
+            print("[3] 🌍 Public SOCKS5 Proxy Rotation")
+            print("[4] 🛡️  Secure DNS-over-HTTPS (DoH)")
+            print("[5] ⚠️  No Anonymity (UNPROTECTED!)")
+            eng = input("\nSelect [1-5]: ").strip()
+            
+            sched_path = os.path.join(TOOLS_DIR, "schedule_config.json")
+            cfg = {}
+            if os.path.exists(sched_path):
+                try:
+                    with open(sched_path, "r", encoding="utf-8") as f:
+                        cfg = json.load(f)
+                except:
+                    pass
+            
+            engines = {"1": "tor", "2": "warp", "3": "proxy", "4": "doh", "5": "none"}
+            if eng in engines:
+                cfg["anonymity_engine"] = engines[eng]
+                try:
+                    with open(sched_path, "w", encoding="utf-8") as f:
+                        json.dump(cfg, f, indent=2)
+                except:
+                    pass
+                print(f"✅ Engine switched to: {engines[eng].upper()}")
+            else:
+                print("❌ Invalid choice.")
+                
+        elif choice == "2":
+            print("\n🛡️  AETHERGHOST GUARD SCAN CENTER:")
+            print("---------------------------------")
+            print("[1] 🦠 Scan Active Memory (Virus Guard)")
+            print("[2] 💾 Scan Storage Files (Malware Guard)")
+            scan_c = input("\nSelect [1-2]: ").strip()
+            if scan_c == "1":
+                ACTIVE_THREATS = []
+                check_virus_guard()
+                save_report()
+            elif scan_c == "2":
+                ACTIVE_THREATS = []
+                check_malware_guard()
+                save_report()
+            else:
+                print("❌ Invalid choice.")
+                
+        elif choice == "3":
+            run_full_audit_pc()
+            
+        elif choice == "4":
+            sched_path = os.path.join(TOOLS_DIR, "schedule_config.json")
+            eng = "tor"
+            if os.path.exists(sched_path):
+                try:
+                    with open(sched_path, "r", encoding="utf-8") as f:
+                        eng = json.load(f).get("anonymity_engine", "tor")
+                except:
+                    pass
+            print(f"\n🔒 Active Engine: {eng.upper()}")
+            try:
+                real_ip = requests.get("https://icanhazip.com", timeout=5).text.strip()
+                print(f"🌐 Your Connection IP: {real_ip}")
+            except Exception as e:
+                print(f"⚠️ Connection check failed: {e}")
+                
+        elif choice == "5":
+            print("🌐 Opening dashboard: http://localhost:8080/ghost_dashboard.html")
+            webbrowser.open("http://localhost:8080/ghost_dashboard.html")
+            
+        elif choice == "6":
+            log_path = os.path.join(TOOLS_DIR, "ghost.log")
+            if os.path.exists(log_path):
+                print("\n📋 Last 30 log lines:")
+                with open(log_path, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                    for l in lines[-30:]:
+                        print(l.strip())
+            else:
+                print("❌ No logs yet.")
+                
+        elif choice == "7":
+            print_sentry_status()
+            
+        elif choice == "8":
+            confirm = input("🚨 Are you sure you want to self-destruct security profiles? (y/n): ").strip().lower()
+            if confirm in ("y", "yes"):
+                panic_self_destruct()
+                sys.exit(0)
+            else:
+                print("Panic cancelled.")
+                
+        elif choice == "9":
+            print("\nStopping Aether Ghost OS PC server...")
+            sys.exit(0)
+            
+        else:
+            print("❌ Invalid choice.")
+        
+        input("\nPress [Enter] to return to menu...")
 
 def print_sentry_status():
     config_path = os.path.join(TOOLS_DIR, "telegram_config.json")
