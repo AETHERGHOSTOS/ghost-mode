@@ -422,9 +422,20 @@ select:focus{border-color:var(--accent-color)}
   vertical-align: middle;
   margin: 0 4px;
 }
+#matrix-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.15;
+}
 </style>
 </head>
 <body>
+<canvas id="matrix-canvas"></canvas>
 
 <!-- Cyber Splash Loading Screen -->
 <div id="splash-overlay">
@@ -1416,6 +1427,47 @@ async function loadScanReport() {
   }
 }
 
+function initMatrixRain() {
+  const canvas = document.getElementById('matrix-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  
+  const chars = "💀😈🤫01ABCDEFGHIJKLMNOP_AETHER_GHOST_";
+  const charArr = chars.split("");
+  const fontSize = 14;
+  const columns = canvas.width / fontSize;
+  const drops = [];
+  for (let x = 0; x < columns; x++) {
+    drops[x] = 1;
+  }
+  
+  function draw() {
+    ctx.fillStyle = 'rgba(5, 5, 5, 0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = '#00ff88';
+    ctx.font = fontSize + 'px "Share Tech Mono", monospace';
+    
+    for (let i = 0; i < drops.length; i++) {
+      const text = charArr[Math.floor(Math.random() * charArr.length)];
+      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+      
+      if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+  }
+  setInterval(draw, 33);
+}
+
 async function runScan(){
   if (scanInterval > 0) {
     timeToNextScan = scanInterval;
@@ -1701,7 +1753,10 @@ window.addEventListener('DOMContentLoaded', () => {
     } else {
       clearInterval(interval);
       overlay.classList.add('fade-out');
-      setTimeout(runScan, 600);
+      setTimeout(() => {
+        initMatrixRain();
+        runScan();
+      }, 600);
     }
   }, 400);
 });
