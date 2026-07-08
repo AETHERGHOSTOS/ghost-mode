@@ -781,12 +781,12 @@ If you are running Aether OS on a mobile phone (Android/Termux) or a computer (W
   chmod +x ghost.sh
   ```
 
-#### 10. Dashboard does not show "Dismiss Alerts" or status badges
-* **Issue:** You pulled the latest updates, but the web dashboard still does not show the new buttons or features.
-* **Fix:** Your browser has cached the old HTML page. Force the browser to discard cached files and load the fresh updates by performing a **Hard Refresh**:
-  * **Windows / Linux PC:** Press **`Ctrl + F5`** (or `Ctrl + Shift + R`).
-  * **macOS:** Press **`Cmd + Shift + R`** (Safari: hold `Shift` and click the Reload button).
-  * **Android / iOS Mobile:** Clear browser history/site data, or reload in Incognito/Private mode.
+#### 10. Dashboard does not show new buttons or split schedulers (Mobile / PC Caching)
+* **Issue:** You pulled the latest updates, but the web dashboard still displays the old single-scheduler layout or does not show new features.
+* **Fix:** Browser caching (especially on mobile phone Chrome and Safari) is extremely aggressive. Force the browser to discard old cached files:
+  * **PC (Windows / Linux):** Press **`Ctrl + F5`** (or `Ctrl + Shift + R`).
+  * **PC (macOS):** Press **`Cmd + Shift + R`** (Safari: hold `Shift` and click the Reload button).
+  * **Android / iOS Phone:** Open a new **Incognito / Private tab** and enter the dashboard URL. If this displays the new layout, clear your main browser tab's site cache/cookies.
 
 #### 11. False positive "Active Backdoor Process: PID 6 (init)" (WSL Users)
 * **Issue:** On Windows Subsystem for Linux (WSL), the core process `init` (PID 6) is flagged as a backdoor, and attempting to terminate it fails.
@@ -805,6 +805,21 @@ If you are running Aether OS on a mobile phone (Android/Termux) or a computer (W
 #### 14. Termux:API installation failure (Android)
 * **Issue:** Installing `termux-api` fails or throws package warnings during the universal setup installer process.
 * **Fix:** The `termux-api` integration is completely optional. It is only required if you want to run SMS-based spam filtering or local Wi-Fi encryption scanning. If you do not need these features, you can safely type `n` when asked during installation.
+
+#### 15. Foreground Terminal Menus not showing new options after update
+* **Issue:** You pulled updates from the dashboard or Sentry Bot, but your active Termux (`ghost.sh`) or PC (`ghost_mode_pc.py`) terminal console still does not display new options (like choice `[13]`).
+* **Fix:** Foreground scripts are kept loaded inside your terminal session's active RAM by the operating system. They cannot dynamically reload themselves from the disk while running. Simply exit the menu (option `12` or `10`) and start it fresh:
+  * **Termux:** `bash ~/ghost.sh`
+  * **PC / WSL:** `python3 ghost_mode_pc.py`
+
+#### 16. Update Button fails to apply changes due to local file locks (Termux / WSL)
+* **Issue:** You click "Pull Updates" but the dashboard/Sentry Bot logs a git pull error, or the version doesn't change.
+* **Fix:** This occurs if local modifications or file locks cause a git merge conflict. Reset your local repository state to match GitHub:
+  ```bash
+  cd ~/ghost-mode
+  git fetch --all
+  git reset --hard origin/main
+  ```
 
 ---
 
