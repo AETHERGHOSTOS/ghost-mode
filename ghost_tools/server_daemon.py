@@ -519,6 +519,10 @@ def get_sentry_dashboard_layout():
                 {"text": "📡 Check Connection", "callback_data": "sentry_check_conn"}
             ],
             [
+                {"text": "💀 Run Security Scan", "callback_data": "run_scan"},
+                {"text": "📋 View Threat Logs", "callback_data": "view_threats"}
+            ],
+            [
                 {"text": "🦠 Scan Memory", "callback_data": "run_scan_virus"},
                 {"text": "💾 Scan Storage", "callback_data": "run_scan_malware"}
             ],
