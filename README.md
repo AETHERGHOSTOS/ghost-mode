@@ -42,6 +42,7 @@ Most security suites are either too complex (built only for enterprise networks 
 |--------|--------------------------|
 | **🎙️ Privacy Sentry** | Monitors Android camera and microphone log access in real-time, preventing spy apps from recording you. |
 | **🛡️ Deception Sentry** | Traps and delays unauthorized network scans on port `2222` with a decoy SSH tarpit honeypot, reporting intrusions instantly. |
+| **🛡️ AetherGhost Guard** | Cross-platform active scanner checking memory backdoors (Virus Guard) and storage files/Defender/spyware packages (Malware Guard), with remote Telegram Sentry remediation controls. |
 | **🌐 Sovereign Tor Routing** | Routes Termux web requests and scans securely through Tor, utilizing country-rotational SOCKS5 proxy circuits. |
 | **💬 Scam Sentry** | Offline-compatible link and message scanner running inside Telegram to check incoming SMS for fraud, phishing, and bad links. |
 | **🔄 Failover Daemon** | Background loop that tests connection health and automatically rotates between Tor, Cloudflare WARP, and secure DNS. |
@@ -270,7 +271,8 @@ This starts the real-time background monitor, checks active webcam/microphone st
 To keep your security modules and vulnerability signatures up to date, it is recommended to check for updates periodically.
 
 ### 🔍 1. How to Check Your Current Version Status
-*   **Via the Dashboard UI:** Look at the bottom-right version badge in your local web dashboard (e.g. `v1.2.0`) and compare it with the latest release badge on your **[GitHub Releases Page](https://github.com/AETHERGHOSTOS/ghost-mode/releases)**.
+*   **Via the Dashboard UI:** Look at the version badge in the local web dashboard header (which should display **`v1.2.0`** or higher) and compare it with the latest release.
+*   **Via the Telegram Sentry Bot:** Send `/menu` or `/status` to your Sentry Bot. The status response will show the version number and active scan scheduler settings.
 *   **Via Git (CLI check):** Open your terminal inside the project directory and run:
     ```bash
     git fetch && git status
@@ -280,26 +282,44 @@ To keep your security modules and vulnerability signatures up to date, it is rec
 
 ---
 
-### 📥 2. How to Apply Updates
+### 📥 2. How to Apply Updates & Run Again Fully
 
 #### 📱 On Mobile Devices (Android / Termux)
-If you installed Aether via Git, run these commands in Termux to fetch and apply the latest patches:
-```bash
-cd ~/ghost-mode
-git pull
-```
+To update your phone and restart all processes:
+1.  **Stop all running background services:**
+    ```bash
+    pkill -f server_daemon.py
+    pkill -f ghost_mode.py
+    pkill tor
+    ```
+2.  **Pull changes and restart:**
+    ```bash
+    cd ~/ghost-mode
+    git pull
+    python ghost_tools/server_daemon.py &
+    ```
 
 #### 🖥️ On Desktop PCs (Windows, WSL, Linux, macOS)
-1.  **Stop active background processes:** Close your running console window or force kill the active socket port:
-    ```bash
-    kill -9 $(lsof -t -i:8080) 2>/dev/null || fuser -k 8080/tcp 2>/dev/null
-    ```
-2.  **Pull changes:** Navigate to the folder and pull:
+To update your PC and restart:
+1.  **Stop active background processes:** Close your running console windows or run:
+    *   **Windows (PowerShell)**:
+        ```powershell
+        Stop-Process -Name "python" -Force
+        ```
+    *   **Linux / macOS**:
+        ```bash
+        pkill -f server_daemon.py
+        pkill -f ghost_mode_pc.py
+        ```
+2.  **Pull changes:**
     ```bash
     cd ~/ghost-mode
     git pull
     ```
-3.  **For ZIP installations (Manual):** Simply redownload the latest release ZIP from the download link and extract it, replacing the old files on your Desktop.
+3.  **Run the update fully:**
+    *   Double-click `run_dashboard.bat` (or execute `python ghost_tools/server_daemon.py`).
+    *   Double-click `run_scanner.bat` (or execute `python ghost_mode_pc.py`).
+4.  **For ZIP installations:** Simply download the latest release ZIP from the homepage, extract it, and overwrite your old files.
 
 ---
 
