@@ -1879,6 +1879,10 @@ async function openThreatModal() {
             ? '<span style="color:#ff3355; background:#ff335515; border:1px solid #ff335530; padding:2px 6px; border-radius:4px; font-size:0.75em; font-family:\'Share Tech Mono\', monospace; font-weight:bold; margin-left:8px;">🔴 STILL ACTIVE</span>'
             : '<span style="color:#00ff88; background:#00ff8815; border:1px solid #00ff8830; padding:2px 6px; border-radius:4px; font-size:0.75em; font-family:\'Share Tech Mono\', monospace; font-weight:bold; margin-left:8px;">🟢 RESOLVED / SAFE</span>';
           
+          const killButton = isActive
+            ? `<button onclick="remediateThreat('${t.detail.replace(/'/g, "\\'")}', this)" style="margin-top:6px; background:#ff335518; border:1px solid #ff335540; color:#ff3355; padding:4px 8px; border-radius:4px; font-family:'Share Tech Mono', monospace; font-size:0.75em; cursor:pointer; width:100%; text-align:center; transition: all 0.2s;" onmouseover="this.style.background='#ff335525'" onmouseout="this.style.background='#ff335518'">❌ RESOLVE & KILL THREAT</button>`
+            : '';
+            
           div.innerHTML = `
             <div style="font-family:'Share Tech Mono', monospace; font-size:0.78em; color:#666; display:flex; justify-content:space-between; align-items:center;">
               <span>[${timeStr}]</span>
@@ -1886,6 +1890,7 @@ async function openThreatModal() {
             </div>
             <div style="color:#ff3355; font-weight:bold; margin-top:4px;">⚠️ ${t.detail}</div>
             ${guide}
+            ${killButton}
           `;
           body.appendChild(div);
         });
@@ -1913,6 +1918,44 @@ async function clearThreatHistory() {
       }
     } catch(e) {
       showToast("❌ API offline.", true);
+    }
+  }
+}
+
+async function remediateThreat(detail, btn) {
+  if (confirm(`Do you want to launch AetherGhost Guard active defense to resolve this threat:\n"${detail}"?`)) {
+    btn.disabled = true;
+    btn.textContent = "⚡ REMEDIATING THREAT...";
+    addLog(`🛡️ AetherGhost Guard: Executing remediation for threat "${detail}"`, 'info');
+    try {
+      const res = await fetch('/api/remediate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ detail: detail })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          showToast("🛡️ Threat remediated successfully!");
+          addLog(`✅ Remediation success: ${data.message}`, 'ok');
+          closeThreatModal();
+          // Trigger a quick check to verify clean status
+          runVirusScanOnly();
+        } else {
+          showToast(`❌ Remediation failed: ${data.message}`, true);
+          addLog(`⚠️ Remediation fail: ${data.message}`, 'alert');
+          btn.disabled = false;
+          btn.textContent = "❌ RESOLVE & KILL THREAT";
+        }
+      } else {
+        showToast("❌ Server error during remediation.", true);
+        btn.disabled = false;
+        btn.textContent = "❌ RESOLVE & KILL THREAT";
+      }
+    } catch(e) {
+      showToast("❌ Server is offline.", true);
+      btn.disabled = false;
+      btn.textContent = "❌ RESOLVE & KILL THREAT";
     }
   }
 }
