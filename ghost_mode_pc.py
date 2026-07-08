@@ -444,6 +444,19 @@ def main():
     time.sleep(1) # wait for server to start
     
     while True:
+        if sys.platform == "win32":
+            os.system("cls")
+        else:
+            os.system("clear")
+            
+        # Try to render logo
+        logo_script = os.path.join(TOOLS_DIR, "render_logo.py")
+        if os.path.exists(logo_script):
+            try:
+                subprocess.run([sys.executable, logo_script])
+            except:
+                pass
+                
         print()
         print(f"{RED}💀😈🤫  A E T H E R   G H O S T   O S  [PC EDITION]  🤫😈💀{NC}")
         print("=" * 55)
