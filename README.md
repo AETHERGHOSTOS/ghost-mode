@@ -274,6 +274,28 @@ python3 ghost_mode_pc.py
 ```
 This starts the interactive PC security terminal console menu, fires up the real-time background monitor (checking active webcams, microphones, network interfaces, and ARP traffic), and boots up the local browser dashboard integration!
 
+### 🔄 How to Restart / Recover after a System Shutdown or Crash
+If your computer restarts, shuts down, or the background daemon closes unexpectedly, Aether Ghost OS background services and the Sentry Bot will go offline. To boot everything back up:
+
+1. **Open your Terminal** (or launch your Ubuntu/WSL shell).
+2. **Navigate to the repository folder:**
+   ```bash
+   cd ~/ghost-mode
+   ```
+3. **Execute the launcher script:**
+   ```bash
+   python3 ghost_mode_pc.py
+   ```
+This immediately initializes the background listener daemon, checks connection integrity, loads your security rules, and re-connects the Telegram Sentry Bot!
+
+*(Optional - Auto-Start on System Boot):*
+If you want the background daemon to launch automatically every time your system restarts without having to open the terminal:
+1. Run `crontab -e` in your terminal.
+2. Paste this line at the very bottom:
+   ```bash
+   @reboot python3 ~/ghost-mode/ghost_tools/server_daemon.py >/dev/null 2>&1 &
+   ```
+
 ## 🔄 Checking for Updates & Upgrading
 
 To keep your security modules, memory scanners, and threat signatures up to date, Aether OS features an **Automated Self-Updater** alongside traditional manual git pulls.
