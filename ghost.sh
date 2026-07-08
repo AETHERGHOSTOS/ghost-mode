@@ -32,18 +32,19 @@ while true; do
   echo ""
   echo -e "  \e[1;32m[1]\e[0m 👻 Select Anonymity Engine"
   echo -e "  \e[1;32m[2]\e[0m 🛡️ AetherGhost Guard Scans"
-  echo -e "  \e[1;32m[3]\e[0m 🌍 Pick Tor Location Node"
-  echo -e "  \e[1;32m[4]\e[0m 🌐 Check My Connection"
-  echo -e "  \e[1;32m[5]\e[0m 🖥️  Open Dashboard"
-  echo -e "  \e[1;32m[6]\e[0m 📋 View System Logs"
-  echo -e "  \e[1;32m[7]\e[0m 🔧 Change DNS Resolver"
-  echo -e "  \e[1;32m[8]\e[0m 🚨 PANIC — Self Destruct"
-  echo -e "  \e[1;32m[9]\e[0m ⏹️  Stop Everything & Exit"
-  echo -e "  \e[1;32m[11]\e[0m 🚪 Exit Menu (Keep Services Running)"
+  echo -e "  \e[1;32m[3]\e[0m 💀 Run Full System Security Audit"
+  echo -e "  \e[1;32m[4]\e[0m 🌍 Pick Tor Location Node"
+  echo -e "  \e[1;32m[5]\e[0m 🌐 Check My Connection"
+  echo -e "  \e[1;32m[6]\e[0m 🖥️  Open Dashboard"
+  echo -e "  \e[1;32m[7]\e[0m 📋 View System Logs"
+  echo -e "  \e[1;32m[8]\e[0m 🔧 Change DNS Resolver"
+  echo -e "  \e[1;32m[9]\e[0m 🚨 PANIC — Self Destruct"
+  echo -e "  \e[1;32m[10]\e[0m ⏹️  Stop Everything & Exit"
+  echo -e "  \e[1;32m[12]\e[0m 🚪 Exit Menu (Keep Services Running)"
   echo -e "  \e[1;32m[0]\e[0m 🔤 Reset Termux Font"
-  echo -e "  \e[1;32m[10]\e[0m ☕ Support & Donate to Project"
+  echo -e "  \e[1;32m[11]\e[0m ☕ Support & Donate to Project"
   echo ""
-  read -p "  Choose [0-11]: " c
+  read -p "  Choose [0-12]: " c
   echo ""
 
   case $c in
@@ -143,9 +144,8 @@ json.dump(c, open(p,'w'), indent=2)
       echo "  ---------------------------------"
       echo "  [1] 🦠 Scan Active Memory (Virus Guard)"
       echo "  [2] 💾 Scan Storage Files (Malware Guard)"
-      echo "  [3] 💀 Run Full System Security Audit"
       echo ""
-      read -p "  Select [1-3]: " scan_c
+      read -p "  Select [1-2]: " scan_c
       SCRIPT=$(find "$HOME" ./  -name "ghost_mode.py" 2>/dev/null | head -1)
       if [ -n "$SCRIPT" ]; then
         case $scan_c in
@@ -154,9 +154,6 @@ json.dump(c, open(p,'w'), indent=2)
             ;;
           2)
             python3 "$SCRIPT" --malware
-            ;;
-          3)
-            python3 "$SCRIPT"
             ;;
           *)
             echo "Invalid choice."
@@ -168,6 +165,15 @@ json.dump(c, open(p,'w'), indent=2)
       ;;
 
     3)
+      SCRIPT=$(find "$HOME" ./ -name "ghost_mode.py" 2>/dev/null | head -1)
+      if [ -n "$SCRIPT" ]; then
+        python3 "$SCRIPT"
+      else
+        echo "❌ ghost_mode.py not found."
+      fi
+      ;;
+
+    4)
       PICKER=$(find "$HOME/ghost_tools" ./ -name "location_picker.py" 2>/dev/null | head -1)
       if [ -n "$PICKER" ]; then
         python3 "$PICKER"
@@ -176,7 +182,7 @@ json.dump(c, open(p,'w'), indent=2)
       fi
       ;;
 
-    4)
+    5)
       # Check connection status
       CFG="$HOME/ghost_tools/schedule_config.json"
       ENG="tor"
@@ -220,7 +226,7 @@ json.dump(c, open(p,'w'), indent=2)
       fi
       ;;
 
-    5)
+    6)
       # Open dashboard
       if ! pgrep -f server_daemon.py >/dev/null; then
         echo "🖥️  Starting dashboard server..."
@@ -235,7 +241,7 @@ json.dump(c, open(p,'w'), indent=2)
         echo "Open in browser: http://localhost:8080/ghost_dashboard.html"
       ;;
 
-    6)
+    7)
       echo "📋 Last 40 log lines:"
       echo "---------------------"
       LOG_FILE="$HOME/ghost_tools/ghost.log"
@@ -246,7 +252,7 @@ json.dump(c, open(p,'w'), indent=2)
       fi
       ;;
 
-    7)
+    8)
       # DNS Changer
       SCRIPT=$(find "$HOME" ./ -name "ghost_mode.py" 2>/dev/null | head -1)
       if [ -n "$SCRIPT" ]; then
@@ -256,10 +262,10 @@ json.dump(c, open(p,'w'), indent=2)
       fi
       ;;
 
-    8)
-      echo "🚨 PANIC MODE — This will wipe ALL logs, threats, and config!"
-      read -p "Type 'CONFIRM' to proceed: " confirm
-      if [ "$confirm" = "CONFIRM" ]; then
+    9)
+      echo "🚨 PANIC MODE — Self-destruct security profiles..."
+      read -p "🚨 Are you sure you want to proceed? (y/n): " confirm
+      if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
         SCRIPT=$(find "$HOME" ./ -name "ghost_mode.py" 2>/dev/null | head -1)
         if [ -n "$SCRIPT" ]; then
           python3 "$SCRIPT" --panic
@@ -269,7 +275,7 @@ json.dump(c, open(p,'w'), indent=2)
       fi
       ;;
 
-    9)
+    10)
       echo "⏹️  Stopping Aether Ghost OS..."
       pkill tor 2>/dev/null && echo "✅ Tor stopped"
       warp-cli disconnect 2>/dev/null
@@ -285,7 +291,7 @@ json.dump(c, open(p,'w'), indent=2)
       echo "✅ Font reset to system default."
       ;;
 
-    10)
+    11)
       echo "=========================================================="
       echo "  ☕ SUPPORT AETHER GHOST OS DEVELOPMENT"
       echo "=========================================================="
@@ -309,7 +315,7 @@ json.dump(c, open(p,'w'), indent=2)
       echo "=========================================================="
       ;;
 
-    11)
+    12)
       echo "🚪 Exiting menu. Background Sentry and Anonymity daemon remains ACTIVE."
       echo "🌐 Dashboard is online: http://localhost:8080/ghost_dashboard.html"
       echo ""

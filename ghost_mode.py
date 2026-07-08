@@ -792,8 +792,8 @@ def main():
     import sys
     if len(sys.argv) > 1:
         if sys.argv[1] == "--panic":
-            confirm = input("🚨 WARNING: Self-destruct will wipe all log directories, config files, and credentials. Are you sure you want to proceed? Type 'CONFIRM' to run: ")
-            if confirm == "CONFIRM":
+            confirm = input("🚨 Are you sure you want to self-destruct security profiles? (y/n): ").strip().lower()
+            if confirm in ("y", "yes"):
                 panic_self_destruct()
             else:
                 print("Panic cancelled.")

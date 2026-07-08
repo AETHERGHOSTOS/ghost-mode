@@ -561,8 +561,8 @@ if __name__ == "__main__":
                 print("❌ Missing arguments: --sentry-setup <token> <chat_id>")
             sys.exit(0)
         elif sys.argv[1] == "--panic":
-            confirm = input("🚨 WARNING: Self-destruct will wipe all log directories, config files, and credentials. Are you sure you want to proceed? Type 'CONFIRM' to run: ")
-            if confirm == "CONFIRM":
+            confirm = input("🚨 Are you sure you want to self-destruct security profiles? (y/n): ").strip().lower()
+            if confirm in ("y", "yes"):
                 panic_self_destruct()
             else:
                 print("Panic cancelled.")

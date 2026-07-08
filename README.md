@@ -253,16 +253,17 @@ This opens the terminal dashboard:
 
   [1] 👻 Select Anonymity Engine
   [2] 🛡️ AetherGhost Guard Scans
-  [3] 🌍 Pick Tor Location Node
-  [4] 🌐 Check My Connection
-  [5] 🖥️  Open Dashboard
-  [6] 📋 View System Logs
-  [7] 🔧 Change DNS Resolver
-  [8] 🚨 PANIC — Self Destruct
-  [9] ⏹️  Stop Everything & Exit
-  [11] 🚪 Exit Menu (Keep Services Running)
+  [3] 💀 Run Full System Security Audit
+  [4] 🌍 Pick Tor Location Node
+  [5] 🌐 Check My Connection
+  [6] 🖥️  Open Dashboard
+  [7] 📋 View System Logs
+  [8] 🔧 Change DNS Resolver
+  [9] 🚨 PANIC — Self Destruct
+  [10] ⏹️  Stop Everything & Exit
+  [12] 🚪 Exit Menu (Keep Services Running)
   [0] 🔤 Reset Termux Font
-  [10] ☕ Support & Donate to Project
+  [11] ☕ Support & Donate to Project
 ```
 
 ### 🖥️ On Desktop (Windows, macOS, Linux, Parrot, Raspberry Pi)
