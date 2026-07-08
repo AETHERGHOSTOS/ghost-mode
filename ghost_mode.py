@@ -792,7 +792,11 @@ def main():
     import sys
     if len(sys.argv) > 1:
         if sys.argv[1] == "--panic":
-            panic_self_destruct()
+            confirm = input("🚨 WARNING: Self-destruct will wipe all log directories, config files, and credentials. Are you sure you want to proceed? Type 'CONFIRM' to run: ")
+            if confirm == "CONFIRM":
+                panic_self_destruct()
+            else:
+                print("Panic cancelled.")
             return
         if sys.argv[1] == "--dns":
             change_dns()

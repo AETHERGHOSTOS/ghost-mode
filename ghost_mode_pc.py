@@ -399,6 +399,18 @@ def run_http_server():
         except:
             pass
 
+def panic_self_destruct():
+    log("💀🚨 SELF DESTRUCT — Wiping all logs and config 🚨💀")
+    files = ["ghost.log", "report.json", "threats.json", "schedule_config.json", "telegram_config.json"]
+    for f in files:
+        p = os.path.join(TOOLS_DIR, f)
+        if os.path.exists(p):
+            try:
+                os.remove(p)
+            except:
+                pass
+    print("🤫 Destruct complete. All local logs and cache wiped clean.")
+
 def main():
     global ACTIVE_THREATS
     ACTIVE_THREATS = []
@@ -547,6 +559,13 @@ if __name__ == "__main__":
                 setup_sentry(sys.argv[2], sys.argv[3])
             else:
                 print("❌ Missing arguments: --sentry-setup <token> <chat_id>")
+            sys.exit(0)
+        elif sys.argv[1] == "--panic":
+            confirm = input("🚨 WARNING: Self-destruct will wipe all log directories, config files, and credentials. Are you sure you want to proceed? Type 'CONFIRM' to run: ")
+            if confirm == "CONFIRM":
+                panic_self_destruct()
+            else:
+                print("Panic cancelled.")
             sys.exit(0)
         elif sys.argv[1] == "--update":
             check_and_pull_updates_cli()
