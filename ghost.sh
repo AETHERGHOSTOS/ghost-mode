@@ -41,10 +41,11 @@ while true; do
   echo -e "  \e[1;32m[9]\e[0m 🚨 PANIC — Self Destruct"
   echo -e "  \e[1;32m[10]\e[0m ⏹️  Stop Everything & Exit"
   echo -e "  \e[1;32m[12]\e[0m 🚪 Exit Menu (Keep Services Running)"
+  echo -e "  \e[1;32m[13]\e[0m 🔄 Check & Pull Updates"
   echo -e "  \e[1;32m[0]\e[0m 🔤 Reset Termux Font"
   echo -e "  \e[1;32m[11]\e[0m ☕ Support & Donate to Project"
   echo ""
-  read -p "  Choose [0-12]: " c
+  read -p "  Choose [0-13]: " c
   echo ""
 
   case $c in
@@ -313,6 +314,21 @@ json.dump(c, open(p,'w'), indent=2)
       echo ""
       echo "  Thank you for keeping Aether Ghost OS active and secure!"
       echo "=========================================================="
+      ;;
+
+    13)
+      echo "🔄 Checking for updates from GitHub..."
+      git fetch && git status
+      if git status -uno | grep -q "behind"; then
+        read -p "💡 New update detected! Pull latest code changes? (y/n): " pull_choice
+        if [[ "$pull_choice" == "y" || "$pull_choice" == "Y" ]]; then
+          git pull
+          echo "✅ Update complete! Restaging launcher..."
+          sleep 2
+        fi
+      else
+        echo "🟢 System is already up-to-date!"
+      fi
       ;;
 
     12)

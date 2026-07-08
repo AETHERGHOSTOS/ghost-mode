@@ -471,10 +471,11 @@ def main():
         print(f"  {GREEN}[9]{NC} 🚨 PANIC — Self Destruct")
         print(f"  {GREEN}[10]{NC} ⏹️  Stop Everything & Exit")
         print(f"  {GREEN}[12]{NC} 🚪 Exit Menu (Keep Services Running)")
+        print(f"  {GREEN}[13]{NC} 🔄 Check & Pull Updates")
         print(f"  {GREEN}[0]{NC} 🔤 Reset Console Font")
         print(f"  {GREEN}[11]{NC} ☕ Support & Donate to Project")
         print("=" * 55)
-        choice = input("Choose [0-12]: ").strip()
+        choice = input("Choose [0-13]: ").strip()
         
         if choice == "1":
             print("\n😈 SELECT ANONYMITY ENGINE:")
@@ -631,6 +632,9 @@ def main():
             print("")
             print("  Thank you for keeping Aether Ghost OS active and secure!")
             print("==========================================================")
+            
+        elif choice == "13":
+            check_and_pull_updates_cli()
             
         else:
             print("❌ Invalid choice.")
