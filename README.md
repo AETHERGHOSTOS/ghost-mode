@@ -262,6 +262,8 @@ This opens the terminal dashboard:
   [9] 🚨 PANIC — Self Destruct
   [10] ⏹️  Stop Everything & Exit
   [12] 🚪 Exit Menu (Keep Services Running)
+  [13] 🔄 Check & Pull Updates
+  [14] 🤖 Telegram Sentry Bot Setup
   [0] 🔤 Reset Termux Font
   [11] ☕ Support & Donate to Project
 ```

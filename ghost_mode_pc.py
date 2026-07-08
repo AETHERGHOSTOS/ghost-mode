@@ -472,10 +472,11 @@ def main():
         print(f"  {GREEN}[10]{NC} ⏹️  Stop Everything & Exit")
         print(f"  {GREEN}[12]{NC} 🚪 Exit Menu (Keep Services Running)")
         print(f"  {GREEN}[13]{NC} 🔄 Check & Pull Updates")
+        print(f"  {GREEN}[14]{NC} 🤖 Telegram Sentry Bot Setup")
         print(f"  {GREEN}[0]{NC} 🔤 Reset Console Font")
         print(f"  {GREEN}[11]{NC} ☕ Support & Donate to Project")
         print("=" * 55)
-        choice = input("Choose [0-13]: ").strip()
+        choice = input("Choose [0-14]: ").strip()
         
         if choice == "1":
             print("\n😈 SELECT ANONYMITY ENGINE:")
@@ -636,6 +637,9 @@ def main():
         elif choice == "13":
             check_and_pull_updates_cli()
             
+        elif choice == "14":
+            print_sentry_status()
+            
         else:
             print("❌ Invalid choice.")
         
@@ -660,17 +664,75 @@ def print_sentry_status():
         except:
             pass
 
-    print()
-    print("🤖 AETHERGHOST SENTRY BOT REMOTE TERMINAL CONSOLE")
-    print("==================================================")
-    print(f"Status:      {'🟢 ENABLED' if cfg.get('enabled') else '🔴 DISABLED'}")
-    print(f"Token:       {cfg.get('token', 'N/A')}")
-    print(f"Chat ID:     {cfg.get('chat_id', 'N/A')}")
-    print(f"Scheduler:   {sched.get('scan_mode', 'interval').upper()}")
-    print(f"Interval:    {sched.get('scan_interval', 120)}s")
-    print(f"Auto-Update: {'🟢 ENABLED' if sched.get('auto_update', True) else '🔴 DISABLED'}")
-    print("==================================================")
-    print("Use --sentry-toggle to enable/disable or --sentry-setup <token> <chat_id> to configure.")
+    while True:
+        if sys.platform == "win32":
+            os.system("cls")
+        else:
+            os.system("clear")
+            
+        print()
+        print("🤖 AETHERGHOST SENTRY BOT REMOTE TERMINAL CONSOLE")
+        print("==================================================")
+        print(f"Status:      {'🟢 ENABLED' if cfg.get('enabled') else '🔴 DISABLED'}")
+        print(f"Token:       {cfg.get('token', 'N/A')}")
+        print(f"Chat ID:     {cfg.get('chat_id', 'N/A')}")
+        print(f"Scheduler:   {sched.get('scan_mode', 'interval').upper()}")
+        print(f"Interval:    {sched.get('scan_interval', 120)}s")
+        print(f"Auto-Update: {'🟢 ENABLED' if sched.get('auto_update', True) else '🔴 DISABLED'}")
+        print("==================================================")
+        print(" [1] Toggle Sentry Bot Active State")
+        print(" [2] Set Bot API Token & Chat ID credentials")
+        print(" [3] Test Sentry Connection (Send Alert message)")
+        print(" [4] Return to Main Menu")
+        print()
+        c = input("Select [1-4]: ").strip()
+        
+        if c == "1":
+            cfg["enabled"] = not cfg.get("enabled", False)
+            try:
+                with open(config_path, "w", encoding="utf-8") as f:
+                    json.dump(cfg, f, indent=2)
+                print(f"✅ Sentry Bot toggled to: {'🟢 ENABLED' if cfg['enabled'] else '🔴 DISABLED'}")
+            except Exception as e:
+                print(f"❌ Failed to toggle sentry: {e}")
+            input("\nPress [Enter] to continue...")
+            
+        elif c == "2":
+            tok = input("Enter your Telegram Bot Token: ").strip()
+            cid = input("Enter your Telegram Chat ID: ").strip()
+            if tok and cid:
+                cfg["token"] = tok
+                cfg["chat_id"] = cid
+                cfg["enabled"] = True
+                try:
+                    with open(config_path, "w", encoding="utf-8") as f:
+                        json.dump(cfg, f, indent=2)
+                    print("✅ Sentry credentials successfully saved and enabled.")
+                except Exception as e:
+                    print(f"❌ Failed to save sentry details: {e}")
+            else:
+                print("❌ Invalid token or chat ID.")
+            input("\nPress [Enter] to continue...")
+            
+        elif c == "3":
+            if not cfg.get("token") or not cfg.get("chat_id"):
+                print("❌ Sentry is not configured. Set credentials first!")
+            else:
+                print("🔄 Sending test alert to Telegram...")
+                import requests
+                url = f"https://api.telegram.org/bot{cfg['token']}/sendMessage"
+                try:
+                    r = requests.post(url, json={"chat_id": cfg["chat_id"], "text": "🔔 *Aether Ghost OS Sentry:* Terminal connection test successful! ✅", "parse_mode": "Markdown"}, timeout=8)
+                    if r.status_code == 200:
+                        print("✅ Test message sent successfully! Check your Sentry Bot chat.")
+                    else:
+                        print(f"❌ Failed to send. API response {r.status_code}: {r.text}")
+                except Exception as e:
+                    print(f"❌ Connection error: {e}")
+            input("\nPress [Enter] to continue...")
+            
+        elif c == "4":
+            break
 
 def setup_sentry(token, chat_id):
     config_path = os.path.join(TOOLS_DIR, "telegram_config.json")
