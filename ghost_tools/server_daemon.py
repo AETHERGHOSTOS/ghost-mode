@@ -515,16 +515,23 @@ def get_sentry_dashboard_layout():
                 {"text": "🔀 Change DNS", "callback_data": "menu_dns"}
             ],
             [
-                {"text": f"⏳ Scheduler: {scan_mode.upper()}", "callback_data": "menu_scheduler"},
-                {"text": f"🔄 Auto-Update: {'ON 🟢' if cfg.get('auto_update', True) else 'OFF 🔴'}", "callback_data": "toggle_auto_update"}
+                {"text": "🌍 Pick Location", "callback_data": "menu_location"},
+                {"text": "📡 Check Connection", "callback_data": "sentry_check_conn"}
             ],
             [
                 {"text": "🦠 Scan Memory", "callback_data": "run_scan_virus"},
                 {"text": "💾 Scan Storage", "callback_data": "run_scan_malware"}
             ],
             [
-                {"text": "📋 View Threat Logs", "callback_data": "view_threats"},
+                {"text": "📋 View System Logs", "callback_data": "sentry_view_logs"},
                 {"text": "📥 Pull Updates", "callback_data": "menu_update"}
+            ],
+            [
+                {"text": "🚨 PANIC", "callback_data": "confirm_panic_prompt"},
+                {"text": "⏹️ Stop Services", "callback_data": "confirm_stop_prompt"}
+            ],
+            [
+                {"text": "☕ Support & Donate", "callback_data": "sentry_support"}
             ]
         ]
     }
@@ -716,6 +723,155 @@ def handle_sentry_callback(token, chat_id, query):
                 ]
             ]
         }
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data == "sentry_check_conn":
+        import requests
+        try:
+            r = requests.get("https://icanhazip.com", timeout=5)
+            if r.status_code == 200:
+                CONNECTION_STATUS["active"] = True
+                CONNECTION_STATUS["ip"] = r.text.strip()
+                try:
+                    loc_res = requests.get(f"https://ipapi.co/{CONNECTION_STATUS['ip']}/json/", timeout=5).json()
+                    CONNECTION_STATUS["location"] = f"{loc_res.get('city', 'Unknown')}, {loc_res.get('country_name', 'Unknown')}"
+                except:
+                    CONNECTION_STATUS["location"] = "Unknown"
+        except:
+            CONNECTION_STATUS["active"] = False
+            CONNECTION_STATUS["ip"] = "Offline"
+            CONNECTION_STATUS["location"] = "Unknown"
+        
+        msg, kb = get_sentry_dashboard_layout()
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data == "menu_location":
+        msg = "🌍 *Select Tor Location Exit Node*\n\nRoute your Tor proxy circuit through a specific country:"
+        kb = {
+            "inline_keyboard": [
+                [
+                    {"text": "🇺🇸 United States (US)", "callback_data": "set_exit_us"},
+                    {"text": "🇩🇪 Germany (DE)", "callback_data": "set_exit_de"}
+                ],
+                [
+                    {"text": "🇬🇧 United Kingdom (GB)", "callback_data": "set_exit_gb"},
+                    {"text": "🇨🇦 Canada (CA)", "callback_data": "set_exit_ca"}
+                ],
+                [
+                    {"text": "🇯🇵 Japan (JP)", "callback_data": "set_exit_jp"},
+                    {"text": "🇸🇬 Singapore (SG)", "callback_data": "set_exit_sg"}
+                ],
+                [
+                    {"text": "🔄 Clear Exit Nodes", "callback_data": "set_exit_clear"}
+                ],
+                [
+                    {"text": "↩️ Back to Menu", "callback_data": "menu_main"}
+                ]
+            ]
+        }
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
+    elif data.startswith("set_exit_"):
+        node = data.replace("set_exit_", "")
+        torrc_path = "/data/data/com.termux/files/usr/etc/tor/torrc"
+        if not os.path.exists(torrc_path):
+            torrc_path = "/etc/tor/torrc"
+            
+        success = False
+        message = ""
+        if os.path.exists(torrc_path):
+            try:
+                with open(torrc_path, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                new_lines = [l for l in lines if "ExitNodes" not in l and "StrictNodes" not in l]
+                if node != "clear":
+                    new_lines.append(f"ExitNodes {{{node}}}\n")
+                    new_lines.append("StrictNodes 1\n")
+                with open(torrc_path, "w", encoding="utf-8") as f:
+                    f.writelines(new_lines)
+                
+                # Reload Tor depending on platform
+                if sys.platform != "win32":
+                    subprocess.run("pkill -HUP tor", shell=True)
+                success = True
+                message = f"Tor exit node set to: {node.upper()}" if node != "clear" else "Tor exit node restrictions cleared."
+            except Exception as e:
+                message = f"Failed to modify torrc: {e}"
+        else:
+            message = "Tor configuration file (torrc) not found on this path."
+            
+        msg = f"{'✅' if success else '❌'} *Tor Exit Node Configuration*\n\n{message}"
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data == "sentry_view_logs":
+        log_path = os.path.join(LOG_DIR, "ghost.log")
+        lines_to_send = "No logs recorded yet."
+        if os.path.exists(log_path):
+            try:
+                with open(log_path, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                    lines_to_send = "".join(lines[-15:])
+            except Exception as e:
+                lines_to_send = f"Error reading logs: {e}"
+        
+        msg = f"📋 *Last 15 System Log Lines:*\n\n```\n{lines_to_send}\n```"
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data == "confirm_panic_prompt":
+        msg = "⚠️ *CONFIRM PANIC SELF-DESTRUCT*\n\nAre you sure you want to securely delete all local logs, cache files, and security profiles remotely?"
+        kb = {
+            "inline_keyboard": [
+                [
+                    {"text": "🚨 YES, DESTRUCT!", "callback_data": "trigger_sentry_panic"},
+                    {"text": "❌ NO, CANCEL", "callback_data": "menu_main"}
+                ]
+            ]
+        }
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
+    elif data == "trigger_sentry_panic":
+        edit_telegram_message(token, chat_id, message_id, "🤫 *Destruct initiated...*", None)
+        files = ["ghost.log", "report.json", "threats.json", "schedule_config.json", "telegram_config.json"]
+        for f in files:
+            p = os.path.join(LOG_DIR, f)
+            if os.path.exists(p):
+                try:
+                    os.remove(p)
+                except:
+                    pass
+        sys.exit(0)
+
+    elif data == "confirm_stop_prompt":
+        msg = "⏹️ *CONFIRM STOP SERVICES*\n\nAre you sure you want to shut down the Aether Ghost OS background daemon server remotely? (Sentry Bot will go offline)"
+        kb = {
+            "inline_keyboard": [
+                [
+                    {"text": "⏹️ YES, STOP EVERYTHING", "callback_data": "trigger_sentry_stop"},
+                    {"text": "❌ NO, CANCEL", "callback_data": "menu_main"}
+                ]
+            ]
+        }
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
+    elif data == "trigger_sentry_stop":
+        edit_telegram_message(token, chat_id, message_id, "⏹️ *Aether Ghost OS Daemon terminated remotely.*", None)
+        sys.exit(0)
+
+    elif data == "sentry_support":
+        msg = (
+            "☕ *Support Aether Ghost OS Development*\n\n"
+            "If this tool keeps you secure, consider supporting our development relays!\n\n"
+            "🔗 *Web Donation:* [Buy Me a Coffee](https://buymeacoffee.com/aetherghost.os)\n\n"
+            "🪙 *Crypto Addresses:*\n"
+            "• *USDT (Tron TRC20):*\n`TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU`\n"
+            "• *USDC (Solana):*\n`9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui`\n"
+            "• *USDT (Ethereum ERC20):*\n`0x09cad574c2c39a88ce931307361682680b795490`\n"
+            "• *Bitcoin (Native BTC):*\n`15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k`\n\n"
+            "Thank you for keeping Aether Ghost OS alive!"
+        )
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
         edit_telegram_message(token, chat_id, message_id, msg, kb)
 
     elif data.startswith("set_sched_interval_"):

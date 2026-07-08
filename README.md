@@ -266,12 +266,13 @@ This opens the terminal dashboard:
   [11] ☕ Support & Donate to Project
 ```
 
-### 🖥️ On Desktop (Windows, macOS, Linux, Parrot, Raspberry Pi)
-Run the dedicated PC security engine directly:
+### 🖥️ On Desktop (Windows, macOS, Linux, Parrot, Raspberry Pi, WSL)
+First, navigate into the downloaded repository folder, then run the launcher script:
 ```bash
-python ghost_mode_pc.py
+cd ~/ghost-mode
+python3 ghost_mode_pc.py
 ```
-This starts the real-time background monitor, checks active webcam/microphone status, logs local scanning activities, and boots up the browser dashboard integration.
+This starts the interactive PC security terminal console menu, fires up the real-time background monitor (checking active webcams, microphones, network interfaces, and ARP traffic), and boots up the local browser dashboard integration!
 
 ## 🔄 Checking for Updates & Upgrading
 
@@ -787,9 +788,23 @@ If you are running Aether OS on a mobile phone (Android/Termux) or a computer (W
   * **macOS:** Press **`Cmd + Shift + R`** (Safari: hold `Shift` and click the Reload button).
   * **Android / iOS Mobile:** Clear browser history/site data, or reload in Incognito/Private mode.
 
-#### 11. False positive "External background session detected" alerts
-* **Issue:** The security shield detects standard background system tasks (like Ubuntu's `unattended-upgrades`) or your own Telegram Sentry Bot (`support_bot.py`) and lists them as active threats.
-* **Fix:** Update your repository using `git pull`. We have whitelisted standard Linux system daemons and the Sentry Bot, and updated the dashboard modal to display dynamic **`🟢 RESOLVED / SAFE`** and **`🔴 STILL ACTIVE`** badges!
+#### 11. False positive "Active Backdoor Process: PID 6 (init)" (WSL Users)
+* **Issue:** On Windows Subsystem for Linux (WSL), the core process `init` (PID 6) is flagged as a backdoor, and attempting to terminate it fails.
+* **Fix:** `init` is a safe, critical Microsoft translation layer process required to run WSL. It is not a backdoor. We have whitelisted `init`, `wsl-`, and `wslbridge` in `ghost_mode.py`. Simply run the update commands to apply the whitelist.
+
+#### 12. ClamAV Warning "clamscan not installed. File scan skipped." (Linux / WSL)
+* **Issue:** Running a Malware scan outputs a warning that `clamscan` is not installed and skips the file audit.
+* **Fix:** Aether OS uses ClamAV for local storage scans. Install ClamAV on your system to enable the storage scanner layer:
+  * **Ubuntu / Debian / WSL:** `sudo apt update && sudo apt install -y clamav`
+  * **RedHat / Fedora:** `sudo yum install -y clamav`
+
+#### 13. DNS Warning "Permission denied: Could not edit /etc/resolv.conf" (Linux / WSL)
+* **Issue:** Changing DNS resolvers logs a permission error when attempting to write to system-wide network configuration files.
+* **Fix:** Modifying system-wide resolver settings on Linux/WSL requires root privileges. You can either ignore this warning (the local encrypted DNS-over-HTTPS tunnel daemon still operates successfully in user-space) or run the launcher using `sudo python3 ghost_mode_pc.py`.
+
+#### 14. Termux:API installation failure (Android)
+* **Issue:** Installing `termux-api` fails or throws package warnings during the universal setup installer process.
+* **Fix:** The `termux-api` integration is completely optional. It is only required if you want to run SMS-based spam filtering or local Wi-Fi encryption scanning. If you do not need these features, you can safely type `n` when asked during installation.
 
 ---
 

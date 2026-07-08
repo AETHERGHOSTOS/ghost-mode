@@ -853,7 +853,7 @@ select:focus{border-color:var(--accent-color)}
 </div>
 
 <!-- Main controls -->
-<button class="btn" onclick="runScan()">💀 RUN ACTIVE SHIELD SCAN 😈🤫</button>
+<button class="btn" onclick="runScan()"><img src="aether_emoji.png" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/AETHERGHOSTOS/ghost-mode/main/assets/aether_emoji.png';" style="width:1.2em; height:1.2em; vertical-align:middle; filter:drop-shadow(0 0 5px #00ff88); margin-right:8px; object-fit:contain;">RUN ACTIVE SHIELD SCAN</button>
 <div class="grid2">
   <button class="btn blue" onclick="refreshNetworkData()">🌐 Refresh Credentials</button>
   <button class="btn red" onclick="triggerPanic()">🚨 PANIC DE-AUTHENTICATE</button>
@@ -883,9 +883,11 @@ select:focus{border-color:var(--accent-color)}
 <script>
 // System theme permanently locked to Dark Neon Green Cyber mode
 let isBackendOffline = false;
+let failedHeartbeats = 0;
 
 function logBackendOffline() {
-  if (!isBackendOffline) {
+  failedHeartbeats++;
+  if (failedHeartbeats >= 3 && !isBackendOffline) {
     isBackendOffline = true;
     addLog('❌ Local API Server is offline. Check local terminal/system status.','alert');
     showToast('⚠️ Scan server disconnected. Check local terminal.', true);
@@ -893,6 +895,7 @@ function logBackendOffline() {
 }
 
 function logBackendOnline() {
+  failedHeartbeats = 0;
   if (isBackendOffline) {
     isBackendOffline = false;
     addLog('✅ API Server reconnected. System online.','ok');

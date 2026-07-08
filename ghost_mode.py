@@ -29,6 +29,14 @@ def get_ghost_dir():
 
 LOG_DIR = get_ghost_dir()
 
+# ANSI Colors
+CYAN = '\033[0;36m'
+GREEN = '\033[0;32m'
+RED = '\033[0;31m'
+YELLOW = '\033[1;33m'
+GRAY = '\033[0;90m'
+NC = '\033[0m'
+
 def log(msg):
     t = datetime.now().strftime("%H:%M:%S")
     line = f"[{t}] {msg}"
@@ -567,7 +575,7 @@ def check_virus_guard():
     found_threats = []
     
     # Standard whitelisted system services and support bot
-    safe_whitelists = ["support_bot.py", "unattended-upgrades", "networkd-dispatcher", "cloud-init", "systemd", "server_daemon.py", "ghost_mode.py"]
+    safe_whitelists = ["support_bot.py", "unattended-upgrades", "networkd-dispatcher", "cloud-init", "systemd", "server_daemon.py", "ghost_mode.py", "init", "wsl-", "wslbridge"]
     
     try:
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
