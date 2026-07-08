@@ -846,25 +846,46 @@ def handle_sentry_callback(token, chat_id, query):
                 else:
                     message = f"File path not found or already removed: {file_path}"
             
-            elif "package installed:" in detail.lower() or "package:" in detail.lower():
+            elif "package installed:" in detail.lower() or "package:" in detail.lower() or "application:" in detail.lower():
                 import re
-                matches = re.findall(r'package:\s*(\S+)|installed:\s*(\S+)', detail.lower())
+                matches = re.findall(r'package:\s*(\S+)|installed:\s*(\S+)|application:\s*(\S+)', detail.lower())
                 pkg_id = ""
                 if matches:
                     pkg_id = [m for m in matches[0] if m][0]
                 if pkg_id:
                     try:
-                        p = subprocess.run(f"pm uninstall --user 0 {pkg_id}", shell=True, capture_output=True, text=True)
+                        if sys.platform == "win32":
+                            # Windows: try to uninstall via winget first, fallback to wmic if simple name
+                            p = subprocess.run(f"winget uninstall --id {pkg_id} --silent --accept-source-agreements", shell=True, capture_output=True, text=True)
+                            if p.returncode != 0:
+                                p = subprocess.run(f"wmic product where name=\"{pkg_id}\" call uninstall", shell=True, capture_output=True, text=True)
+                        elif sys.platform == "darwin":
+                            # macOS: try brew uninstall, fallback to deleting app from Applications
+                            p = subprocess.run(f"brew uninstall --force --zap {pkg_id}", shell=True, capture_output=True, text=True)
+                            if p.returncode != 0 and os.path.exists(f"/Applications/{pkg_id}.app"):
+                                import shutil
+                                shutil.rmtree(f"/Applications/{pkg_id}.app")
+                                class Dummy: returncode = 0; stderr = ""
+                                p = Dummy()
+                        else:
+                            # Linux/Android: check if package manager tools are present
+                            if subprocess.run("which pm", shell=True, capture_output=True).returncode == 0:
+                                p = subprocess.run(f"pm uninstall --user 0 {pkg_id}", shell=True, capture_output=True, text=True)
+                            elif subprocess.run("which apt-get", shell=True, capture_output=True).returncode == 0:
+                                p = subprocess.run(f"sudo apt-get purge -y {pkg_id}", shell=True, capture_output=True, text=True)
+                            else:
+                                p = subprocess.run(f"sudo yum remove -y {pkg_id}", shell=True, capture_output=True, text=True)
+                                
                         if p.returncode == 0:
                             success = True
-                            message = f"Successfully uninstalled package {pkg_id}."
-                            log_message(f"💀 AetherGhost Guard Remediate: Uninstalled spyware package {pkg_id}")
+                            message = f"Successfully uninstalled package/application {pkg_id}."
+                            log_message(f"💀 AetherGhost Guard Remediate: Uninstalled package/app {pkg_id}")
                         else:
-                            message = f"Android package manager returned error: {p.stderr.strip()}"
+                            message = f"Package manager returned code {p.returncode}. Error: {getattr(p, 'stderr', '').strip()}"
                     except Exception as e:
                         message = f"Failed to run uninstaller: {e}"
                 else:
-                    message = "Could not parse package ID from threat detail."
+                    message = "Could not parse package/application identifier from threat detail."
             else:
                 message = "Remediation type not recognized for this threat signature."
             
