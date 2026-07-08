@@ -114,7 +114,8 @@ def load_config():
         "dns_rotation_interval": 0,
         "dns_scheduled_time": "",
         "custom_dns_primary": "1.1.1.1",
-        "custom_dns_secondary": "1.0.0.1"
+        "custom_dns_secondary": "1.0.0.1",
+        "auto_update": True
     }
 
 def save_config(cfg):
@@ -514,14 +515,16 @@ def get_sentry_dashboard_layout():
                 {"text": "🔀 Change DNS", "callback_data": "menu_dns"}
             ],
             [
-                {"text": f"⏳ Scheduler Mode: {scan_mode.upper()}", "callback_data": "menu_scheduler"}
+                {"text": f"⏳ Scheduler: {scan_mode.upper()}", "callback_data": "menu_scheduler"},
+                {"text": f"🔄 Auto-Update: {'ON 🟢' if cfg.get('auto_update', True) else 'OFF 🔴'}", "callback_data": "toggle_auto_update"}
             ],
             [
                 {"text": "🦠 Scan Memory", "callback_data": "run_scan_virus"},
                 {"text": "💾 Scan Storage", "callback_data": "run_scan_malware"}
             ],
             [
-                {"text": "📋 View Threat Logs", "callback_data": "view_threats"}
+                {"text": "📋 View Threat Logs", "callback_data": "view_threats"},
+                {"text": "📥 Pull Updates", "callback_data": "menu_update"}
             ]
         ]
     }
@@ -544,6 +547,47 @@ def handle_sentry_callback(token, chat_id, query):
     if data == "menu_main":
         msg, kb = get_sentry_dashboard_layout()
         edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data == "toggle_auto_update":
+        current = cfg.get("auto_update", True)
+        cfg["auto_update"] = not current
+        save_config(cfg)
+        msg, kb = get_sentry_dashboard_layout()
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
+    elif data == "menu_update":
+        update_available = False
+        try:
+            subprocess.run("git fetch", shell=True, capture_output=True, text=True, timeout=12)
+            local_hash = subprocess.run("git rev-parse HEAD", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
+            remote_hash = subprocess.run("git rev-parse @{u}", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
+            if local_hash and remote_hash and local_hash != remote_hash:
+                update_available = True
+        except:
+            pass
+            
+        status = "💡 *New Update Available on GitHub!*" if update_available else "🟢 *Your system is completely up-to-date.*"
+        
+        kb = {
+            "inline_keyboard": [
+                [
+                    {"text": "📥 Manually Pull Latest", "callback_data": "trigger_manual_pull"}
+                ] if update_available else [
+                    {"text": "📥 Override Pull Latest", "callback_data": "trigger_manual_pull"}
+                ],
+                [
+                    {"text": "↩️ Return to Menu", "callback_data": "menu_main"}
+                ]
+            ]
+        }
+        edit_telegram_message(token, chat_id, message_id, f"🔄 *Aether Update Center*\n\n• Current Version: `v1.2.0`\n• Status: {status}", kb)
+
+    elif data == "trigger_manual_pull":
+        edit_telegram_message(token, chat_id, message_id, "🔄 *Executing git pull...* please wait.", None)
+        success, message = pull_updates_and_restart()
+        if not success:
+            kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+            edit_telegram_message(token, chat_id, message_id, f"❌ *Manual Update Failed!*\n\n`{message}`", kb)
 
     elif data == "menu_engine":
         msg = "🔄 *Select Anonymity Engine*\n\nChoose an engine circuit below to route your internet traffic:"
@@ -1021,10 +1065,29 @@ def run_honeypot_listener():
     except Exception as e:
         log_message(f"⚠️ Honeypot decoy could not start: {e}")
 
+def pull_updates_and_restart():
+    log_message("👤 Manual update requested. Executing git pull...")
+    try:
+        subprocess.run("git fetch", shell=True, capture_output=True, text=True, timeout=20)
+        pull_res = subprocess.run("git pull", shell=True, capture_output=True, text=True, timeout=20)
+        if pull_res.returncode == 0:
+            log_message("✅ Manual update complete. Hot-restarting now!")
+            send_telegram_alert("✅ *Manual Update:* Code successfully pulled from GitHub. Hot-restarting now!")
+            time.sleep(2)
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+            return True, "Code pulled successfully. Hot-restarting now!"
+        else:
+            err = pull_res.stderr.strip()
+            log_message(f"⚠️ Manual update failed: {err}")
+            return False, f"git pull failed: {err}"
+    except Exception as e:
+        return False, str(e)
+
 # --- Daemon Schedulers & Failover Loop ---
 def run_daemon_loop():
     log_message("🤫 Aether OS background monitor daemon started.")
     last_scan_time = 0
+    last_update_check_time = 0
     last_scheduled_scan_date = ""
     global last_manual_change_time
     
@@ -1089,6 +1152,31 @@ def run_daemon_loop():
                     run_security_scan()
                     last_scheduled_scan_date = today
                     last_scan_time = now
+
+            # 3. Auto-Updater check loop (runs every 1 hour)
+            if now - last_update_check_time >= 3600:
+                last_update_check_time = now
+                if cfg.get("auto_update", True):
+                    try:
+                        subprocess.run("git fetch", shell=True, capture_output=True, text=True, timeout=20)
+                        local_hash = subprocess.run("git rev-parse HEAD", shell=True, capture_output=True, text=True, timeout=10).stdout.strip()
+                        remote_hash = subprocess.run("git rev-parse @{u}", shell=True, capture_output=True, text=True, timeout=10).stdout.strip()
+                        
+                        if local_hash and remote_hash and local_hash != remote_hash:
+                            log_message("🔄 Aether OS: New updates detected on GitHub. Pulling changes...")
+                            send_telegram_alert("🔄 *Aether OS Auto-Update:* New updates detected on GitHub. Pulling changes and hot-reloading...")
+                            
+                            pull_res = subprocess.run("git pull", shell=True, capture_output=True, text=True, timeout=20)
+                            if pull_res.returncode == 0:
+                                log_message("✅ Aether OS: Pull complete. Restarting daemon...")
+                                send_telegram_alert("✅ *Aether OS Auto-Update:* Code pulled successfully. Hot-restarting now!")
+                                time.sleep(2)
+                                os.execv(sys.executable, [sys.executable] + sys.argv)
+                            else:
+                                log_message(f"⚠️ Aether OS: Pull failed: {pull_res.stderr.strip()}")
+                                send_telegram_alert(f"⚠️ *Aether OS Auto-Update Fail:* git pull failed:\n`{pull_res.stderr.strip()}`")
+                    except Exception as updater_err:
+                        log_message(f"⚠️ Aether OS Auto-Update Exception: {updater_err}")
         except Exception as daemon_err:
             log_message(f"⚠️ Exception in background daemon cycle: {daemon_err}")
             
@@ -1130,7 +1218,19 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         url_path = self.path.split('?')[0]
         cfg = load_config()
 
-        if url_path == '/api/telegram_config':
+        if url_path == '/api/update/check':
+            update_available = False
+            try:
+                subprocess.run("git fetch", shell=True, capture_output=True, text=True, timeout=12)
+                local_hash = subprocess.run("git rev-parse HEAD", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
+                remote_hash = subprocess.run("git rev-parse @{u}", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
+                if local_hash and remote_hash and local_hash != remote_hash:
+                    update_available = True
+            except:
+                pass
+            self.send_json_response({"update_available": update_available, "version": "1.2.0"})
+
+        elif url_path == '/api/telegram_config':
             config_path = os.path.join(LOG_DIR, "telegram_config.json")
             data = {"enabled": False, "token": "", "chat_id": ""}
             if os.path.exists(config_path):
@@ -1337,6 +1437,10 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             report_data = run_specific_scan("--malware")
             self.send_json_response(report_data)
 
+        elif url_path == '/api/update/pull':
+            success, message = pull_updates_and_restart()
+            self.send_json_response({"success": success, "message": message})
+
         elif url_path == '/api/telegram_test':
             token = body.get("token")
             chat_id = body.get("chat_id")
@@ -1437,6 +1541,8 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
                 cfg["notification_profile"] = body["notification_profile"]
             if "custom_sound_path" in body:
                 cfg["custom_sound_path"] = body["custom_sound_path"]
+            if "auto_update" in body:
+                cfg["auto_update"] = bool(body["auto_update"])
             
             save_config(cfg)
             self.send_json_response({"status": "ok"})

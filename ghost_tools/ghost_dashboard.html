@@ -665,6 +665,25 @@ select:focus{border-color:var(--accent-color)}
         <option value="none">🛑 Disabled</option>
       </select>
     </div>
+    <div>
+      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">AUTO-UPDATE ENGINE</label>
+      <select id="auto-update-select" onchange="updateSchedule()" style="width:100%; color:#00ff88;">
+        <option value="true">🟢 ENABLED (Auto)</option>
+        <option value="false">🔴 DISABLED (Manual)</option>
+      </select>
+    </div>
+  </div>
+  
+  <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid #141414;">
+    <div>
+      <label style="font-size:0.7em; color:#555; display:block; margin-bottom:4px; letter-spacing:1px;">AETHER UPDATE CENTER</label>
+      <div id="update-status-text" style="font-family:'Share Tech Mono', monospace; font-size:0.8em; color:#00ff88; text-shadow:0 0 5px rgba(0,255,136,0.3);">
+        🟢 Checking GitHub repository version status...
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <button class="btn blue" id="pull-update-btn" onclick="triggerManualUpdate()" style="margin:0; padding:8px 12px; font-size:0.8em; letter-spacing:1px;" disabled>📥 PULL LATEST</button>
+    </div>
   </div>
   
   <div style="display:grid; grid-template-columns:2fr 1fr; gap:12px; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid #141414;">
@@ -1575,6 +1594,9 @@ async function getSchedule() {
       if (data.custom_sound_path) {
         document.getElementById('custom-sound-path-input').value = data.custom_sound_path;
       }
+      if (data.auto_update !== undefined) {
+        document.getElementById('auto-update-select').value = String(data.auto_update);
+      }
 
       if (scanMode === 'interval') {
         startTimer(interval);
@@ -1582,6 +1604,7 @@ async function getSchedule() {
         startTimer(0);
       }
       startPolling(6);
+      await checkSystemUpdates();
     }
   } catch(e) {
     startPolling(6);
@@ -1595,6 +1618,7 @@ async function updateSchedule() {
   const scheduledTime = document.getElementById('scan-time-input').value.trim();
   const locInterval = parseInt(document.getElementById('loc-interval-select').value) || 0;
   const notif = document.getElementById('notif-select').value;
+  const autoUpdate = document.getElementById('auto-update-select').value === 'true';
 
   if (scanMode === 'interval') {
     startTimer(interval);
@@ -1611,7 +1635,8 @@ async function updateSchedule() {
         scan_interval: interval,
         scan_scheduled_time: scheduledTime,
         location_interval: locInterval,
-        notification_profile: notif
+        notification_profile: notif,
+        auto_update: autoUpdate
       })
     });
     const modeDesc = scanMode === 'interval' ? `every ${interval > 0 ? interval+'s' : 'manual only'}` : `daily at ${scheduledTime || '02:00'}`;
@@ -2033,6 +2058,59 @@ async function runMalwareScanOnly() {
     btn.textContent = oldText;
     statusDiv.textContent = '🟢 SHIELD ACTIVE';
     statusDiv.style.color = '#00ff88';
+  }
+}
+
+async function checkSystemUpdates() {
+  const statusText = document.getElementById('update-status-text');
+  const pullBtn = document.getElementById('pull-update-btn');
+  if (!statusText || !pullBtn) return;
+  try {
+    const res = await fetch('/api/update/check?t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      if (data.update_available) {
+        statusText.innerHTML = '💡 <span style="color:#ffaa00; font-weight:bold;">Update Available!</span> A new version is ready on GitHub.';
+        pullBtn.disabled = false;
+        pullBtn.classList.remove('blue');
+        pullBtn.classList.add('red');
+      } else {
+        statusText.innerHTML = '🟢 <span style="color:#00ff88; font-weight:bold;">System Up-to-date</span>. Running version 1.2.0.';
+        pullBtn.disabled = true;
+      }
+    }
+  } catch (e) {
+    statusText.textContent = '⚠️ Could not connect to update servers.';
+  }
+}
+
+async function triggerManualUpdate() {
+  if (confirm("Are you sure you want to pull the latest update from GitHub and hot-restart the system?")) {
+    const statusText = document.getElementById('update-status-text');
+    const pullBtn = document.getElementById('pull-update-btn');
+    pullBtn.disabled = true;
+    pullBtn.textContent = '🔄 UPDATING...';
+    statusText.textContent = '⏳ Executing git pull & hot-restart sequence...';
+    try {
+      const res = await fetch('/api/update/pull', {method: 'POST'});
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          showToast("🛡️ Update complete! Hot-restarting...");
+          addLog("✅ System updated successfully. Hot-restarting daemon...", "ok");
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        } else {
+          showToast("❌ Update failed: " + data.message, true);
+          statusText.textContent = "❌ Update failed: " + data.message;
+          pullBtn.disabled = false;
+          pullBtn.textContent = '📥 PULL LATEST';
+        }
+      }
+    } catch(e) {
+      showToast("❌ Server went offline. (Check console logs)", true);
+    }
   }
 }
 
