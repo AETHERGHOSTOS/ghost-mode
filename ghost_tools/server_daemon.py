@@ -475,6 +475,7 @@ def get_sentry_dashboard_layout():
     engine = cfg.get("anonymity_engine", "tor")
     is_rot = cfg.get("dns_provider") == "rotation"
     dns_mode = "Auto-Rotation" if is_rot else cfg.get("dns_provider", "cloudflare").upper()
+    scan_mode = cfg.get("scan_mode", "interval")
 
     # Use the cached connection status instead of a live blocking API call
     is_healthy = CONNECTION_STATUS.get("active", False)
@@ -501,6 +502,7 @@ def get_sentry_dashboard_layout():
         f"Spoofed IP: `{ip}`\n"
         f"Location: *{loc}*\n"
         f"DNS Resolver: *{dns_mode}*\n"
+        f"Scheduler Mode: *{scan_mode.upper()}*\n"
         f"Active Threat Alerts: *{threats_count} alerts*\n\n"
         f"Use buttons below to control the phone remotely:"
     )
@@ -512,11 +514,14 @@ def get_sentry_dashboard_layout():
                 {"text": "🔀 Change DNS", "callback_data": "menu_dns"}
             ],
             [
-                {"text": f"🔀 Auto-Rotate DNS: {'ON 🟢' if is_rot else 'OFF 🔴'}", "callback_data": "toggle_dns_rot"}
+                {"text": f"⏳ Scheduler Mode: {scan_mode.upper()}", "callback_data": "menu_scheduler"}
             ],
             [
-                {"text": "⚡ Run Security Scan", "callback_data": "run_scan"},
-                {"text": "📋 View Threat Details", "callback_data": "view_threats"}
+                {"text": "🦠 Scan Memory", "callback_data": "run_scan_virus"},
+                {"text": "💾 Scan Storage", "callback_data": "run_scan_malware"}
+            ],
+            [
+                {"text": "📋 View Threat Logs", "callback_data": "view_threats"}
             ]
         ]
     }
@@ -631,6 +636,64 @@ def handle_sentry_callback(token, chat_id, query):
         msg, kb = get_sentry_dashboard_layout()
         edit_telegram_message(token, chat_id, message_id, "✅ *Scan Completed!*\n\n" + msg, kb)
         
+    elif data == "run_scan_virus":
+        edit_telegram_message(token, chat_id, message_id, "🔄 *Active Memory Scan (Virus Guard) triggered...* please wait.", None)
+        run_specific_scan("--virus")
+        msg, kb = get_sentry_dashboard_layout()
+        edit_telegram_message(token, chat_id, message_id, "✅ *Virus scan completed!*\n\n" + msg, kb)
+        
+    elif data == "run_scan_malware":
+        edit_telegram_message(token, chat_id, message_id, "🔄 *Storage Files Scan (Malware Guard) triggered...* please wait.", None)
+        run_specific_scan("--malware")
+        msg, kb = get_sentry_dashboard_layout()
+        edit_telegram_message(token, chat_id, message_id, "✅ *Malware scan completed!*\n\n" + msg, kb)
+        
+    elif data == "menu_scheduler":
+        msg = (
+            "⚙️ *Configure Security Scheduler Mode*\n\n"
+            "Choose a mode profile for background monitoring scans:"
+        )
+        kb = {
+            "inline_keyboard": [
+                [
+                    {"text": "⏳ Interval (Every 2 Min)", "callback_data": "set_sched_interval_120"},
+                    {"text": "⏳ Interval (Every 10 Min)", "callback_data": "set_sched_interval_600"}
+                ],
+                [
+                    {"text": "⏳ Interval (Every 1 Hour)", "callback_data": "set_sched_interval_3600"},
+                    {"text": "⏳ Interval (Every 24 Hours)", "callback_data": "set_sched_interval_86400"}
+                ],
+                [
+                    {"text": "⏰ Daily Scheduled (02:00)", "callback_data": "set_sched_daily_02:00"},
+                    {"text": "⏰ Daily Scheduled (22:00)", "callback_data": "set_sched_daily_22:00"}
+                ],
+                [
+                    {"text": "↩️ Return to Menu", "callback_data": "menu_main"}
+                ]
+            ]
+        }
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data.startswith("set_sched_interval_"):
+        seconds = int(data.replace("set_sched_interval_", ""))
+        cfg["scan_mode"] = "interval"
+        cfg["scan_interval"] = seconds
+        save_config(cfg)
+        
+        msg = f"✅ *Scheduler updated to Interval Mode!*\n\nAuditing system every `{seconds}` seconds."
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data.startswith("set_sched_daily_"):
+        time_val = data.replace("set_sched_daily_", "")
+        cfg["scan_mode"] = "scheduled"
+        cfg["scan_scheduled_time"] = time_val
+        save_config(cfg)
+        
+        msg = f"✅ *Scheduler updated to Daily Mode!*\n\nSystem will perform threat checks daily at `{time_val}`."
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+        
     elif data == "view_threats":
         t_path = os.path.join(LOG_DIR, "threats.json")
         threats_list = []
@@ -643,16 +706,139 @@ def handle_sentry_callback(token, chat_id, query):
                 
         if not threats_list:
             msg = "🟢 *Aether Sentry Alert Logs*\n\nNo threats captured today! All systems secure."
+            kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
         else:
             msg_lines = ["⚠️ *Active Security Alerts & Diagnostics:*", "-----------------------------"]
-            for idx, t in enumerate(threats_list[-6:]):
+            inline_keyboard = []
+            
+            # Show the last 5 threats
+            recent_threats = threats_list[-5:]
+            for idx, t in enumerate(recent_threats):
                 time_str = t["time"].split("T")[-1][:5]
-                msg_lines.append(f"• *[{time_str}]* {t['detail']}")
-            msg_lines.append("\n💡 Visit the dashboard for step-by-step fix tutorials.")
+                msg_lines.append(f"*{idx+1}. [{time_str}]* {t['detail']}")
+                
+                # Check if this threat is currently active
+                report_file = os.path.join(LOG_DIR, "report.json")
+                is_active = True
+                if os.path.exists(report_file):
+                    try:
+                        with open(report_file) as f:
+                            rep = json.load(f)
+                        is_active = t['detail'] in rep.get("active_threats", [])
+                    except:
+                        pass
+                
+                if is_active:
+                    inline_keyboard.append([{"text": f"⚡ Resolve Threat {idx+1}", "callback_data": f"remediate_threat_{len(threats_list) - len(recent_threats) + idx}"}])
+            
+            msg_lines.append("\n💡 Tap a resolve button to invoke AetherGhost Guard active defense remotely.")
             msg = "\n".join(msg_lines)
             
-        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+            inline_keyboard.append([{"text": "↩️ Return to Menu", "callback_data": "menu_main"}])
+            kb = {"inline_keyboard": inline_keyboard}
+            
         edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data.startswith("remediate_threat_"):
+        threat_idx = int(data.replace("remediate_threat_", ""))
+        t_path = os.path.join(LOG_DIR, "threats.json")
+        threats_list = []
+        if os.path.exists(t_path):
+            try:
+                with open(t_path) as f:
+                    threats_list = json.load(f)
+            except:
+                pass
+                
+        if threat_idx < len(threats_list):
+            threat = threats_list[threat_idx]
+            detail = threat.get("detail", "")
+            
+            success = False
+            message = ""
+            
+            if "PID" in detail:
+                import re
+                pids = re.findall(r'PID\s+(\d+)', detail)
+                if pids:
+                    pid = int(pids[0])
+                    try:
+                        if pid == os.getpid():
+                            message = "Cannot kill the running security daemon itself!"
+                        else:
+                            import psutil
+                            proc = psutil.Process(pid)
+                            proc.kill()
+                            success = True
+                            message = f"Successfully terminated rogue process PID {pid}."
+                            log_message(f"💀 AetherGhost Guard Remediate: Terminated process PID {pid}")
+                    except Exception as e:
+                        message = f"Failed to terminate process PID {pid}: {e}"
+                else:
+                    message = "Could not parse PID from threat detail."
+            
+            elif "Infected File" in detail or "/" in detail or "\\" in detail:
+                parts = detail.split("Infected File Detected:")
+                file_path = parts[-1].strip() if len(parts) > 1 else detail.strip()
+                if os.path.exists(file_path):
+                    try:
+                        quarantine_dir = os.path.join(LOG_DIR, "quarantine")
+                        os.makedirs(quarantine_dir, exist_ok=True)
+                        dest = os.path.join(quarantine_dir, os.path.basename(file_path))
+                        if os.path.exists(dest):
+                            os.remove(dest)
+                        os.rename(file_path, dest)
+                        success = True
+                        message = f"File successfully moved to quarantine directory: {dest}"
+                        log_message(f"💀 AetherGhost Guard Remediate: Quarantined file to {dest}")
+                    except Exception as e:
+                        try:
+                            os.remove(file_path)
+                            success = True
+                            message = f"File successfully deleted directly: {file_path}"
+                            log_message(f"💀 AetherGhost Guard Remediate: Deleted file {file_path}")
+                        except Exception as de:
+                            message = f"Failed to delete/quarantine file: {de}"
+                else:
+                    message = f"File path not found or already removed: {file_path}"
+            
+            elif "package installed:" in detail.lower() or "package:" in detail.lower():
+                import re
+                matches = re.findall(r'package:\s*(\S+)|installed:\s*(\S+)', detail.lower())
+                pkg_id = ""
+                if matches:
+                    pkg_id = [m for m in matches[0] if m][0]
+                if pkg_id:
+                    try:
+                        p = subprocess.run(f"pm uninstall --user 0 {pkg_id}", shell=True, capture_output=True, text=True)
+                        if p.returncode == 0:
+                            success = True
+                            message = f"Successfully uninstalled package {pkg_id}."
+                            log_message(f"💀 AetherGhost Guard Remediate: Uninstalled spyware package {pkg_id}")
+                        else:
+                            message = f"Android package manager returned error: {p.stderr.strip()}"
+                    except Exception as e:
+                        message = f"Failed to run uninstaller: {e}"
+                else:
+                    message = "Could not parse package ID from threat detail."
+            else:
+                message = "Remediation type not recognized for this threat signature."
+            
+            if success:
+                msg = f"✅ *Threat Remediation Success*\n\n• *Threat:* `{detail}`\n• *Status:* {message}\n\nRunning verification scans..."
+                kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+                edit_telegram_message(token, chat_id, message_id, msg, kb)
+                
+                # Perform follow-up scan
+                run_specific_scan("--virus")
+            else:
+                msg = f"❌ *Threat Remediation Failed*\n\n• *Threat:* `{detail}`\n• *Reason:* {message}"
+                kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+                edit_telegram_message(token, chat_id, message_id, msg, kb)
+        else:
+            msg = "❌ Error: Threat reference not found in logs database."
+            kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+            edit_telegram_message(token, chat_id, message_id, msg, kb)
 
 def run_telegram_bot_poller():
     last_update_id = 0
