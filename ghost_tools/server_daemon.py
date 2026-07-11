@@ -31,6 +31,32 @@ PORT = 8080
 last_manual_change_time = 0
 last_dns_rotation_time = 0
 
+# --- Secure Dashboard Token (generated at startup) ---
+import secrets as _secrets
+_token_file = None  # will be set after LOG_DIR is initialised
+
+def _get_or_create_dashboard_token():
+    """Load persistent token from disk, or generate a new one on first run."""
+    global _token_file
+    if _token_file is None:
+        return _secrets.token_hex(24)  # fallback before LOG_DIR ready
+    token_path = os.path.join(_token_file, "dashboard_token.txt")
+    if os.path.exists(token_path):
+        try:
+            with open(token_path, "r") as f:
+                return f.read().strip()
+        except:
+            pass
+    tok = _secrets.token_hex(24)
+    try:
+        with open(token_path, "w") as f:
+            f.write(tok)
+    except:
+        pass
+    return tok
+
+DASHBOARD_TOKEN = _secrets.token_hex(24)  # temp value; replaced after LOG_DIR init
+
 CONNECTION_STATUS = {
     "engine": "tor",
     "active": False,
@@ -82,6 +108,10 @@ def get_ghost_dir():
     return log_dir
 
 LOG_DIR = get_ghost_dir()
+
+# Now that LOG_DIR is ready, load/create a persistent token
+_token_file = LOG_DIR
+DASHBOARD_TOKEN = _get_or_create_dashboard_token()
 
 def log_message(msg):
     t = datetime.now().strftime("%H:%M:%S")
@@ -712,7 +742,10 @@ def handle_sentry_callback(token, chat_id, query):
         kb = {
             "inline_keyboard": [
                 [
-                    {"text": "🛡️ Security Scan Sched", "callback_data": "sentry_sched_sec"},
+                    {"text": "🛡️ Guard Shield Sched", "callback_data": "sentry_sched_guard"},
+                    {"text": "🔒 Security Scan Sched", "callback_data": "sentry_sched_sec"}
+                ],
+                [
                     {"text": "🌍 Location Spoof Sched", "callback_data": "sentry_sched_loc"}
                 ],
                 [
@@ -722,9 +755,35 @@ def handle_sentry_callback(token, chat_id, query):
         }
         edit_telegram_message(token, chat_id, message_id, msg, kb)
         
+    elif data == "sentry_sched_guard":
+        msg = (
+            "🛡️ *Configure Guard Shield Scan Schedule*\n\n"
+            "Choose automation frequency profile for Virus Guard and Malware Guard sweep cycles:"
+        )
+        kb = {
+            "inline_keyboard": [
+                [
+                    {"text": "⏳ Interval (Every 5 Min)", "callback_data": "set_guard_interval_300"},
+                    {"text": "⏳ Interval (Every 30 Min)", "callback_data": "set_guard_interval_1800"}
+                ],
+                [
+                    {"text": "⏳ Interval (Every 1 Hour)", "callback_data": "set_guard_interval_3600"},
+                    {"text": "⏰ Daily Scheduled (01:00)", "callback_data": "set_guard_daily_01:00"}
+                ],
+                [
+                    {"text": "⏰ Daily Scheduled (03:00)", "callback_data": "set_guard_daily_03:00"},
+                    {"text": "⏰ Daily Scheduled (22:00)", "callback_data": "set_guard_daily_22:00"}
+                ],
+                [
+                    {"text": "↩️ Back to Scheduler Menu", "callback_data": "menu_scheduler"}
+                ]
+            ]
+        }
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
     elif data == "sentry_sched_sec":
         msg = (
-            "🛡️ *Configure Security Threat Scan Schedule*\n\n"
+            "🔒 *Configure Security Threat Scan Schedule*\n\n"
             "Choose automation frequency profile for memory and storage guard sweeps:"
         )
         kb = {
@@ -771,6 +830,7 @@ def handle_sentry_callback(token, chat_id, query):
             ]
         }
         edit_telegram_message(token, chat_id, message_id, msg, kb)
+
 
     elif data == "sentry_check_conn":
         import requests
@@ -915,7 +975,12 @@ def handle_sentry_callback(token, chat_id, query):
             "• *USDT (Tron TRC20):*\n`TKPkbkZLFyeeUD9QEbmc7FiVfSY9FieaQU`\n"
             "• *USDC (Solana):*\n`9pU3D88DVXzebd8kR5rzGeqjxKHbxBcBKNFwEBRBNzui`\n"
             "• *USDT (Ethereum ERC20):*\n`0x09cad574c2c39a88ce931307361682680b795490`\n"
-            "• *Bitcoin (Native BTC):*\n`15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k`\n\n"
+            "• *BNB (BNB Smart Chain BEP20):*\n`0x09cad574c2c39a88ce931307361682680b795490`\n"
+            "• *Wrapped BTC / BTCB (BEP-20):*\n`0x09cad574c2c39a88ce931307361682680b795490`\n"
+            "• *Bitcoin Native (BTC):*\n`15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k`\n"
+            "• *Bitcoin SegWit (BTC):*\n`bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj`\n\n"
+            "⚠️ *IMPORTANT:* Native Bitcoin (BTC) ONLY goes to the two BTC-format addresses above. "
+            "Sending real BTC to an EVM/0x address will permanently lose your funds.\n\n"
             "Thank you for keeping Aether Ghost OS alive!"
         )
         kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
@@ -961,8 +1026,28 @@ def handle_sentry_callback(token, chat_id, query):
         msg = f"✅ *Location Spoof scheduler updated to Daily Mode!*\n\nSystem will rotate location tunnel and check IP daily at `{time_val}`."
         kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
         edit_telegram_message(token, chat_id, message_id, msg, kb)
-        
+
+    elif data.startswith("set_guard_interval_"):
+        seconds = int(data.replace("set_guard_interval_", ""))
+        cfg["guard_scan_mode"] = "interval"
+        cfg["guard_scan_interval"] = seconds
+        save_config(cfg)
+        mins = seconds // 60
+        msg = f"✅ *Guard Shield scheduler updated to Interval Mode!*\n\nVirus & Malware Guard will sweep every `{mins} minute(s)`."
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
+    elif data.startswith("set_guard_daily_"):
+        time_val = data.replace("set_guard_daily_", "")
+        cfg["guard_scan_mode"] = "scheduled"
+        cfg["guard_scheduled_time"] = time_val
+        save_config(cfg)
+        msg = f"✅ *Guard Shield scheduler updated to Daily Mode!*\n\nVirus & Malware Guard will sweep daily at `{time_val}`."
+        kb = {"inline_keyboard": [[{"text": "↩️ Return to Menu", "callback_data": "menu_main"}]]}
+        edit_telegram_message(token, chat_id, message_id, msg, kb)
+
     elif data == "view_threats":
+
         t_path = os.path.join(LOG_DIR, "threats.json")
         threats_list = []
         if os.path.exists(t_path):
@@ -1336,6 +1421,8 @@ def run_daemon_loop():
     last_update_check_time = 0
     last_scheduled_scan_date = ""
     last_scheduled_location_date = ""
+    last_guard_scan_time = 0
+    last_scheduled_guard_date = ""
     global last_manual_change_time
     
     while True:
@@ -1420,7 +1507,32 @@ def run_daemon_loop():
                     last_scheduled_scan_date = today
                     last_scan_time = now
 
-            # 3. Auto-Updater check loop (runs every 1 hour)
+            # 3. Independent Guard Shield (Virus + Malware Guard) scheduler
+            guard_mode = cfg.get("guard_scan_mode", "")
+            guard_interval = cfg.get("guard_scan_interval", 0)
+            guard_scheduled_time = cfg.get("guard_scheduled_time", "")
+
+            if guard_mode == "interval" and guard_interval > 0:
+                if now - last_guard_scan_time >= guard_interval:
+                    log_message("🛡️ Guard Shield scheduled sweep starting...")
+                    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    script = "ghost_mode_pc.py" if sys.platform == "win32" else "ghost_mode.py"
+                    subprocess.Popen([sys.executable, os.path.join(base_dir, script), "--virus"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.Popen([sys.executable, os.path.join(base_dir, script), "--malware"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    last_guard_scan_time = now
+            elif guard_mode == "scheduled" and guard_scheduled_time:
+                today = datetime.now().strftime("%Y-%m-%d")
+                now_time_str = datetime.now().strftime("%H:%M")
+                if today != last_scheduled_guard_date and now_time_str == guard_scheduled_time:
+                    log_message(f"⏰ Guard Shield daily sweep triggered at {guard_scheduled_time}")
+                    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    script = "ghost_mode_pc.py" if sys.platform == "win32" else "ghost_mode.py"
+                    subprocess.Popen([sys.executable, os.path.join(base_dir, script), "--virus"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.Popen([sys.executable, os.path.join(base_dir, script), "--malware"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    last_scheduled_guard_date = today
+                    last_guard_scan_time = now
+
+            # 4. Auto-Updater check loop (runs every 1 hour)
             if now - last_update_check_time >= 3600:
                 last_update_check_time = now
                 if cfg.get("auto_update", True):
@@ -1477,27 +1589,55 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
     def send_json_response(self, data, status=200):
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
+        # Restrict to localhost only — no cross-origin access
+        self.send_header('Access-Control-Allow-Origin', 'http://localhost:8080')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Ghost-Token')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
+
+    def _check_auth(self):
+        """Return True if request carries the correct dashboard token."""
+        token = self.headers.get('X-Ghost-Token', '')
+        return token == DASHBOARD_TOKEN
+
+    def do_OPTIONS(self):
+        """Handle pre-flight CORS requests."""
+        self.send_response(204)
+        self.send_header('Access-Control-Allow-Origin', 'http://localhost:8080')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Ghost-Token')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.end_headers()
 
     def do_GET(self):
         url_path = self.path.split('?')[0]
         cfg = load_config()
 
+        # Expose the dashboard token so the HTML page can read it once
+        if url_path == '/api/token':
+            self.send_json_response({"token": DASHBOARD_TOKEN})
+            return
+
         if url_path == '/api/update/check':
             update_available = False
             try:
-                subprocess.run("git fetch", shell=True, capture_output=True, text=True, timeout=12)
-                local_hash = subprocess.run("git rev-parse HEAD", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
-                remote_hash = subprocess.run("git rev-parse @{u}", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
-                if local_hash and remote_hash and local_hash != remote_hash:
-                    update_available = True
+                # Only attempt git check when a .git repository is present
+                base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                if os.path.isdir(os.path.join(base, ".git")):
+                    subprocess.run("git fetch", shell=True, capture_output=True, text=True, timeout=12, cwd=base)
+                    local_hash = subprocess.run("git rev-parse HEAD", shell=True, capture_output=True, text=True, timeout=8, cwd=base).stdout.strip()
+                    remote_hash = subprocess.run("git rev-parse @{u}", shell=True, capture_output=True, text=True, timeout=8, cwd=base).stdout.strip()
+                    if local_hash and remote_hash and local_hash != remote_hash:
+                        update_available = True
             except:
                 pass
             self.send_json_response({"update_available": update_available, "version": "1.2.0"})
+            return
 
         elif url_path == '/api/telegram_config':
+            if not self._check_auth():
+                self.send_json_response({"error": "Unauthorized"}, 401)
+                return
             config_path = os.path.join(LOG_DIR, "telegram_config.json")
             data = {"enabled": False, "token": "", "chat_id": ""}
             if os.path.exists(config_path):
@@ -1583,6 +1723,11 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         url_path = self.path.split('?')[0]
         cfg = load_config()
 
+        # All POST endpoints require a valid dashboard session token
+        if not self._check_auth():
+            self.send_json_response({"error": "Unauthorized — missing or invalid X-Ghost-Token header"}, 401)
+            return
+
         content_length = int(self.headers.get('Content-Length', 0))
         post_data = self.rfile.read(content_length).decode('utf-8') if content_length > 0 else ""
         
@@ -1590,6 +1735,7 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             body = json.loads(post_data) if post_data else {}
         except:
             body = {}
+
 
         if url_path == '/api/telegram_config':
             config_path = os.path.join(LOG_DIR, "telegram_config.json")
@@ -1853,6 +1999,17 @@ def main():
     # Initialize cache status asynchronously
     threading.Thread(target=update_connection_status_cache, daemon=True).start()
     
+    # Issue 2 — warn if Telegram bot token is unconfigured or set to default
+    try:
+        t_cfg_path = os.path.join(LOG_DIR, "telegram_config.json")
+        if os.path.exists(t_cfg_path):
+            with open(t_cfg_path, "r") as _f:
+                _t = json.load(_f)
+            if not _t.get("token") or _t.get("token") == "CHANGE_ME_NOW":
+                log_message("⚠️  SECURITY WARNING: Telegram Sentry Bot token not configured! Use Option 14 in the launcher menu to set it.")
+    except:
+        pass
+
     # Load and apply initial DNS configurations on startup
     try:
         cfg = load_config()
@@ -1878,7 +2035,9 @@ def main():
 
     log_message(f"🚀 Starting Dashboard HTTP Server on port {PORT}...")
     try:
-        httpd = ThreadingHTTPServer(('', PORT), DashboardAPIHandler)
+        # Bind to localhost only — prevents remote LAN access to the API
+        httpd = ThreadingHTTPServer(('127.0.0.1', PORT), DashboardAPIHandler)
+        log_message(f"🔐 Dashboard token loaded. Stored at: {os.path.join(LOG_DIR, 'dashboard_token.txt')}")
         httpd.serve_forever()
     except Exception as e:
         log_message(f"❌ Server crash or port already occupied: {e}")

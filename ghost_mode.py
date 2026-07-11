@@ -9,6 +9,16 @@ Monitors: Network, Open Ports, Mic/Camera, ARP spoofing, Tor, DNS leaks, Wi-Fi i
 import subprocess, os, json, time, socket, sys
 from datetime import datetime
 
+# Auto-install and import psutil (required for Virus Guard process scanning)
+try:
+    import psutil
+except ImportError:
+    subprocess.run([sys.executable, "-m", "pip", "install", "psutil", "-q"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        import psutil
+    except ImportError:
+        psutil = None  # Will be handled gracefully inside check_virus_guard()
+
 # Force UTF-8 stdout/stderr encoding on Windows to prevent UnicodeEncodeError on emojis
 if sys.platform == "win32":
     try:
@@ -535,13 +545,17 @@ def change_dns():
             try:
                 ps_cmd = (
                     f"Get-NetAdapter | Where-Object {{ $_.Status -eq 'Up' }} | "
-                    f"ForEach-Object {{ Set-DnsClientServerAddress -InterfaceIndex $_.InterfaceIndex -ServerAddresses ('{primary}', '{secondary}') -ErrorAction SilentlyContinue }}"
+                    f"ForEach-Object {{ Set-DnsClientServerAddress -InterfaceIndex $_.InterfaceIndex -ServerAddresses ('{primary}', '{secondary}') }}"
                 )
-                subprocess.run(["powershell", "-Command", ps_cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                applied = True
-                print("✅ Windows DNS client server addresses updated.")
-            except:
-                pass
+                result = subprocess.run(["powershell", "-Command", ps_cmd], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+                if result.returncode == 0:
+                    applied = True
+                    print("✅ Windows DNS client server addresses updated.")
+                else:
+                    print(f"❌ Windows DNS update failed (requires Administrator privileges).")
+                    print(f"   Run your terminal as Administrator and try again.")
+            except Exception as e:
+                print(f"❌ Windows DNS error: {e}")
 
         if applied:
             print(f"✅ DNS successfully updated to: {name}")
@@ -573,6 +587,10 @@ def panic_self_destruct():
 def check_virus_guard():
     log(f"{CYAN}Virus Guard: Auditing active memory and background processes...{NC}")
     found_threats = []
+    
+    if psutil is None:
+        log(f"⚠️ Virus Guard: psutil not available. Install with: pip install psutil")
+        return
     
     # Standard whitelisted system services and support bot
     safe_whitelists = ["support_bot.py", "unattended-upgrades", "networkd-dispatcher", "cloud-init", "systemd", "server_daemon.py", "ghost_mode.py", "init", "wsl-", "wslbridge"]

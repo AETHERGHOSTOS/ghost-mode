@@ -318,22 +318,27 @@ json.dump(c, open(p,'w'), indent=2)
       ;;
 
     13)
-      echo "🔄 Checking for updates from GitHub..."
-      git fetch && git status
-      if git status -uno | grep -q "behind"; then
-        read -p "💡 New update detected! Pull latest code changes? (y/n): " pull_choice
-        if [[ "$pull_choice" == "y" || "$pull_choice" == "Y" ]]; then
-          git pull
-          echo "✅ Update complete! Restaging launcher..."
-          sleep 2
-        fi
+      if [ ! -d ".git" ]; then
+        echo "ℹ️ Installed via ZIP — git repository not found."
+        echo "   To update, download the latest ZIP from: https://github.com/AETHERGHOSTOS/ghost-mode"
       else
-        echo "🟢 System is already up-to-date!"
+        echo "🔄 Checking for updates from GitHub..."
+        git fetch && git status
+        if git status -uno | grep -q "behind"; then
+          read -p "💡 New update detected! Pull latest code changes? (y/n): " pull_choice
+          if [[ "$pull_choice" == "y" || "$pull_choice" == "Y" ]]; then
+            git pull
+            echo "✅ Update complete! Restaging launcher..."
+            sleep 2
+          fi
+        else
+          echo "🟢 System is already up-to-date!"
+        fi
       fi
       ;;
 
     14)
-      python3 -c "import sys; sys.path.append('.'); from ghost_mode_pc import print_sentry_status; print_sentry_status()"
+      python3 -c "import sys; sys.path.append('.'); from ghost_mode import print_sentry_status; print_sentry_status()"
       ;;
 
     12)

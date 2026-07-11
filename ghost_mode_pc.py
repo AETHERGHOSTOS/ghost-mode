@@ -763,11 +763,22 @@ def toggle_sentry():
 
 def check_and_pull_updates_cli():
     print("🔄 Checking for updates from GitHub...")
+    
+    # ZIP installs have no .git folder — skip git commands
+    if not os.path.isdir(".git"):
+        print("ℹ️  Installed via ZIP — git repository not found.")
+        print("   To update: download the latest ZIP from https://github.com/AETHERGHOSTOS/ghost-mode")
+        return
+    
     try:
-        subprocess.run("git fetch", shell=True, capture_output=True, text=True, timeout=15)
+        fetch_res = subprocess.run("git fetch", shell=True, capture_output=True, text=True, timeout=15)
         local_hash = subprocess.run("git rev-parse HEAD", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
         remote_hash = subprocess.run("git rev-parse @{u}", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
         
+        if not remote_hash:
+            print("⚠️  Could not reach remote. Check your internet connection.")
+            return
+            
         if local_hash == remote_hash:
             print("🟢 System is already up-to-date!")
             return
@@ -780,6 +791,7 @@ def check_and_pull_updates_cli():
             os.execv(sys.executable, [sys.executable] + sys.argv)
         else:
             print(f"❌ Pull failed: {pull_res.stderr.strip()}")
+            print("   Try: git fetch --all && git reset --hard origin/main")
     except Exception as e:
         print(f"❌ Error checking updates: {e}")
 

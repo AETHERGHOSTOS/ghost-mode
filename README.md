@@ -28,12 +28,14 @@ Most security suites are either too complex (built only for enterprise networks 
 | :--- | :---: | :---: | :---: | :---: |
 | **🛡️ AetherGhost Guard (Virus/Malware)** | ✅ Yes (Stalkerware audit) | ✅ Yes (Defender / Memory whitelist) | ✅ Yes (ClamAV / Memory whitelist) | ✅ Yes (ClamAV / Memory whitelist) |
 | **🎙️ Privacy Sentry (Mic/Cam Monitor)** | ✅ Yes (Logcat Audit) | ✅ Yes (Win32 API) | ✅ Yes (lsof/procfs) | ✅ Yes (AVFoundation) |
-| **🛡️ Deception Sentry (SSH Honeypot)** | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) | ✅ Yes (Port 2222) |
+| **🛡️ Deception Sentry (SSH Honeypot)** | ✅ Yes (Port 2222)¹ | ✅ Yes (Port 2222)¹ | ✅ Yes (Port 2222)¹ | ✅ Yes (Port 2222)¹ |
 | **🌐 Sovereign Tor Routing** | ✅ Yes (Tor daemon) | ✅ Yes (Tor service) | ✅ Yes (Tor daemon) | ✅ Yes (Tor daemon) |
 | **💬 Scam Sentry (SMS/Clipboard)** | ✅ Yes (SMS / Copy) | ✅ Yes (Clipboard scan) | ✅ Yes (Clipboard scan) | ✅ Yes (Clipboard scan) |
 | **🔄 Failover Daemon** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
 | **🖥️ Web Dashboard Console** | ✅ Yes (Port 8080) | ✅ Yes (Port 8080) | ✅ Yes (Port 8080) | ✅ Yes (Port 8080) |
 | **⏰ Automated Sentry Alerts** | ✅ Yes (Telegram Sentry) | ✅ Yes (Telegram Sentry) | ✅ Yes (Telegram Sentry) | ✅ Yes (Telegram Sentry) |
+
+> ¹ **SSH Honeypot note:** On mobile networks (carrier-grade NAT / CGNAT), the honeypot on port 2222 can only detect scans from devices on the **same local Wi-Fi network**. It is **not reachable from the public internet** unless you configure manual port forwarding on your router, or run the agent on a VPS with a public IP. Home broadband or cloud servers are recommended for internet-facing intrusion detection.
 
 ---
 
@@ -777,9 +779,11 @@ If you are running Aether OS on a mobile phone (Android/Termux) or a computer (W
   ```
   *(Note: The Aether auto-installer handles this dynamically on all Linux/macOS systems).*
 
-#### 6. ModuleNotFoundError immediately after installing dependencies
-* **Issue:** You run the scanner, it installs `psutil` or `pysocks` successfully, but then exits with `ModuleNotFoundError: No module named 'psutil'`.
-* **Fix:** Python’s running interpreter caches the import path list. Simply **run the scanner command again** (`python3 ghost_mode_pc.py`), and the fresh process will detect and load the packages perfectly.
+#### 6. ModuleNotFoundError: No module named 'psutil'
+* **Issue:** You run the scanner and get `ModuleNotFoundError: No module named 'psutil'`, causing the Virus Guard process scanner to silently fail.
+* **Root cause (fixed in v1.2.1+):** Earlier versions of `ghost_mode.py` were missing `import psutil` at the top of the file. The Virus Guard function called `psutil.process_iter()` causing a silent `NameError` — meaning the backdoor/reverse-shell detector had never actually run on affected installs.
+* **Fix (automatic):** Update via `git pull` or Option `[13]` in the launcher menu. The updated `ghost_mode.py` now auto-imports and auto-installs `psutil` on launch.
+* **Manual fix:** `pip install psutil --break-system-packages`
 
 #### 7. Dashboard buttons return 404/501 errors
 * **Issue:** Clicking buttons in the browser returns `404 File Not Found` or `501 Unsupported Method`.
@@ -864,10 +868,12 @@ Ghost Mode is built and maintained independently. If this tool keeps you safe, c
 | USDT | ETH — Ethereum (ERC20) | `0x09cad574c2c39a88ce931307361682680b795490` |
 | BNB | BSC — BNB Smart Chain (BEP20) | `0x09cad574c2c39a88ce931307361682680b795490` |
 | BNB | ETH — Ethereum (ERC20) | `0x09cad574c2c39a88ce931307361682680b795490` |
-| Bitcoin | BTC — Bitcoin | `15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k` |
-| Bitcoin | BSC — BNB Smart Chain (BEP20) | `0x09cad574c2c39a88ce931307361682680b795490` |
-| Bitcoin | ETH — Ethereum (ERC20) | `0x09cad574c2c39a88ce931307361682680b795490` |
-| Bitcoin | SEGWIT — BTC (SegWit) | `bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj` |
+| **Bitcoin (Native BTC)** | **BTC — Bitcoin** | `15dzX3kqeUD29fbYqoMX4AW9aBDR6ahJ5k` |
+| **Bitcoin (SegWit BTC)** | **SEGWIT — BTC (SegWit)** | `bc1qqmf52ajmvhaxswv97p2q0z82pk4hchv2aqrpmj` |
+| Wrapped BTC / BTCB | BSC — BNB Smart Chain (BEP-20) | `0x09cad574c2c39a88ce931307361682680b795490` |
+| Wrapped BTC / WBTC | ETH — Ethereum (ERC-20) | `0x09cad574c2c39a88ce931307361682680b795490` |
+
+> ⚠️ **IMPORTANT:** Native Bitcoin (BTC) can **only** be sent to the two BTC-format addresses starting with `1...` or `bc1...` above. Sending real BTC to an EVM `0x...` address will **permanently lose your funds**. The rows labelled Wrapped BTC receive cross-chain bridged BTC (BTCB / WBTC) only.
 
 *Every contribution — no matter how small — keeps Ghost Mode alive and free for everyone.*
 

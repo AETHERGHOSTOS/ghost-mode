@@ -521,7 +521,39 @@ select:focus{border-color:var(--accent-color)}
     </div>
     
   </div>
+
+  <!-- Guard Shield Scheduler -->
+  <div style="margin-top: 14px; background: rgba(0,255,136,0.03); border: 1px solid rgba(0,255,136,0.12); border-radius: 8px; padding: 14px;">
+    <h4 style="color:#00ff88; font-size: 0.8em; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;">⏱️ Guard Shield Auto-Sweep Schedule</h4>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; align-items: end;">
+      <div>
+        <label style="font-size:0.58em; color:#555; letter-spacing:0.5px; text-transform:uppercase;">Sweep Mode</label>
+        <select id="guard-scan-mode" onchange="toggleGuardSchedulerFields()" style="width:100%; color:#00ff88; margin-top:4px;">
+          <option value="">⏸️ Disabled</option>
+          <option value="interval">⏳ Interval</option>
+          <option value="scheduled">⏰ Daily Schedule</option>
+        </select>
+      </div>
+      <div id="guard-interval-field">
+        <label style="font-size:0.58em; color:#555; letter-spacing:0.5px; text-transform:uppercase;">Sweep Every</label>
+        <select id="guard-scan-interval" style="width:100%; color:#00ff88; margin-top:4px;">
+          <option value="300">5 minutes</option>
+          <option value="1800">30 minutes</option>
+          <option value="3600">1 hour</option>
+          <option value="7200">2 hours</option>
+          <option value="86400">Daily (24 hr)</option>
+        </select>
+      </div>
+      <div id="guard-scheduled-field" style="display:none;">
+        <label style="font-size:0.58em; color:#555; letter-spacing:0.5px; text-transform:uppercase;">Daily Sweep Time</label>
+        <input type="text" id="guard-scheduled-time" placeholder="e.g. 03:00" style="width:100%; background:#0f0f0f; color:#fff; border:1px solid #202020; padding:6px; border-radius:6px; font-family:monospace; font-size:0.85em; text-align:center; outline:none; margin-top:4px;">
+      </div>
+    </div>
+    <button class="btn" onclick="saveGuardSchedule()" style="margin-top: 10px; width:100%; background: linear-gradient(135deg, #00ff88, #00cc6a); color:#000; font-weight:700; font-size:0.75em; padding: 8px;">💾 SAVE GUARD SWEEP SCHEDULE</button>
+    <div id="guard-sched-status" style="font-size:0.6em; color:#555; margin-top:4px; text-align:center;"></div>
+  </div>
 </div>
+
 
 <!-- Anonymizer & DNS Configuration -->
 <div class="grid3">
@@ -1287,7 +1319,7 @@ async function changeEngine() {
   try {
     const res = await fetch('/api/engine', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'X-Ghost-Token': ghostToken},
       body: JSON.stringify({ engine: engine })
     });
     if (res.ok) {
@@ -1307,7 +1339,7 @@ async function changeLocation(){
   try {
     const res = await fetch('/api/location', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'X-Ghost-Token': ghostToken},
       body: JSON.stringify({ codes: val })
     });
     if (res.ok) {
@@ -1354,7 +1386,7 @@ async function updateDnsSettings() {
   try {
     const res = await fetch('/api/dns', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'X-Ghost-Token': ghostToken},
       body: JSON.stringify({
         dns_provider: provider,
         dns_rotation_interval: interval,
@@ -1512,7 +1544,7 @@ async function runScan(){
   setShieldStatus('SCANNING...','warn');
 
   try {
-    const res = await fetch('/api/scan', { method: 'POST' });
+    const res = await fetch('/api/scan', { method: 'POST', headers: {'X-Ghost-Token': ghostToken} });
     if (res.ok) {
       addLog('📡 Security shield active audit started in background...','info');
       
@@ -1558,7 +1590,7 @@ async function triggerPanic() {
     try {
       await fetch('/api/scan', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json', 'X-Ghost-Token': ghostToken},
         body: JSON.stringify({ panic: true })
       });
       window.location.reload();
@@ -1698,6 +1730,17 @@ async function getSchedule() {
       if (data.location_scheduled_time) {
         document.getElementById('loc-time-input').value = data.location_scheduled_time;
       }
+      // 3. Guard Shield Schedule
+      const guardMode = data.guard_scan_mode || '';
+      document.getElementById('guard-scan-mode').value = guardMode;
+      toggleGuardSchedulerFields();
+      if (data.guard_scan_interval) {
+        document.getElementById('guard-scan-interval').value = data.guard_scan_interval;
+      }
+      if (data.guard_scheduled_time) {
+        document.getElementById('guard-scheduled-time').value = data.guard_scheduled_time;
+      }
+
       document.getElementById('notif-select').value = data.notification_profile || 'sound_vibrate';
       if (data.custom_sound_path) {
         document.getElementById('custom-sound-path-input').value = data.custom_sound_path;
@@ -1717,6 +1760,41 @@ async function getSchedule() {
   } catch(e) {
     startPolling(6);
     startTimer(120);
+  }
+}
+
+function toggleGuardSchedulerFields() {
+  const mode = document.getElementById('guard-scan-mode').value;
+  document.getElementById('guard-interval-field').style.display = mode === 'interval' ? 'block' : 'none';
+  document.getElementById('guard-scheduled-field').style.display = mode === 'scheduled' ? 'block' : 'none';
+}
+
+async function saveGuardSchedule() {
+  const mode = document.getElementById('guard-scan-mode').value;
+  const interval = parseInt(document.getElementById('guard-scan-interval').value) || 0;
+  const dailyTime = document.getElementById('guard-scheduled-time').value.trim();
+  const statusEl = document.getElementById('guard-sched-status');
+  try {
+    const res = await fetch('/api/schedule', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-Ghost-Token': ghostToken},
+      body: JSON.stringify({
+        guard_scan_mode: mode,
+        guard_scan_interval: interval,
+        guard_scheduled_time: dailyTime
+      })
+    });
+    if (res.ok) {
+      statusEl.textContent = '✅ Guard sweep schedule saved!';
+      statusEl.style.color = '#00ff88';
+      showToast('🛡️ Guard Shield schedule saved');
+    } else {
+      statusEl.textContent = '❌ Save failed — auth error.';
+      statusEl.style.color = '#ff3355';
+    }
+  } catch(e) {
+    statusEl.textContent = '❌ Server offline.';
+    statusEl.style.color = '#ff3355';
   }
 }
 
@@ -1741,7 +1819,7 @@ async function updateSchedule() {
   try {
     await fetch('/api/schedule', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'X-Ghost-Token': ghostToken},
       body: JSON.stringify({
         scan_mode: scanMode,
         scan_interval: interval,
@@ -1768,7 +1846,7 @@ async function saveCustomSoundPath() {
   try {
     const res = await fetch('/api/schedule', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'X-Ghost-Token': ghostToken},
       body: JSON.stringify({ custom_sound_path: path })
     });
     if (res.ok) {
@@ -1786,8 +1864,17 @@ async function refreshNetworkData() {
   addLog('✅ Network details updated.','ok');
 }
 
+// Ghost Token — fetched from /api/token on page load, used for authenticated POST requests
+let ghostToken = '';
+
 // Dom Boot Splash Screen Controller
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  // Fetch session token first
+  try {
+    const tr = await fetch('/api/token');
+    if (tr.ok) { const td = await tr.json(); ghostToken = td.token || ''; }
+  } catch(e) {}
+  
   const bar = document.getElementById('splash-bar');
   const status = document.getElementById('splash-status');
   const overlay = document.getElementById('splash-overlay');
@@ -1827,7 +1914,9 @@ window.addEventListener('DOMContentLoaded', () => {
 // Telegram Config Script Helpers
 async function loadTelegramConfig() {
   try {
-    const res = await fetch('/api/telegram_config?t=' + Date.now());
+    const res = await fetch('/api/telegram_config?t=' + Date.now(), {
+      headers: {'X-Ghost-Token': ghostToken}
+    });
     if (res.ok) {
       const data = await res.json();
       document.getElementById('telegram-enabled').checked = !!data.enabled;
@@ -1867,7 +1956,7 @@ async function saveTelegramConfig() {
   try {
     const res = await fetch('/api/telegram_config', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Ghost-Token': ghostToken },
       body: JSON.stringify(payload)
     });
     if (res.ok) {
@@ -1894,7 +1983,7 @@ async function testTelegramBot() {
   try {
     const res = await fetch('/api/telegram_test', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Ghost-Token': ghostToken },
       body: JSON.stringify({ token, chat_id })
     });
     if (res.ok) {
@@ -1905,7 +1994,7 @@ async function testTelegramBot() {
       const payload = { enabled: true, token, chat_id };
       fetch('/api/telegram_config', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Ghost-Token': ghostToken },
         body: JSON.stringify(payload)
       });
       document.getElementById('telegram-enabled').checked = true;
