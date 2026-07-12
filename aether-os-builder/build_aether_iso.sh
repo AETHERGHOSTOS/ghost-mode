@@ -35,7 +35,7 @@ if ! command -v mkarchiso &>/dev/null; then
             echo ""
             
             # Run compilation inside privileged Arch Linux container with diagnostics
-            docker run --privileged --rm -v "${BASE_DIR}/..:/workspace" archlinux bash -c "
+            docker run -it --privileged --rm -v "${BASE_DIR}/..:/workspace" archlinux bash -c "
                 if [ ! -d '/workspace/aether-os-builder' ]; then
                     echo '❌ Error: The project directory was not mounted correctly inside the container.'
                     echo '   (This is common on Windows WSL if WSL2 Integration is not enabled in Docker Desktop settings).'
