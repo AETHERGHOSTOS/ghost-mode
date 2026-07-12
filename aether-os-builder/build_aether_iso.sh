@@ -32,8 +32,16 @@ if ! command -v mkarchiso &>/dev/null; then
             echo "   (This handles all dependencies automatically and outputs the ISO locally)"
             echo ""
             
-            # Run compilation inside privileged Arch Linux container
+            # Run compilation inside privileged Arch Linux container with diagnostics
             docker run --privileged --rm -v "${BASE_DIR}/..:/workspace" archlinux bash -c "
+                if [ ! -d '/workspace/aether-os-builder' ]; then
+                    echo '❌ Error: The project directory was not mounted correctly inside the container.'
+                    echo '   (This is common on Windows WSL if WSL2 Integration is not enabled in Docker Desktop settings).'
+                    echo ''
+                    echo '   📁 Container /workspace contents:'
+                    ls -la /workspace
+                    exit 1
+                fi
                 echo '🔄 Updating Arch packages and installing archiso...' && \
                 pacman -Syu --noconfirm archiso &>/dev/null && \
                 echo '🚀 Running ISO compiler inside container...' && \
