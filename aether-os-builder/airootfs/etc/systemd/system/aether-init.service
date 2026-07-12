@@ -1,0 +1,12 @@
+[Unit]
+Description=Aether Ghost OS System Initializer and Network Security Lockdown
+Before=lightdm.service
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/aether-init.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

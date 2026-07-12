@@ -1,0 +1,15 @@
+# 🧅 Pre-configured Tor daemon settings for Aether Ghost OS
+SocksPort 127.0.0.1:9050
+SocksPort 127.0.0.1:9051
+
+# Route local DNS requests through Tor to prevent DNS leaks
+DNSPort 127.0.0.1:9053
+
+# Optimise circuit rotations for rapid location changes
+NewCircuitPeriod 30
+MaxCircuitDirtiness 60
+
+# Prevent local DNS leakage
+AvoidDisallowedPorts 1
+SafeLogging 1
+Log notice file /var/log/tor/notices.log

@@ -1,0 +1,55 @@
+# Arch Linux Core Packages
+base
+linux
+linux-firmware
+intel-ucode
+amd-ucode
+grub
+efibootmgr
+
+# Wireless & Networking
+networkmanager
+iw
+wireless_tools
+dialog
+wpa_supplicant
+
+# System Utilities
+sudo
+git
+curl
+wget
+tar
+unzip
+zip
+net-tools
+iptables
+lsof
+psutil
+python
+python-pip
+python-psutil
+
+# Graphical Environment
+xorg-server
+xorg-xinit
+lightdm
+lightdm-gtk-greeter
+xfce4
+xfce4-terminal
+xfce4-session
+xfce4-settings
+xfconf
+thunar
+ristretto
+
+# Anonymity & Security
+tor
+torsocks
+macchanger
+ufw
+clamav
+yara
+
+# Fallback Web Browser
+firefox
