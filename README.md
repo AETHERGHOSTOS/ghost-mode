@@ -8,6 +8,20 @@ Ghost Mode is a unified, sovereign privacy and security ecosystem designed to se
 
 ---
 
+### 🛡️ v1.2.0 Security Hardening & Feature Changelog
+Following a full security and functional audit, the following vulnerabilities, bugs, and OS limitations have been resolved:
+1. **Bot Connection Health Crash:** Replaced the external `requests` dependency inside the Sentry Bot's connection health check with native subprocess curl commands, eliminating silent daemon crashes.
+2. **Honest Circuit Routing:** Replaced fake, hardcoded entry and middle Tor relay IPs (`185.220.101.5` / `199.249.230.77`) with accurate, secure `Hidden (Tor Protocol)` descriptors.
+3. **Guard Shield Schedulers:** Wired up independent background scheduler keys (`guard_scan_mode`, `guard_scan_interval`, and `guard_scheduled_time`) to the daemon and the `/api/schedule` POST endpoint to save schedules from the dashboard.
+4. **ZIP Auto-Updater:** Created a zero-dependency update check and auto-extraction module via the GitHub Releases API so non-git (ZIP download) installations can auto-update seamlessly.
+5. **Multi-Platform Thermal Audits:** Added fallback temperature monitoring using `psutil.sensors_temperatures()` and Linux `/sys/class/thermal` zones so desktop users get real-time sensor metrics.
+6. **Linux Malware Heuristic:** Integrated a fallback scanner that audits `/tmp` and local directories for malicious hidden script extensions when ClamAV (`clamscan`) is not installed.
+7. **Sentry Support Bot:** Coded a lightweight, standalone Telegram bot client (`support_bot.py`) that operates without the dashboard server daemon.
+8. **Wi-Fi SSID Fallback:** Implemented `iw dev` and `/proc/net/wireless` signal scanning to fetch connection quality when the `Termux:API` app is blocked by your phone.
+9. **Non-Root DNS Management:** Configured `resolvectl` and `nmcli` updates so system DNS configurations can be applied on Linux/WSL without elevating to root.
+
+---
+
 ## 🤔 Why Ghost Mode?
 
 Most security suites are either too complex (built only for enterprise networks or expert laptops) or too restricted (like basic mobile VPNs). Ghost Mode is different — it is a cross-platform, user-space defensive shield that secures both your mobile devices (via Termux on Android) and your computer workstations (via native Python engines on Windows, Linux, and macOS) against stalkerware, spyware, rogue active process backdoors, infected files, and unauthorized network scans. It is built for anyone who wants sovereign protection across all their hardware, without needing complex setups or administrative root access.
