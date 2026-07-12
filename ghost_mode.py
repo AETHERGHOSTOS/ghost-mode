@@ -182,22 +182,55 @@ def check_arp():
 def check_connection_type():
     log("👻 Auditing network interface routing...")
     routes = run("ip route show 2>/dev/null")
-    is_wifi = "wlan" in routes
+    is_wifi   = "wlan" in routes
     is_mobile = any(k in routes for k in ["rmnet", "ccmni", "ppp", "tun"])
-    conn_type = "Wi-Fi Network" if is_wifi else "Mobile Cellular Network" if is_mobile else "Ethernet / Local VPN"
+    conn_type = ("Wi-Fi Network" if is_wifi
+                 else "Mobile Cellular Network" if is_mobile
+                 else "Ethernet / Local VPN")
 
-    ssid = "Wi-Fi Interface Connected"
+    ssid = ""
     if is_wifi:
+        # 1st choice: Termux:API (gives exact SSID)
         try:
             wifi_info = run("termux-wifi-connectioninfo 2>/dev/null", timeout=4)
             if wifi_info and "ssid" in wifi_info:
                 info = json.loads(wifi_info)
-                ssid = info.get("ssid", ssid).replace('"', '')
+                ssid = info.get("ssid", "").replace('"', '')
         except:
             pass
-        log(f"👻 {conn_type}: {ssid}")
+
+        # 2nd choice: `iw dev` — works on Linux/Android without Termux:API
+        if not ssid:
+            try:
+                iw_out = run("iw dev 2>/dev/null")
+                for line in iw_out.split("\n"):
+                    if "ssid" in line.lower():
+                        ssid = line.strip().split(None, 1)[-1]
+                        break
+            except:
+                pass
+
+        # 3rd choice: /proc/net/wireless (no SSID but gives signal quality)
+        signal_info = ""
+        try:
+            if os.path.exists("/proc/net/wireless"):
+                with open("/proc/net/wireless") as f:
+                    lines = f.readlines()
+                for line in lines[2:]:          # skip header rows
+                    parts = line.split()
+                    if len(parts) >= 4:
+                        iface   = parts[0].strip(":")
+                        quality = parts[2].strip(".")
+                        signal_info = f" (interface: {iface}, quality: {quality}/70)"
+                        break
+        except:
+            pass
+
+        display_ssid = ssid if ssid else "Wi-Fi Interface Connected"
+        log(f"👻 {conn_type}: {display_ssid}{signal_info}")
+
         public_keywords = ["free", "public", "guest", "hotspot", "open", "airport", "hotel"]
-        if any(kw in ssid.lower() for kw in public_keywords):
+        if ssid and any(kw in ssid.lower() for kw in public_keywords):
             log(f"⚠️  WARNING: Unsecured public Wi-Fi detected: '{ssid}'")
             save_threat(f"Insecure Public Wi-Fi: {ssid}")
     elif is_mobile:
@@ -874,20 +907,113 @@ def toggle_sentry():
 
 def check_and_pull_updates_cli():
     print("🔄 Checking for updates from GitHub...")
-    # ZIP installs have no .git folder — skip git commands gracefully
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    if not os.path.isdir(os.path.join(base_dir, ".git")):
-        print("ℹ️  Installed via ZIP — git repository not found.")
-        print("   To update: download the latest ZIP from https://github.com/AETHERGHOSTOS/ghost-mode")
+
+    # ── git clone install ─────────────────────────────────────────
+    if os.path.isdir(os.path.join(base_dir, ".git")):
+        try:
+            fetch_res = subprocess.run("git fetch", shell=True, capture_output=True, text=True, timeout=15)
+            local_hash  = subprocess.run("git rev-parse HEAD",  shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
+            remote_hash = subprocess.run("git rev-parse @{u}", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
+            if not remote_hash:
+                print("⚠️  Could not reach remote. Check your internet connection.")
+                return
+            if local_hash == remote_hash:
+                print("🟢 System is already up-to-date!")
+                return
+            print("💡 New update detected! Pulling latest code changes...")
+            pull_res = subprocess.run("git pull", shell=True, capture_output=True, text=True, timeout=20)
+            if pull_res.returncode == 0:
+                print("✅ Code successfully updated. Hot-restarting scanner...")
+                time.sleep(1)
+                os.execv(sys.executable, [sys.executable] + sys.argv)
+            else:
+                print(f"❌ Pull failed: {pull_res.stderr.strip()}")
+                print("   Try: git fetch --all && git reset --hard origin/main")
+        except Exception as e:
+            print(f"❌ Error checking updates: {e}")
         return
+
+    # ── ZIP install: use GitHub Releases API ────────────────────────
+    print("ℹ️  ZIP install detected. Checking GitHub Releases API for a newer version...")
+    import urllib.request, zipfile, shutil, tempfile
+    api_url = "https://api.github.com/repos/AETHERGHOSTOS/ghost-mode/releases/latest"
     try:
-        fetch_res = subprocess.run("git fetch", shell=True, capture_output=True, text=True, timeout=15)
-        local_hash = subprocess.run("git rev-parse HEAD", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
-        remote_hash = subprocess.run("git rev-parse @{u}", shell=True, capture_output=True, text=True, timeout=8).stdout.strip()
-        
-        if not remote_hash:
-            print("⚠️  Could not reach remote. Check your internet connection.")
+        req = urllib.request.Request(api_url,
+                                     headers={"User-Agent": "AetherGhostOS-Updater",
+                                              "Accept": "application/vnd.github+json"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            release = json.loads(resp.read().decode("utf-8"))
+
+        latest_tag = release.get("tag_name", "").lstrip("v")
+        if not latest_tag:
+            print("⚠️  Could not read release version from GitHub.")
             return
+
+        print(f"   Current version : v{VERSION}")
+        print(f"   Latest release  : v{latest_tag}")
+
+        if latest_tag == VERSION:
+            print("🟢 Already on the latest version!")
+            return
+
+        # Find the zip asset
+        zip_url = ""
+        for asset in release.get("assets", []):
+            if asset["name"].endswith(".zip"):
+                zip_url = asset["browser_download_url"]
+                break
+        if not zip_url:
+            # Fallback: GitHub source zip
+            zip_url = release.get("zipball_url", "")
+
+        if not zip_url:
+            print("❌ No ZIP asset found in the latest release.")
+            print(f"   Download manually: https://github.com/AETHERGHOSTOS/ghost-mode/releases/latest")
+            return
+
+        print(f"\n📥 Downloading update from:\n   {zip_url}")
+        print("   (This may take a moment...)")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            zip_path = os.path.join(tmp, "update.zip")
+            urllib.request.urlretrieve(zip_url, zip_path)
+
+            # Extract
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                zf.extractall(tmp)
+
+            # Find extracted root folder (GitHub adds a prefix folder)
+            extracted_dirs = [d for d in os.listdir(tmp)
+                              if os.path.isdir(os.path.join(tmp, d)) and d != "__MACOSX"]
+            if not extracted_dirs:
+                print("❌ Could not find extracted folder.")
+                return
+            src = os.path.join(tmp, extracted_dirs[0])
+
+            # Copy new files over current install, skip .git
+            for item in os.listdir(src):
+                s = os.path.join(src, item)
+                d = os.path.join(base_dir, item)
+                if item == ".git":
+                    continue
+                try:
+                    if os.path.isdir(s):
+                        if os.path.exists(d):
+                            shutil.rmtree(d)
+                        shutil.copytree(s, d)
+                    else:
+                        shutil.copy2(s, d)
+                except Exception as copy_err:
+                    print(f"   ⚠️ Could not update {item}: {copy_err}")
+
+        print(f"\n✅ Successfully updated to v{latest_tag}!")
+        print("🔄 Restart the script to use the new version.")
+        print("   On Termux: python3 ghost_mode.py")
+
+    except Exception as e:
+        print(f"❌ Update check failed: {e}")
+        print(f"   Download manually: https://github.com/AETHERGHOSTOS/ghost-mode/releases/latest")
         
         if local_hash == remote_hash:
             print("🟢 System is already up-to-date!")

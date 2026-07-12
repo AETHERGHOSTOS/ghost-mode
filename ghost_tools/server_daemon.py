@@ -369,22 +369,74 @@ def apply_system_dns(primary, secondary):
         except Exception as e:
             log_message(f"⚠️ Failed to update Windows DNS: {e}")
             
-    # 3. Linux / macOS configurations
+    # 3. Linux — try user-level methods first (no root needed)
     if sys.platform in ["linux", "darwin"]:
+        # 3a. resolvectl (systemd-resolved) — works without root on most Ubuntu/Fedora
+        try:
+            res = subprocess.run(
+                f"resolvectl dns 2>/dev/null | head -1",
+                shell=True, capture_output=True, text=True, timeout=3
+            )
+            if res.returncode == 0 or "resolvectl" in res.stderr:
+                iface_res = subprocess.run(
+                    "ip route get 1.1.1.1 2>/dev/null | grep -oP 'dev \\K\\S+'",
+                    shell=True, capture_output=True, text=True, timeout=3
+                )
+                iface = iface_res.stdout.strip() or "eth0"
+                r = subprocess.run(
+                    f"resolvectl dns {iface} {primary} {secondary}",
+                    shell=True, capture_output=True, text=True, timeout=5
+                )
+                if r.returncode == 0:
+                    log_message(f"✅ resolvectl DNS updated on interface {iface} (no root needed).")
+                    return True
+        except Exception:
+            pass
+
+        # 3b. nmcli — works without root when user is in 'network' group (Ubuntu Desktop)
+        try:
+            conn_res = subprocess.run(
+                "nmcli -t -f NAME,DEVICE,STATE connection show --active 2>/dev/null | head -1",
+                shell=True, capture_output=True, text=True, timeout=4
+            )
+            if conn_res.returncode == 0 and conn_res.stdout.strip():
+                conn_name = conn_res.stdout.strip().split(":")[0]
+                r = subprocess.run(
+                    f'nmcli connection modify "{conn_name}" ipv4.dns "{primary} {secondary}" '
+                    f'&& nmcli connection up "{conn_name}"',
+                    shell=True, capture_output=True, text=True, timeout=8
+                )
+                if r.returncode == 0:
+                    log_message(f"✅ nmcli DNS updated for connection '{conn_name}' (no root needed).")
+                    return True
+        except Exception:
+            pass
+
+        # 3c. macOS networksetup
+        if sys.platform == "darwin":
+            try:
+                subprocess.run(
+                    f"networksetup -setdnsservers Wi-Fi {primary} {secondary} 2>/dev/null",
+                    shell=True, timeout=5
+                )
+                log_message("✅ macOS networksetup resolver updated.")
+                return True
+            except Exception:
+                pass
+
+        # 3d. Last resort: direct /etc/resolv.conf write (requires root on Linux)
         try:
             with open("/etc/resolv.conf", "w", encoding="utf-8") as f:
                 f.write(f"nameserver {primary}\nnameserver {secondary}\n")
-            log_message("✅ Linux / etc resolv.conf updated.")
+            log_message("✅ Linux /etc/resolv.conf updated.")
             return True
-        except:
-            if sys.platform == "darwin":
-                try:
-                    subprocess.run("networksetup -setdnsservers Wi-Fi 1.1.1.1 1.0.0.1 2>/dev/null", shell=True)
-                    log_message("✅ macOS networksetup resolver updated.")
-                    return True
-                except:
-                    pass
-            log_message("⚠️ Permission denied: Could not edit /etc/resolv.conf system settings.")
+        except Exception:
+            log_message(
+                "⚠️ DNS preference saved to config but could not apply to system.\n"
+                "   To apply manually without root: resolvectl dns <interface> "
+                f"{primary} {secondary}\n"
+                f"   Or with root: sudo sh -c 'echo nameserver {primary} > /etc/resolv.conf'"
+            )
     return False
 
 # --- DNS Rotation Loop ---
