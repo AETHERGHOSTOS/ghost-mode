@@ -44,8 +44,8 @@ if ! command -v mkarchiso &>/dev/null; then
                     ls -la /workspace
                     exit 1
                 fi
-                echo '🔄 Updating Arch packages and installing archiso...' && \
-                pacman -Syu --noconfirm archiso &>/dev/null && \
+                echo '🔄 Updating Arch packages and installing build tools (archiso, grub, syslinux)...' && \
+                pacman -Syu --noconfirm archiso grub syslinux &>/dev/null && \
                 echo '🚀 Running ISO compiler inside container...' && \
                 cd /workspace/aether-os-builder && \
                 ./build_aether_iso.sh
