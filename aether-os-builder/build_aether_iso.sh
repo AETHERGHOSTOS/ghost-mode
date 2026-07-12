@@ -66,21 +66,38 @@ fi
 
 # ── 3. Resolve Workspace directories ──────────────────────────────
 WORK_DIR="/tmp/archiso-aether-work"
+PROFILE_DIR="/tmp/aether-iso-profile"
 OUT_DIR="${BASE_DIR}/out"
 
-rm -rf "${WORK_DIR}"
+rm -rf "${WORK_DIR}" "${PROFILE_DIR}"
 mkdir -p "${OUT_DIR}"
+
+# Copy the official releng config as our baseline profile
+echo -e "📂 Copying Arch Linux official 'releng' ISO baseline profile..."
+cp -r /usr/share/archiso/configs/releng "${PROFILE_DIR}"
+
+# Append Aether Ghost OS custom packages to the releng package list
+echo -e "⚙️ Appending Aether Ghost OS custom packages to build profile..."
+cat "${BASE_DIR}/packages.x86_64" >> "${PROFILE_DIR}/packages.x86_64"
+
+# Copy our airootfs custom overlays directly into the build profile
+echo -e "📂 Overlaying custom system configs and settings..."
+cp -r "${BASE_DIR}/airootfs/"* "${PROFILE_DIR}/airootfs/"
+
+# Copy our custom permissions profiledef.sh directly into the build profile
+cp "${BASE_DIR}/profiledef.sh" "${PROFILE_DIR}/profiledef.sh"
 
 echo -e "📂 Preparing environment paths..."
 echo "   Workspace   : ${BASE_DIR}"
+echo "   Build Profile: ${PROFILE_DIR}"
 echo "   Working Dir : ${WORK_DIR}"
 echo "   Output ISO  : ${OUT_DIR}"
 
 # ── 4. Sync template directory configurations ─────────────────────
 # Create local pacman.conf if missing
-if [ ! -f "${BASE_DIR}/pacman.conf" ]; then
+if [ ! -f "${PROFILE_DIR}/pacman.conf" ]; then
     echo "⚙️ Creating default package manager config (pacman.conf)..."
-    cat > "${BASE_DIR}/pacman.conf" << 'EOF'
+    cat > "${PROFILE_DIR}/pacman.conf" << 'EOF'
 [options]
 HoldPkg     = pacman glibc
 Architecture = auto
@@ -102,13 +119,17 @@ fi
 
 # ── 5. Copy current Aether Ghost Mode files to the ISO Root ───────
 echo -e "🧬 Embedding Aether Ghost Mode source files inside ISO target root..."
-DEST_AETHER="${BASE_DIR}/airootfs/usr/share/aether"
+DEST_AETHER="${PROFILE_DIR}/airootfs/usr/share/aether"
 rm -rf "${DEST_AETHER}"
 mkdir -p "${DEST_AETHER}"
 
-# Copy codebase files, skip builder and work temp directory
-cp -r "${BASE_DIR}/../"* "${DEST_AETHER}/" || true
-rm -rf "${DEST_AETHER}/aether-os-builder"
+# Copy codebase files, skipping builder to avoid infinite loop copying
+for item in "${BASE_DIR}/../"*; do
+    name=$(basename "$item")
+    if [ "$name" != "aether-os-builder" ] && [ "$name" != "out" ]; then
+        cp -r "$item" "${DEST_AETHER}/" || true
+    fi
+done
 rm -rf "${DEST_AETHER}/.git"
 rm -rf "${DEST_AETHER}/ghost_tools/quarantine"
 
@@ -117,7 +138,7 @@ echo -e "${GREEN}🚀 Compiling ISO image files using mkarchiso...${NC}"
 echo "   (This downloads Arch packages and compiles the filesystem, please wait...)"
 echo ""
 
-mkarchiso -v -w "${WORK_DIR}" -o "${OUT_DIR}" "${BASE_DIR}"
+mkarchiso -v -w "${WORK_DIR}" -o "${OUT_DIR}" "${PROFILE_DIR}"
 
 echo ""
 echo -e "${GREEN}==========================================================${NC}"
