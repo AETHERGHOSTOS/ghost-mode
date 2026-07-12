@@ -833,22 +833,9 @@ def handle_sentry_callback(token, chat_id, query):
 
 
     elif data == "sentry_check_conn":
-        import requests
-        try:
-            r = requests.get("https://icanhazip.com", timeout=5)
-            if r.status_code == 200:
-                CONNECTION_STATUS["active"] = True
-                CONNECTION_STATUS["ip"] = r.text.strip()
-                try:
-                    loc_res = requests.get(f"https://ipapi.co/{CONNECTION_STATUS['ip']}/json/", timeout=5).json()
-                    CONNECTION_STATUS["location"] = f"{loc_res.get('city', 'Unknown')}, {loc_res.get('country_name', 'Unknown')}"
-                except:
-                    CONNECTION_STATUS["location"] = "Unknown"
-        except:
-            CONNECTION_STATUS["active"] = False
-            CONNECTION_STATUS["ip"] = "Offline"
-            CONNECTION_STATUS["location"] = "Unknown"
-        
+        # BUG FIX: Use the built-in run_curl helper (no external 'requests' dependency)
+        edit_telegram_message(token, chat_id, message_id, "🔄 *Checking connection status...* Please wait.", None)
+        is_healthy, ip, loc, real_ip = update_connection_status_cache()
         msg, kb = get_sentry_dashboard_layout()
         edit_telegram_message(token, chat_id, message_id, msg, kb)
 
@@ -1657,17 +1644,31 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             ip = CONNECTION_STATUS.get("ip", "Disconnected")
             loc = CONNECTION_STATUS.get("location", "Offline")
             if engine == "tor" and is_active:
+                # NOTE: Tor relay IPs (entry/middle) are encrypted and hidden by design.
+                # Only the exit node IP is visible via external IP check.
                 self.send_json_response({
                     "hops": [
-                        {"type": "Entry Guard", "ip": "185.220.101.5", "loc": "Germany (DE)"},
-                        {"type": "Middle Relay", "ip": "199.249.230.77", "loc": "Canada (CA)"},
+                        {"type": "Entry Guard", "ip": "Hidden (Tor Protocol)", "loc": "Encrypted"},
+                        {"type": "Middle Relay", "ip": "Hidden (Tor Protocol)", "loc": "Encrypted"},
                         {"type": "Exit Node", "ip": ip, "loc": loc}
+                    ]
+                })
+            elif engine == "warp" and is_active:
+                self.send_json_response({
+                    "hops": [
+                        {"type": "Cloudflare WARP", "ip": ip, "loc": loc}
+                    ]
+                })
+            elif engine == "proxy" and is_active:
+                self.send_json_response({
+                    "hops": [
+                        {"type": "SOCKS Proxy", "ip": ip, "loc": loc}
                     ]
                 })
             else:
                 self.send_json_response({
                     "hops": [
-                        {"type": "Direct Route", "ip": "UNPROTECTED", "loc": "ISP Gateway (Exposed)"}
+                        {"type": "Direct Route", "ip": ip or "UNPROTECTED", "loc": "ISP Gateway (Exposed)"}
                     ]
                 })
 
@@ -1948,6 +1949,19 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
                 cfg["scan_interval"] = int(body["scan_interval"])
             if "scan_scheduled_time" in body:
                 cfg["scan_scheduled_time"] = body["scan_scheduled_time"]
+            if "security_scan_mode" in body:
+                cfg["security_scan_mode"] = body["security_scan_mode"]
+            if "security_scan_interval" in body:
+                cfg["security_scan_interval"] = int(body["security_scan_interval"])
+            if "security_scheduled_time" in body:
+                cfg["security_scheduled_time"] = body["security_scheduled_time"]
+            # Guard Shield independent scheduler keys
+            if "guard_scan_mode" in body:
+                cfg["guard_scan_mode"] = body["guard_scan_mode"]
+            if "guard_scan_interval" in body:
+                cfg["guard_scan_interval"] = int(body["guard_scan_interval"])
+            if "guard_scheduled_time" in body:
+                cfg["guard_scheduled_time"] = body["guard_scheduled_time"]
             if "location_scan_mode" in body:
                 cfg["location_scan_mode"] = body["location_scan_mode"]
             if "location_scan_interval" in body:
@@ -1964,6 +1978,7 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
                 cfg["auto_update"] = bool(body["auto_update"])
             
             save_config(cfg)
+            log_message(f"👤 Schedule config saved: {list(body.keys())}")
             self.send_json_response({"status": "ok"})
 
         elif url_path == '/api/dns':
