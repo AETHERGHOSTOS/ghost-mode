@@ -14,6 +14,8 @@ echo -e "${GREEN}💀😈 AETHER GHOST OS ISO BUILDER INITIALISING...${NC}"
 echo "=========================================================="
 
 # ── 1. Check root permissions ─────────────────────────────────────
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 if [ "$EUID" -ne 0 ]; then
     echo -e "${RED}❌ Please run this script as root (sudo ./build_aether_iso.sh)${NC}"
     exit 1
@@ -63,7 +65,6 @@ if ! command -v mkarchiso &>/dev/null; then
 fi
 
 # ── 3. Resolve Workspace directories ──────────────────────────────
-BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK_DIR="/tmp/archiso-aether-work"
 OUT_DIR="${BASE_DIR}/out"
 
