@@ -19,15 +19,38 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# ── 2. Check architecture building dependencies ───────────────────
+# ── 2. Check architecture building dependencies & Docker Fallback ──
 if ! command -v mkarchiso &>/dev/null; then
-    echo -e "📦 Installing building tools ('archiso')..."
     if command -v pacman &>/dev/null; then
+        echo -e "📦 Installing building tools ('archiso')..."
         pacman -S --noconfirm archiso
-    elif command -v apt-get &>/dev/null; then
-        echo -e "${RED}❌ Building directly on Debian/Ubuntu is not recommended without Docker.${NC}"
-        echo "   Please run this script inside an Arch Linux VM, container, or WSL instance."
-        exit 1
+    else
+        # Not on Arch. Check if Docker is installed to run containerised build
+        if command -v docker &>/dev/null; then
+            echo -e "${GREEN}🐳 Ubuntu/Debian system detected. Docker is installed!${NC}"
+            echo -e "   Spawning a privileged Arch Linux container to compile the ISO..."
+            echo "   (This handles all dependencies automatically and outputs the ISO locally)"
+            echo ""
+            
+            # Run compilation inside privileged Arch Linux container
+            docker run --privileged --rm -v "${BASE_DIR}/..:/workspace" archlinux bash -c "
+                echo '🔄 Updating Arch packages and installing archiso...' && \
+                pacman -Syu --noconfirm archiso &>/dev/null && \
+                echo '🚀 Running ISO compiler inside container...' && \
+                cd /workspace/aether-os-builder && \
+                ./build_aether_iso.sh
+            "
+            exit 0
+        else
+            echo -e "${RED}❌ Building directly on Debian/Ubuntu is not natively supported.${NC}"
+            echo "   To build this ISO, you have two choices:"
+            echo "   1. Install Docker on your Ubuntu system (recommended):"
+            echo "      sudo apt update && sudo apt install -y docker.io"
+            echo "      (Once installed, re-run this script and it will build automatically!)"
+            echo ""
+            echo "   2. Run this script inside a native Arch Linux Virtual Machine."
+            exit 1
+        fi
     fi
 fi
 
