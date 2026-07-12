@@ -14,6 +14,5 @@ pacman_conf="pacman.conf"
 file_permissions=(
   ["/etc/shadow"]="0:0:0400"
   ["/etc/gshadow"]="0:0:0400"
-  ["/etc/skel/.gnupg"]="0:0:0700"
   ["/usr/local/bin/aether-init.sh"]="0:0:0755"
 )
