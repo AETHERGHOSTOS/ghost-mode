@@ -25,7 +25,6 @@ zip
 net-tools
 iptables
 lsof
-psutil
 python
 python-pip
 python-psutil
