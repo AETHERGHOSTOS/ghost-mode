@@ -367,24 +367,59 @@ def check_hosts_blocker():
 def check_spyware_temp():
     log("👻 Checking device thermal load...")
     temp = 0.0
+    source = ""
+
+    # 1. Android battery sensor (Termux)
     try:
         path = "/sys/class/power_supply/battery/temp"
         if os.path.exists(path):
             with open(path) as f:
                 raw = int(f.read().strip())
                 temp = raw / 1000.0 if raw > 1000 else raw / 10.0
+                source = "Android battery"
     except:
         pass
 
+    # 2. Linux desktop: psutil CPU/chip sensors (Ubuntu, Debian, Arch…)
+    if temp == 0.0 and psutil:
+        try:
+            sensor_data = psutil.sensors_temperatures()
+            if sensor_data:
+                for chip, entries in sensor_data.items():
+                    for entry in entries:
+                        if entry.current and 0 < entry.current < 125:
+                            temp = entry.current
+                            source = f"CPU ({chip}/{entry.label or 'core'})"
+                            break
+                    if temp > 0:
+                        break
+        except Exception:
+            pass
+
+    # 3. Linux fallback: /sys/class/thermal/thermal_zoneN
+    if temp == 0.0:
+        for zone in range(6):
+            try:
+                p = f"/sys/class/thermal/thermal_zone{zone}/temp"
+                if os.path.exists(p):
+                    with open(p) as f:
+                        raw = int(f.read().strip())
+                        if raw > 1000:          # kernel gives millidegrees
+                            temp = raw / 1000.0
+                            source = f"thermal_zone{zone}"
+                            break
+            except:
+                pass
+
     if temp > 0:
-        log(f"🌡️  Device temperature: {temp:.1f}°C")
+        log(f"🌡️  Device temperature: {temp:.1f}°C ({source})")
         if temp >= 42.0:
             log("⚠️  High thermal load detected — possible hidden background activity")
             save_threat(f"High thermal: {temp:.1f}°C")
         else:
             log("🤫 Thermal profile normal — device resting")
     else:
-        log("🤫 Thermal sensors secured / unavailable")
+        log("🤫 Thermal sensors unavailable on this platform (normal on Windows / virtualised environments)")
 
 # ── MODULE 11: TOR STATUS ──────────────────────────────────────────
 
@@ -652,30 +687,77 @@ def check_malware_guard():
         except Exception as e:
             log(f"⚠️ Malware Guard Android audit failed: {e}")
     else:
-        # Standard Linux ClamAV
-        log(f"{CYAN}Malware Guard: Auditing files using ClamAV...{NC}")
+        # Try ClamAV first (best-in-class); fall back to heuristic scan
+        log(f"{CYAN}Malware Guard: Auditing files for malware...{NC}")
         clam_installed = subprocess.run("which clamscan", shell=True, capture_output=True).returncode == 0
-        if not clam_installed:
-            log(f"{YELLOW}⚠️ ClamAV (clamscan) not installed. File scan skipped. Run: sudo apt install clamav{NC}")
-            return
-            
-        try:
-            scan_dir = os.path.expanduser("~/Downloads")
-            if not os.path.exists(scan_dir):
-                scan_dir = "/tmp"
-                
-            log(f"🕵️ Scanning directory: {scan_dir}")
-            p = subprocess.run(f"clamscan -r --infected --no-summary {scan_dir} 2>/dev/null", shell=True, capture_output=True, text=True)
-            if p.stdout.strip():
-                infected_files = [line.strip() for line in p.stdout.split("\n") if line.strip()]
-                for f in infected_files[:5]:
-                    detail = f"Infected File Detected: {f}"
-                    log(f"{RED}💀 MALWARE GUARD THREAT: {detail}{NC}")
+
+        if clam_installed:
+            try:
+                scan_dir = os.path.expanduser("~/Downloads")
+                if not os.path.exists(scan_dir):
+                    scan_dir = "/tmp"
+                log(f"🕵️ ClamAV scanning: {scan_dir}")
+                p = subprocess.run(f"clamscan -r --infected --no-summary {scan_dir} 2>/dev/null",
+                                   shell=True, capture_output=True, text=True, timeout=120)
+                if p.stdout.strip():
+                    infected_files = [line.strip() for line in p.stdout.split("\n") if line.strip()]
+                    for f in infected_files[:5]:
+                        detail = f"Infected File Detected: {f}"
+                        log(f"{RED}💀 MALWARE GUARD THREAT: {detail}{NC}")
+                        save_threat(detail)
+                else:
+                    log(f"{GREEN}🤫 ClamAV scan complete: 0 infected files found{NC}")
+            except Exception as e:
+                log(f"⚠️ ClamAV scan failed: {e}")
+        else:
+            # ── Heuristic fallback: no ClamAV needed ──────────────────────────
+            log(f"{YELLOW}ℹ️  ClamAV not installed — running built-in heuristic file scan...{NC}")
+            log(f"{YELLOW}    (For deep scan: sudo apt install clamav){NC}")
+            suspicious = []
+            scan_targets = [
+                ("/tmp",                          True,  False),   # (dir, check_exec, check_hidden)
+                (os.path.expanduser("~"),          False, True),
+                (os.path.expanduser("~/.local"),   False, True),
+            ]
+            # Known dangerous script extensions that shouldn't live in /tmp
+            danger_exts = {".sh", ".py", ".pl", ".rb", ".php", ".elf", ".so"}
+            for scan_dir, check_exec_in_tmp, check_hidden in scan_targets:
+                if not os.path.exists(scan_dir):
+                    continue
+                try:
+                    for root, dirs, files in os.walk(scan_dir):
+                        # Limit depth to avoid scanning entire filesystem
+                        depth = root.replace(scan_dir, "").count(os.sep)
+                        if depth > 4:
+                            dirs.clear()
+                            continue
+                        for fname in files:
+                            full = os.path.join(root, fname)
+                            _, ext = os.path.splitext(fname.lower())
+                            # Rule 1: executable scripts sitting in /tmp
+                            if check_exec_in_tmp and ext in danger_exts:
+                                try:
+                                    if os.access(full, os.X_OK):
+                                        suspicious.append(full)
+                                except:
+                                    pass
+                            # Rule 2: hidden executable files outside of known dot-dirs
+                            if check_hidden and fname.startswith(".") and ext in danger_exts:
+                                try:
+                                    if os.access(full, os.X_OK):
+                                        suspicious.append(full)
+                                except:
+                                    pass
+                except Exception:
+                    pass
+
+            if suspicious:
+                for f in suspicious[:5]:
+                    detail = f"Suspicious Executable Detected: {f}"
+                    log(f"{RED}💀 MALWARE GUARD (heuristic): {detail}{NC}")
                     save_threat(detail)
             else:
-                log(f"{GREEN}🤫 ClamAV file scan completed: 0 infected files found{NC}")
-        except Exception as e:
-            log(f"⚠️ ClamAV scan failed: {e}")
+                log(f"{GREEN}🤫 Heuristic scan complete: 0 suspicious executables found{NC}")
 
 def save_report():
     temp = 0.0
