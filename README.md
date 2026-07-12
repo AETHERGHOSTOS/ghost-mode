@@ -820,34 +820,49 @@ If you are running Aether OS on a mobile phone (Android/Termux) or a computer (W
 * **Issue:** On Windows Subsystem for Linux (WSL), the core process `init` (PID 6) is flagged as a backdoor, and attempting to terminate it fails.
 * **Fix:** `init` is a safe, critical Microsoft translation layer process required to run WSL. It is not a backdoor. We have whitelisted `init`, `wsl-`, and `wslbridge` in `ghost_mode.py`. Simply run the update commands to apply the whitelist.
 
-#### 12. ClamAV Warning "clamscan not installed. File scan skipped." (Linux / WSL)
-* **Issue:** Running a Malware scan outputs a warning that `clamscan` is not installed and skips the file audit.
-* **Fix:** Aether OS uses ClamAV for local storage scans. Install ClamAV on your system to enable the storage scanner layer:
-  * **Ubuntu / Debian / WSL:** `sudo apt update && sudo apt install -y clamav`
-  * **RedHat / Fedora:** `sudo yum install -y clamav`
-
-#### 13. DNS Warning "Permission denied: Could not edit /etc/resolv.conf" (Linux / WSL)
-* **Issue:** Changing DNS resolvers logs a permission error when attempting to write to system-wide network configuration files.
-* **Fix:** Modifying system-wide resolver settings on Linux/WSL requires root privileges. You can either ignore this warning (the local encrypted DNS-over-HTTPS tunnel daemon still operates successfully in user-space) or run the launcher using `sudo python3 ghost_mode_pc.py`.
-
-#### 14. Termux:API installation failure (Android)
-* **Issue:** Installing `termux-api` fails or throws package warnings during the universal setup installer process.
-* **Fix:** The `termux-api` integration is completely optional. It is only required if you want to run SMS-based spam filtering or local Wi-Fi encryption scanning. If you do not need these features, you can safely type `n` when asked during installation.
+#### 14. Termux:API installation failure or unsupported phone (Android)
+*   **Issue:** Your phone does not allow installing `Termux:API` (e.g. signature mismatch, OS restrictions, custom Android profiles without auxiliary app support), causing local Wi-Fi encryption SSID checks to report "N/A" or crash.
+*   **Fix & Fallback (v1.2.0+ Auto-Fix):** The latest version introduces a multi-layer fallback:
+    1.  If the `termux-api` bridge is blocked or missing, the tool attempts to query `iw dev` to fetch the SSID.
+    2.  If `iw dev` fails, it falls back to parsing `/proc/net/wireless` to at least track wireless interface signal quality (e.g. `quality: 53/70`), confirming your network state.
+    3.  If you want maximum anonymity on public/unsecure Wi-Fi without Termux:API, toggle the **DoH (DNS-over-HTTPS)** or **Tor SOCKS5** engine in the console or dashboard. This encrypts all queries at the application level, bypasses localized logging, and keeps you secure regardless of the OS permission restrictions.
 
 #### 15. Foreground Terminal Menus not showing new options after update
-* **Issue:** You pulled updates from the dashboard or Sentry Bot, but your active Termux (`ghost.sh`) or PC (`ghost_mode_pc.py`) terminal console still does not display new options (like choice `[13]`).
-* **Fix:** Foreground scripts are kept loaded inside your terminal session's active RAM by the operating system. They cannot dynamically reload themselves from the disk while running. Simply exit the menu (option `12` or `10`) and start it fresh:
-  * **Termux:** `bash ~/ghost.sh`
-  * **PC / WSL:** `python3 ghost_mode_pc.py`
+*   **Issue:** You pulled updates from the dashboard or Sentry Bot, but your active Termux (`ghost.sh`) or PC (`ghost_mode_pc.py`) terminal console still does not display new options (like choice `[13]`).
+*   **Fix:** Foreground scripts are kept loaded inside your terminal session's active RAM by the operating system. They cannot dynamically reload themselves from the disk while running. Simply exit the menu (option `12` or `10`) and start it fresh:
+    *   **Termux:** `bash ~/ghost.sh`
+    *   **PC / WSL:** `python3 ghost_mode_pc.py`
 
 #### 16. Update Button fails to apply changes due to local file locks (Termux / WSL)
-* **Issue:** You click "Pull Updates" but the dashboard/Sentry Bot logs a git pull error, or the version doesn't change.
-* **Fix:** This occurs if local modifications or file locks cause a git merge conflict. Reset your local repository state to match GitHub:
-  ```bash
-  cd ~/ghost-mode
-  git fetch --all
-  git reset --hard origin/main
-  ```
+*   **Issue:** You click "Pull Updates" but the dashboard/Sentry Bot logs a git pull error, or the version doesn't change.
+*   **Fix:** This occurs if local modifications or file locks cause a git merge conflict. Reset your local repository state to match GitHub:
+    ```bash
+    cd ~/ghost-mode
+    git fetch --all
+    git reset --hard origin/main
+    ```
+
+#### 17. ClamAV Warning "clamscan not installed. File scan skipped." (Linux / WSL)
+*   **Issue:** Running a Malware scan outputs a warning that `clamscan` is not installed and skips the file audit.
+*   **Fix & Fallback (v1.2.0+ Auto-Fix):** Installing system packages requires `sudo apt install clamav`. If you are unable or do not want to install ClamAV, Aether Ghost OS automatically pivots to a **built-in heuristic scanner**. This will audit `/tmp`, `~`, and `~/.local` for hidden or executable dangerous script files (`.sh`, `.py`, `.php`, etc.) using native Python checks without requiring external dependencies or root.
+
+#### 18. DNS Warning "Permission denied: Could not edit /etc/resolv.conf" (Linux / WSL)
+*   **Issue:** Changing DNS resolvers logs a permission error when attempting to write to system-wide network configuration files.
+*   **Fix & Fallback (v1.2.0+ Auto-Fix):** The daemon now attempts to apply DNS using systemd's `resolvectl` or NetworkManager's `nmcli` first. These tools allow standard users (or users in the network group) to pivot system DNS without typing `sudo`. If those fail, it falls back to the static config file update and logs instructions on manual application.
+
+---
+
+## 🤖 Standalone Sentry Support Bot (`support_bot.py`)
+In addition to the main daemon, Ghost Mode includes a completely dependency-free, standalone Telegram bot client. This is ideal for minimal setups or devices where you do not want to run the full dashboard web server.
+
+### How to Run it:
+1. Open your terminal (Termux or PC).
+2. Configure credentials in `ghost_tools/telegram_config.json` or run options inside the main console.
+3. Run the standalone script:
+   ```bash
+   python3 ghost_tools/support_bot.py
+   ```
+It will connect directly to Telegram using Python's built-in libraries (no `requests` dependency), providing remote scan `/scan`, `/status`, `/panic`, and automatic phishing/scam message audit logs directly in your chat.
 
 ---
 
