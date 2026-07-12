@@ -133,7 +133,7 @@ download "$BASE/assets/aether_emoji.png"          ~/ghost_tools/aether_emoji.png
 download "$BASE/assets/LOGO.png"                  ~/ghost_tools/logo.png                  "logo.png"
 
 # PC Edition (optional)
-download "$BASE/ghost_mode_pc.py" ~/ghost_mode_pc.py "ghost_mode_pc.py (PC Edition)"
+download "$BASE/ghost_mode_pc.py" ~/ghost_mode_pc.py "ghost_mode_pc.py"
 
 chmod +x ~/ghost.sh
 
